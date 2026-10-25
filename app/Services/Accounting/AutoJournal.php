@@ -32,6 +32,7 @@ use App\Models\SalesReturn;
 use App\Models\StockMovement;
 use App\Models\SubcontractOrder;
 use App\Models\SubcontractTransfer;
+use App\Models\VatPeriod;
 use App\Support\LedgerAccounts;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -62,6 +63,7 @@ use Illuminate\Support\Carbon;
  * - Penyesuaian stok   : Persediaan ↔ Selisih persediaan (penyesuaian pertama = saldo awal → Ekuitas saldo awal)
  * - Kas masuk / keluar : Dr Kas/Bank / Cr akun lawan (pendapatan, pinjaman, modal, ...) dan sebaliknya
  * - Transfer rekening  : Dr rekening tujuan / Cr rekening asal
+ * - Tutup masa PPN     : Dr PPN keluaran / Cr PPN masukan + PPN lebih bayar (kompensasi); selisih Cr Hutang PPN / Dr PPN lebih bayar
  */
 class AutoJournal
 {
@@ -444,6 +446,19 @@ class AutoJournal
         ];
 
         return $this->post($asset, $asset->disposal_date, "Pelepasan aset {$asset->number} – {$asset->name} ({$asset->disposal_type->label()})", $lines, 'dispose');
+    }
+
+    /** Tutup masa PPN: saldo PPN keluaran & masukan masa itu dipindah ke Hutang PPN / PPN lebih bayar. */
+    public function vatPeriod(VatPeriod $vat): ?JournalEntry
+    {
+        $net = (float) $vat->net;
+
+        return $this->post($vat, $vat->date, "Tutup masa PPN {$vat->periodLabel()} – ".($net >= 0 ? 'kurang bayar' : 'lebih bayar'), [
+            ['account' => 'vat_out', 'amount' => (float) $vat->output_tax],
+            ['account' => 'vat_in', 'amount' => -(float) $vat->input_tax],
+            ['account' => 'vat_overpaid', 'amount' => -(float) $vat->compensation],
+            ['account' => $net >= 0 ? 'vat_payable' : 'vat_overpaid', 'amount' => -$net],
+        ]);
     }
 
     /** Batalkan semua jurnal dokumen (invoice/tagihan/pembayaran/retur dibatalkan). */

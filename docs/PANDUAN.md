@@ -90,11 +90,21 @@ Kartu stok produk menandai mutasi stok cacat dengan label *Stok Cacat*. Nilai pe
 5. **Lepas Aset**: dijual (isi harga jual & rekening penerimaan) atau dihapus/rusak. Penyusutan harus sudah diposting s.d. bulan sebelum tanggal pelepasan; selisih dengan nilai buku dijurnal sebagai laba/rugi pelepasan aset.
 6. Daftar aset bisa difilter per tanggal & kategori dan diekspor ke Excel / PDF (harga perolehan, penyusutan periode, akumulasi, nilai buku).
 
+## 7a. PPN & faktur pajak — Keuangan
+
+1. Isi **No. Faktur Pajak** setiap transaksi ber-PPN:
+   - Keluaran: buka invoice → *No. Faktur Pajak Keluaran* → **Isi** (nomor & tanggal faktur dari e-Faktur/Coretax). Nomor tercetak di PDF invoice.
+   - Masukan: isi saat mencatat tagihan supplier / maklon (bisa diubah dari halaman tagihan), atau saat mencatat aset tetap tunai.
+   Format 13–20 digit (mis. `010.000-26.00000001` atau 17 digit Coretax); nomor keluaran tidak boleh dipakai dua kali.
+2. **Laporan → Laporan PPN**: pilih masa (bulan). Tampil daftar PPN keluaran (invoice − nota kredit retur penjualan) dan PPN masukan (tagihan supplier + aset tunai − nota debit retur pembelian), faktur yang belum diisi, serta **kurang/lebih bayar**. Ekspor Excel/PDF untuk lampiran SPT.
+3. Setelah bulan berakhir: **Tutup Masa** (PPN-, berurutan per bulan). Jurnal akhir bulan memindahkan saldo PPN keluaran & masukan ke **Hutang PPN** (kurang bayar) atau **PPN Lebih Bayar** yang otomatis dikompensasikan ke masa berikutnya.
+4. Setor kurang bayar lewat **Kas & Bank → Kas Keluar** dengan akun lawan *Hutang PPN*. Bila ada dokumen berubah setelah masa ditutup, laporan memberi peringatan selisih; batalkan penutupan masa terakhir lalu tutup ulang (pembetulan).
+
 ## 8. Kas, akuntansi & laporan — Keuangan
 
 - **Keuangan → Kas & Bank**: saldo tiap rekening, mutasi, bukti kas masuk/keluar (mis. listrik, sewa) & transfer antar rekening.
 - **Akuntansi**: Jurnal Umum (otomatis + manual), Buku Besar, Neraca Saldo, Laba Rugi, Neraca, Arus Kas, Anggaran vs realisasi, **Tutup Buku** per bulan (periode tertutup menolak transaksi bertanggal di dalamnya).
-- **Laporan**: penjualan & pembelian (bersih retur), produksi, maklon, upah borongan, nilai persediaan, HPP & margin produk, umur piutang & hutang. Semua bisa diekspor ke Excel / PDF.
+- **Laporan**: penjualan & pembelian (bersih retur), PPN per masa, produksi, maklon, upah borongan, nilai persediaan, HPP & margin produk, umur piutang & hutang. Semua bisa diekspor ke Excel / PDF.
 
 ## Tips
 

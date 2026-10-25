@@ -94,6 +94,8 @@ class BillController extends Controller implements HasMiddleware
         $data = $request->validate([
             'purchase_order_id' => ['required', 'exists:purchase_orders,id'],
             'supplier_invoice_number' => ['nullable', 'string', 'max:50'],
+            'tax_invoice_number' => ['nullable', 'string', 'max:30'],
+            'tax_invoice_date' => ['nullable', 'date'],
             'bill_date' => ['required', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:bill_date'],
             'discount' => ['nullable', 'numeric', 'min:0'],
@@ -102,7 +104,7 @@ class BillController extends Controller implements HasMiddleware
             'items' => ['required', 'array'],
             'items.*.quantity' => ['nullable', 'numeric', 'min:0'],
             'items.*.price' => ['nullable', 'numeric', 'min:0'],
-        ], [], ['bill_date' => 'tanggal tagihan', 'due_date' => 'jatuh tempo', 'tax_rate' => 'PPN', 'items' => 'jumlah tagih', 'supplier_invoice_number' => 'no. faktur supplier']);
+        ], [], ['bill_date' => 'tanggal tagihan', 'due_date' => 'jatuh tempo', 'tax_rate' => 'PPN', 'items' => 'jumlah tagih', 'supplier_invoice_number' => 'no. faktur supplier', 'tax_invoice_number' => 'no. faktur pajak']);
 
         $order = PurchaseOrder::with('supplier')->findOrFail($data['purchase_order_id']);
         $bill = $service->createFromPurchaseOrder($order, $data['items'], $data);
@@ -115,6 +117,8 @@ class BillController extends Controller implements HasMiddleware
         $data = $request->validate([
             'subcontract_order_id' => ['required', 'exists:subcontract_orders,id'],
             'supplier_invoice_number' => ['nullable', 'string', 'max:50'],
+            'tax_invoice_number' => ['nullable', 'string', 'max:30'],
+            'tax_invoice_date' => ['nullable', 'date'],
             'bill_date' => ['required', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:bill_date'],
             'discount' => ['nullable', 'numeric', 'min:0'],
@@ -122,7 +126,7 @@ class BillController extends Controller implements HasMiddleware
             'notes' => ['nullable', 'string'],
             'receipts' => ['required', 'array', 'min:1'],
             'receipts.*' => ['integer'],
-        ], [], ['bill_date' => 'tanggal tagihan', 'due_date' => 'jatuh tempo', 'tax_rate' => 'PPN', 'receipts' => 'penerimaan hasil', 'supplier_invoice_number' => 'no. faktur vendor']);
+        ], [], ['bill_date' => 'tanggal tagihan', 'due_date' => 'jatuh tempo', 'tax_rate' => 'PPN', 'receipts' => 'penerimaan hasil', 'supplier_invoice_number' => 'no. faktur vendor', 'tax_invoice_number' => 'no. faktur pajak']);
 
         $order = SubcontractOrder::with('supplier')->findOrFail($data['subcontract_order_id']);
         $bill = $service->createFromSubcontract($order, $data['receipts'], $data);

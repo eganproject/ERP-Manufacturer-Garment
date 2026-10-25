@@ -52,6 +52,8 @@ enum Role: string
             'receivables.manage' => 'Buat invoice & catat penerimaan pelanggan',
             'payables.view' => 'Lihat tagihan & hutang supplier',
             'payables.manage' => 'Catat tagihan & pembayaran supplier',
+            'tax.view' => 'Lihat laporan PPN (keluaran, masukan, kurang/lebih bayar per masa)',
+            'tax.manage' => 'Isi nomor faktur pajak & tutup masa PPN',
             'cashbank.view' => 'Lihat rekening kas & bank, mutasi rekening, bukti kas',
             'cashbank.manage' => 'Catat kas masuk/keluar & transfer antar rekening',
             'accounting.view' => 'Lihat jurnal, buku besar & laporan keuangan (termasuk arus kas)',
@@ -102,7 +104,7 @@ enum Role: string
             self::Gudang => 'Menerima barang, mengirim barang (surat jalan), retur penjualan & pembelian, kirim/retur bahan maklon, stock opname, serta memproses barang cacat.',
             self::Produksi => 'Mengelola BOM, SPK produksi dari potong sampai packing, order maklon ke vendor, karyawan & tarif borongan, input hasil kerja harian, menyusun penggajian borongan, MRP, biaya produksi (HPP), dan perbaikan barang cacat.',
             self::Sales => 'Mengelola pelanggan, sales order, dan retur penjualan, memantau piutang.',
-            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, nota kredit/debit retur, menyetujui PO bernilai besar, menyetujui & membayar upah borongan serta kasbon, kas & bank (kas masuk/keluar, transfer antar rekening), aset tetap & penyusutan, jurnal & tutup buku, anggaran, serta laporan keuangan (buku besar, neraca saldo, laba rugi, neraca, arus kas, anggaran vs realisasi), umur piutang/hutang dan HPP.',
+            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, nota kredit/debit retur, faktur pajak & laporan PPN, menyetujui PO bernilai besar, menyetujui & membayar upah borongan serta kasbon, kas & bank (kas masuk/keluar, transfer antar rekening), aset tetap & penyusutan, jurnal & tutup buku, anggaran, serta laporan keuangan (buku besar, neraca saldo, laba rugi, neraca, arus kas, anggaran vs realisasi), umur piutang/hutang dan HPP.',
         };
     }
 
@@ -150,6 +152,7 @@ enum Role: string
                 'costing.view', 'stock.view',
                 'payroll.view', 'payroll.manage', 'payroll.pay',
                 'cashbank.view', 'cashbank.manage',
+                'tax.view', 'tax.manage',
                 'accounting.view', 'accounting.manage', 'accounting.close',
                 'budget.view', 'budget.manage',
                 'assets.view', 'assets.manage',

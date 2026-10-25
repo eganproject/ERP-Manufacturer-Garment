@@ -27,6 +27,9 @@
                 <table class="kv">
                     <tr><td class="k">Tanggal Invoice</td><td>: {{ tanggal($invoice->invoice_date) }}</td></tr>
                     <tr><td class="k">Jatuh Tempo</td><td>: <span class="bold">{{ tanggal($invoice->due_date) }}</span></td></tr>
+                    @if ($invoice->tax_invoice_number)
+                        <tr><td class="k">No. Faktur Pajak</td><td>: {{ $invoice->tax_invoice_number }}</td></tr>
+                    @endif
                     <tr><td class="k">No. SO</td><td>: {{ $invoice->salesOrder->number }}</td></tr>
                     @if ($invoice->salesOrder->deliveries->isNotEmpty())
                         <tr><td class="k">Surat Jalan</td><td>: {{ $invoice->salesOrder->deliveries->pluck('number')->implode(', ') }}</td></tr>

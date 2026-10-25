@@ -19,6 +19,7 @@ class Invoice extends Model
     protected $casts = [
         'invoice_date' => 'date',
         'due_date' => 'date',
+        'tax_invoice_date' => 'date',
         'status' => InvoiceStatus::class,
         'subtotal' => 'decimal:2',
         'discount' => 'decimal:2',

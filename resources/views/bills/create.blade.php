@@ -48,7 +48,9 @@
                     <x-form.input name="supplier_invoice_number" label="No. Faktur Supplier" placeholder="Nomor di invoice supplier" />
                     <x-form.input name="bill_date" label="Tanggal Faktur" :value="now()" required data-date />
                     <x-form.input name="due_date" label="Jatuh Tempo" :value="now()->addDays($order->supplier->payment_terms)" data-date help="Default: tanggal faktur + termin supplier." />
-                    <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-4" />
+                    <x-form.input name="tax_invoice_number" label="No. Faktur Pajak" placeholder="Bila tagihan ber-PPN" help="Dipakai di laporan PPN masukan." />
+                    <x-form.input name="tax_invoice_date" label="Tgl Faktur Pajak" data-date help="Kosong = tanggal tagihan." />
+                    <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-2" />
                 </div>
             </x-card>
 

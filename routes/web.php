@@ -41,6 +41,7 @@ use App\Http\Controllers\SalesReturnController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SubcontractOrderController;
+use App\Http\Controllers\TaxController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -191,6 +192,17 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('cash-transactions/{cashTransaction}', 'show')->name('cash-transactions.show');
         Route::post('cash-transactions/{cashTransaction}/cancel', 'cancel')->name('cash-transactions.cancel');
         Route::get('cash-transactions/{cashTransaction}/pdf', 'pdf')->name('cash-transactions.pdf');
+    });
+
+    // Pajak: laporan PPN per masa, tutup masa, nomor faktur pajak
+    Route::controller(TaxController::class)->group(function () {
+        Route::get('reports/vat', 'report')->name('reports.vat')->middleware('can:tax.view');
+        Route::middleware('can:tax.manage')->group(function () {
+            Route::post('vat-periods', 'close')->name('vat-periods.store');
+            Route::post('vat-periods/{vatPeriod}/cancel', 'cancel')->name('vat-periods.cancel');
+            Route::put('invoices/{invoice}/tax-invoice', 'invoiceNumber')->name('invoices.tax-invoice');
+            Route::put('bills/{bill}/tax-invoice', 'billNumber')->name('bills.tax-invoice');
+        });
     });
 
     Route::get('reports/receivables-aging', [AgingController::class, 'receivables'])->name('reports.receivables-aging')->middleware('can:receivables.view');

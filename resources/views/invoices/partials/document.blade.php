@@ -18,6 +18,35 @@
             @unless ($isInvoice)
                 <div><dt class="text-gray-500">No. Faktur Supplier</dt><dd>{{ $doc->supplier_invoice_number ?: '-' }}</dd></div>
             @endunless
+            @if ((float) $doc->tax_amount != 0 || $doc->tax_invoice_number)
+                <div x-data="{ edit: {{ $errors->has('tax_invoice_number') ? 'true' : 'false' }} }">
+                    <dt class="text-gray-500">No. Faktur Pajak {{ $isInvoice ? 'Keluaran' : 'Masukan' }}</dt>
+                    <dd x-show="! edit">
+                        @if ($doc->tax_invoice_number)
+                            <span class="font-medium">{{ $doc->tax_invoice_number }}</span>
+                            <span class="text-gray-500">· {{ tanggal($doc->tax_invoice_date ?? ($isInvoice ? $doc->invoice_date : $doc->bill_date)) }}</span>
+                        @else
+                            <span class="text-amber-600">Belum diisi</span>
+                        @endif
+                        @can('tax.manage')
+                            @if ($doc->status !== \App\Enums\InvoiceStatus::Cancelled)
+                                <button type="button" class="ml-1 text-xs text-indigo-600 hover:underline" @click="edit = true">{{ $doc->tax_invoice_number ? 'Ubah' : 'Isi' }}</button>
+                            @endif
+                        @endcan
+                    </dd>
+                    @can('tax.manage')
+                        <form x-cloak x-show="edit" method="POST" action="{{ route($isInvoice ? 'invoices.tax-invoice' : 'bills.tax-invoice', $doc) }}" class="mt-1 space-y-2">
+                            @csrf @method('PUT')
+                            <x-form.input name="tax_invoice_number" :value="$doc->tax_invoice_number" placeholder="mis. 010.000-26.00000001" />
+                            <x-form.input name="tax_invoice_date" :value="$doc->tax_invoice_date ?? ($isInvoice ? $doc->invoice_date : $doc->bill_date)" data-date />
+                            <div class="flex gap-2">
+                                <button type="submit" class="btn-primary !py-1 text-xs">Simpan</button>
+                                <button type="button" class="btn-secondary !py-1 text-xs" @click="edit = false">Batal</button>
+                            </div>
+                        </form>
+                    @endcan
+                </div>
+            @endif
             <div><dt class="text-gray-500">Tanggal</dt><dd>{{ tanggal($isInvoice ? $doc->invoice_date : $doc->bill_date) }}</dd></div>
             <div>
                 <dt class="text-gray-500">Jatuh Tempo</dt>

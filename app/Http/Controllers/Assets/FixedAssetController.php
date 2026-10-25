@@ -83,6 +83,7 @@ class FixedAssetController extends Controller implements HasMiddleware
             'cash_account_id' => [$type === AssetAcquisitionType::Cash ? 'required' : 'nullable', Account::cashRule()],
             'due_date' => ['nullable', 'date', 'after_or_equal:acquisition_date'],
             'reference' => ['nullable', 'string', 'max:100'],
+            'tax_invoice_number' => ['nullable', 'string', 'max:30'],
             ...$this->depreciationRules(),
             'opening_accumulated' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],

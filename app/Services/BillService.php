@@ -186,6 +186,8 @@ class BillService
         $bill = Bill::create($source + [
             'number' => DocumentNumber::generate(Bill::class, 'BILL', $date),
             'supplier_invoice_number' => $supplierInvoice,
+            'tax_invoice_number' => VatService::normalizeNumber($data['tax_invoice_number'] ?? null),
+            'tax_invoice_date' => ! empty($data['tax_invoice_number']) && ! empty($data['tax_invoice_date']) ? Carbon::parse($data['tax_invoice_date']) : null,
             'supplier_id' => $supplier->id,
             'bill_date' => $date,
             'due_date' => ! empty($data['due_date']) ? Carbon::parse($data['due_date']) : $date->copy()->addDays($supplier->payment_terms),

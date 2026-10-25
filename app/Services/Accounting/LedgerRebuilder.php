@@ -31,6 +31,7 @@ use App\Models\SalesReturn;
 use App\Models\StockMovement;
 use App\Models\SubcontractOrder;
 use App\Models\SubcontractTransfer;
+use App\Models\VatPeriod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -101,6 +102,8 @@ class LedgerRebuilder
                 FixedAsset::where('status', '!=', FixedAssetStatus::Cancelled)->orderBy('acquisition_date')->orderBy('id')->each(fn ($a) => $this->auto->fixedAssetAcquisition($a));
                 DepreciationRun::where('status', ReturnStatus::Posted)->orderBy('period')->orderBy('id')->each(fn ($r) => $this->auto->depreciationRun($r));
                 FixedAsset::where('status', FixedAssetStatus::Disposed)->orderBy('disposal_date')->orderBy('id')->each(fn ($a) => $this->auto->fixedAssetDisposal($a));
+
+                VatPeriod::where('status', ReturnStatus::Posted)->orderBy('period')->orderBy('id')->each(fn ($v) => $this->auto->vatPeriod($v));
 
                 StockMovement::where('type', StockMovementType::Adjustment)->orderBy('date')->orderBy('id')->each(fn ($m) => $this->auto->stockAdjustment($m));
 
