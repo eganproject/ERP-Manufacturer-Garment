@@ -20,6 +20,7 @@
                     <tr><td class="k">Tanggal Mulai</td><td>: {{ tanggal($order->start_date) }}</td></tr>
                     <tr><td class="k">Target Selesai</td><td>: {{ tanggal($order->due_date) }}</td></tr>
                     <tr><td class="k">Jumlah Rencana</td><td>: <span class="bold">{{ qty($order->quantity) }} {{ $order->product->unit?->code }}</span></td></tr>
+                    @if (\App\Models\Warehouse::isMulti())<tr><td class="k">Gudang</td><td>: {{ $order->warehouse?->name }}</td></tr>@endif
                     <tr><td class="k">Status</td><td>: {{ $order->status->label() }}</td></tr>
                 </table>
             </td>

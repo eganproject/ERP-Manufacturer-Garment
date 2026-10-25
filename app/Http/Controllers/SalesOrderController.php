@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Delivery;
 use App\Models\ProductVariant;
 use App\Models\SalesOrder;
+use App\Models\Warehouse;
 use App\Services\DocumentNumber;
 use App\Services\SalesService;
 use App\Support\DocumentPdf;
@@ -67,7 +68,7 @@ class SalesOrderController extends Controller implements HasMiddleware
 
     public function show(SalesOrder $salesOrder)
     {
-        $salesOrder->load(['customer', 'quotation', 'items.variant.product', 'productionOrders.product', 'deliveries.items.variant.product', 'invoices', 'returns.items.variant', 'creator', 'activities.user']);
+        $salesOrder->load(['customer', 'quotation', 'items.variant.product', 'productionOrders.product', 'deliveries.items.variant.product', 'deliveries.warehouse', 'invoices', 'returns.items.variant', 'creator', 'activities.user']);
 
         return view('sales-orders.show', ['order' => $salesOrder]);
     }
@@ -125,6 +126,7 @@ class SalesOrderController extends Controller implements HasMiddleware
     {
         $data = $request->validate([
             'delivery_date' => ['required', 'date'],
+            'warehouse_id' => ['nullable', Warehouse::rule()],
             'vehicle_number' => ['nullable', 'string', 'max:30'],
             'driver_name' => ['nullable', 'string', 'max:100'],
             'shipping_address' => ['nullable', 'string'],

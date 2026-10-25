@@ -16,6 +16,7 @@ class StockMovement extends Model
         'location' => StockLocation::class,
         'quantity' => 'decimal:2',
         'balance' => 'decimal:2',
+        'warehouse_balance' => 'decimal:2',
         'unit_cost' => 'decimal:4',
     ];
 
@@ -27,6 +28,11 @@ class StockMovement extends Model
     public function reference()
     {
         return $this->morphTo();
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
     }
 
     public function user()

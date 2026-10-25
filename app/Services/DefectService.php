@@ -9,6 +9,7 @@ use App\Models\Account;
 use App\Models\ActivityLog;
 use App\Models\DefectHandling;
 use App\Models\ProductVariant;
+use App\Models\Warehouse;
 use App\Services\Accounting\AutoJournal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -55,6 +56,7 @@ class DefectService
                 'status' => ReturnStatus::Posted,
                 'extra_cost' => $extra,
                 'cash_account_id' => $cashAccountId,
+                'warehouse_id' => Warehouse::resolveId($data['warehouse_id'] ?? null),
                 'notes' => $data['notes'] ?? null,
                 'created_by' => auth()->id(),
             ]);
@@ -69,7 +71,7 @@ class DefectService
                 $variant = ProductVariant::with('product')->findOrFail($line['product_variant_id']);
                 $qty = $line['quantity'];
 
-                $out = $this->stock->move($variant, -$qty, $movementType, $handling, $handling->number, $note, $date, location: $from);
+                $out = $this->stock->move($variant, -$qty, $movementType, $handling, $handling->number, $note, $date, location: $from, warehouse: $handling->warehouse_id);
                 $unitCost = (float) $out->unit_cost;
 
                 // Biaya perbaikan dibagi rata per pcs; sisa pembulatan di baris terakhir
@@ -81,7 +83,7 @@ class DefectService
                 if ($type !== DefectHandlingType::Scrap) {
                     $to = $from === StockLocation::Defect ? StockLocation::Main : StockLocation::Defect;
                     $this->stock->move($variant, $qty, $movementType, $handling, $handling->number, $note, $date,
-                        unitCost: $unitCost + $lineExtra / $qty, location: $to);
+                        unitCost: $unitCost + $lineExtra / $qty, location: $to, warehouse: $handling->warehouse_id);
                 }
 
                 $handling->items()->create([
@@ -120,11 +122,11 @@ class DefectService
                 $qty = (float) $item->quantity;
 
                 if ($type !== DefectHandlingType::Scrap) {
-                    $this->stock->move($item->variant, -$qty, $type->stockMovementType(), $handling, $handling->number, $note, $date, location: $to);
+                    $this->stock->move($item->variant, -$qty, $type->stockMovementType(), $handling, $handling->number, $note, $date, location: $to, warehouse: $handling->warehouse_id);
                 }
 
                 $this->stock->move($item->variant, $qty, $type->stockMovementType(), $handling, $handling->number, $note, $date,
-                    unitCost: (float) $item->unit_cost > 0 ? (float) $item->unit_cost : null, location: $from);
+                    unitCost: (float) $item->unit_cost > 0 ? (float) $item->unit_cost : null, location: $from, warehouse: $handling->warehouse_id);
             }
 
             $handling->update(['status' => ReturnStatus::Cancelled, 'cancel_reason' => $reason]);

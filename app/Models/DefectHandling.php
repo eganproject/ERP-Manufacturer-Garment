@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\DefectHandlingType;
 use App\Enums\ReturnStatus;
 use App\Models\Concerns\HasActivityLog;
+use App\Models\Concerns\HasWarehouse;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class DefectHandling extends Model
 {
-    use HasActivityLog;
+    use HasActivityLog, HasWarehouse;
 
     protected $guarded = ['id'];
 

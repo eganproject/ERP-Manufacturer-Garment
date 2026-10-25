@@ -14,6 +14,7 @@
                     <p class="text-xs text-gray-500">{{ $order->number }} · SPK {{ $order->productionOrder->number }}</p>
                 </div>
                 <x-form.input name="date" label="Tanggal" :value="now()" required data-date />
+                <x-form.warehouse :label="$isDispatch ? 'Dari Gudang' : 'Masuk ke Gudang'" />
                 <x-form.input name="vehicle_number" label="No. Kendaraan" />
                 <x-form.input name="driver_name" label="Sopir / Pengantar" />
                 <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-4" />

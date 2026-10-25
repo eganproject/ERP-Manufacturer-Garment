@@ -17,6 +17,7 @@ use App\Models\SubcontractOrderMaterial;
 use App\Models\SubcontractReceipt;
 use App\Models\SubcontractTransfer;
 use App\Models\Supplier;
+use App\Models\Warehouse;
 use App\Services\Accounting\AutoJournal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -201,6 +202,7 @@ class SubcontractService
                 'date' => $date,
                 'vehicle_number' => $data['vehicle_number'] ?? null,
                 'driver_name' => $data['driver_name'] ?? null,
+                'warehouse_id' => Warehouse::resolveId($data['warehouse_id'] ?? null),
                 'notes' => $data['notes'] ?? null,
                 'created_by' => auth()->id(),
             ]);
@@ -212,7 +214,7 @@ class SubcontractService
                 if ($type === SubcontractTransferType::Dispatch) {
                     $movement = $this->stock->move(
                         $line->material, -1 * $qty, StockMovementType::SubcontractIssue, $transfer, $transfer->number,
-                        "Kirim ke {$order->supplier->name} ({$order->number})", $date,
+                        "Kirim ke {$order->supplier->name} ({$order->number})", $date, warehouse: $transfer->warehouse_id,
                     );
                     $unitCost = (float) $movement->unit_cost;
 
@@ -231,7 +233,7 @@ class SubcontractService
                     $unitCost = (float) $line->unit_cost;
                     $this->stock->move(
                         $line->material, $qty, StockMovementType::SubcontractReturn, $transfer, $transfer->number,
-                        "Retur sisa bahan dari {$order->supplier->name} ({$order->number})", $date, unitCost: $unitCost,
+                        "Retur sisa bahan dari {$order->supplier->name} ({$order->number})", $date, unitCost: $unitCost, warehouse: $transfer->warehouse_id,
                     );
 
                     $line->returned_quantity = (float) $line->returned_quantity + $qty;

@@ -11,6 +11,7 @@ use App\Models\SubcontractOrder;
 use App\Models\SubcontractReceipt;
 use App\Models\SubcontractTransfer;
 use App\Models\Supplier;
+use App\Models\Warehouse;
 use App\Services\SubcontractService;
 use App\Support\DocumentPdf;
 use Illuminate\Http\Request;
@@ -127,6 +128,7 @@ class SubcontractOrderController extends Controller implements HasMiddleware
         $type = SubcontractTransferType::from($type);
         $data = $request->validate([
             'date' => ['required', 'date'],
+            'warehouse_id' => ['nullable', Warehouse::rule()],
             'vehicle_number' => ['nullable', 'string', 'max:30'],
             'driver_name' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],

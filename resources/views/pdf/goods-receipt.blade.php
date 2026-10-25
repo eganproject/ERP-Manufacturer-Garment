@@ -19,6 +19,7 @@
                     <tr><td class="k">Tanggal Terima</td><td>: {{ tanggal($receipt->receipt_date) }}</td></tr>
                     <tr><td class="k">No. PO</td><td>: {{ $po->number }}</td></tr>
                     <tr><td class="k">No. SJ Supplier</td><td>: {{ $receipt->delivery_note ?: '-' }}</td></tr>
+                    @if (\App\Models\Warehouse::isMulti())<tr><td class="k">Gudang</td><td>: {{ $receipt->warehouse?->name }}</td></tr>@endif
                     <tr><td class="k">Penerima</td><td>: {{ $receipt->creator?->name ?? '-' }}</td></tr>
                 </table>
             </td>

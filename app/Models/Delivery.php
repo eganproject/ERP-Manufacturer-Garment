@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasWarehouse;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Delivery extends Model
 {
+    use HasWarehouse;
+
     protected $guarded = ['id'];
 
     protected $casts = ['delivery_date' => 'date'];

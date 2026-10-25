@@ -21,6 +21,22 @@ class ProductVariant extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function warehouseStocks()
+    {
+        return $this->morphMany(WarehouseStock::class, 'stockable');
+    }
+
+    /** Stok jual (atau stok cacat) di satu gudang. */
+    public function stockIn(Warehouse|int $warehouse, bool $defect = false): float
+    {
+        $id = $warehouse instanceof Warehouse ? $warehouse->id : $warehouse;
+        $row = $this->relationLoaded('warehouseStocks')
+            ? $this->warehouseStocks->firstWhere('warehouse_id', $id)
+            : $this->warehouseStocks()->where('warehouse_id', $id)->first();
+
+        return (float) ($row?->{$defect ? 'defect_quantity' : 'quantity'} ?? 0);
+    }
+
     public function stockMovements()
     {
         return $this->morphMany(StockMovement::class, 'stockable');

@@ -86,7 +86,7 @@ class ProductionService
 
                 $movement = $this->stock->move(
                     $line->material, -1 * $qty, StockMovementType::ProductionIssue,
-                    $order, $order->number, 'Pengeluaran bahan produksi',
+                    $order, $order->number, 'Pengeluaran bahan produksi', warehouse: $order->warehouse_id,
                 );
                 $line->update([
                     'unit_cost' => SubcontractService::weightedCost((float) $line->issued_quantity, (float) $line->unit_cost, $qty, (float) $movement->unit_cost),
@@ -212,7 +212,7 @@ class ProductionService
                 if ((float) $item->finished_quantity > 0) {
                     $this->stock->move(
                         $item->variant, (float) $item->finished_quantity, StockMovementType::ProductionOutput,
-                        $order, $order->number, 'Hasil produksi', unitCost: $unitCost,
+                        $order, $order->number, 'Hasil produksi', unitCost: $unitCost, warehouse: $order->warehouse_id,
                     );
                 }
             }

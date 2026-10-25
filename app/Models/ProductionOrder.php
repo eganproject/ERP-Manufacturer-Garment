@@ -5,11 +5,12 @@ namespace App\Models;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\StageStatus;
 use App\Models\Concerns\HasActivityLog;
+use App\Models\Concerns\HasWarehouse;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductionOrder extends Model
 {
-    use HasActivityLog;
+    use HasActivityLog, HasWarehouse;
 
     protected $guarded = ['id'];
 

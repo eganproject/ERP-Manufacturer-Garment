@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ReturnStatus;
 use App\Models\Concerns\HasActivityLog;
+use App\Models\Concerns\HasWarehouse;
 use App\Models\Concerns\ReturnNote;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SalesReturn extends Model
 {
-    use HasActivityLog, ReturnNote;
+    use HasActivityLog, HasWarehouse, ReturnNote;
 
     protected $guarded = ['id'];
 

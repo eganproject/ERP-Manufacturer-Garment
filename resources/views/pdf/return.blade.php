@@ -33,6 +33,7 @@
                     @if ($return->applications->isNotEmpty())
                         <tr><td class="k">Atas {{ $kind->documentLabel }}</td><td>: {{ $return->applications->map(fn ($a) => $a->payable->number)->unique()->implode(', ') }}</td></tr>
                     @endif
+                    @if (\App\Models\Warehouse::isMulti())<tr><td class="k">Gudang</td><td>: {{ $return->warehouse?->name }}</td></tr>@endif
                     <tr><td class="k">Alasan</td><td>: {{ $return->reason }}</td></tr>
                 </table>
             </td>

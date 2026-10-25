@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasWarehouse;
 use Illuminate\Database\Eloquent\Model;
 
 class GoodsReceipt extends Model
 {
+    use HasWarehouse;
+
     protected $guarded = ['id'];
 
     protected $casts = ['receipt_date' => 'date'];

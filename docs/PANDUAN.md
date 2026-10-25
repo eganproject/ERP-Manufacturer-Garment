@@ -76,6 +76,14 @@ Menu **Persediaan → Barang Cacat** menampilkan stok cacat per produk (qty & ni
 
 Kartu stok produk menandai mutasi stok cacat dengan label *Stok Cacat*. Nilai persediaan & neraca (akun *Persediaan Barang Cacat*) sudah termasuk stok cacat. Salah input bisa **Dibatalkan** (stok kembali, jurnal dibalik).
 
+## 5b. Multi-gudang, transfer & stock opname — Gudang
+
+- **Persediaan → Gudang**: daftar gudang/lokasi (mis. *GU Gudang Utama*, *GJ Gudang Barang Jadi*) beserta stok & nilainya. Gudang default dipakai bila gudang tidak dipilih. Gudang yang sudah punya mutasi tidak bisa dihapus, cukup dinonaktifkan.
+- Setelah ada lebih dari satu gudang, form **Terima Barang**, **Kirim Barang**, SPK (bahan keluar & hasil masuk), **Kirim/Retur Bahan Maklon**, retur, barang cacat dan penyesuaian stok punya pilihan **Gudang**. Stok dicek per gudang: barang tidak bisa dikirim dari gudang yang kosong walau gudang lain ada stok.
+- **Stok Bahan/Barang Jadi** & **Kartu Stok** bisa difilter per gudang (saldo per gudang); tanpa filter tampil total dengan rincian per gudang. Harga pokok rata-rata tetap satu untuk semua gudang.
+- **Transfer Antar Gudang** (TG-): pilih gudang asal & tujuan, isi barang & jumlah, cetak surat transfer. Tidak memengaruhi nilai/jurnal. Bisa dibatalkan selama stok di gudang tujuan masih cukup.
+- **Stock Opname** (OPN-) per gudang & jenis barang (bahan / barang jadi, bisa per kategori): buat lembar hitung → **Cetak Lembar Hitung** (tanpa angka sistem) → isi jumlah fisik (boleh bertahap, *Simpan Hasil Hitung*) → **Posting Opname**. Selisih dihitung terhadap stok gudang saat posting dan dijurnal ke *Selisih Persediaan*; barang yang tidak diisi tidak disesuaikan. Setelah diposting tersedia berita acara opname.
+
 ## 6. Hutang supplier — Keuangan
 
 1. **Keuangan → Tagihan Supplier → + Catat Tagihan**: pilih PO (dari barang yang sudah diterima) atau order maklon (dari hasil yang diterima).

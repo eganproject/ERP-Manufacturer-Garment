@@ -88,7 +88,7 @@
                         @forelse ($order->deliveries as $delivery)
                             <tr>
                                 <td class="font-medium">{{ $delivery->number }}</td>
-                                <td>{{ tanggal($delivery->delivery_date) }}</td>
+                                <td>{{ tanggal($delivery->delivery_date) }}<x-warehouse-tag :warehouse="$delivery->warehouse" /></td>
                                 <td>{{ $delivery->vehicle_number ?: '-' }}<div class="text-xs text-gray-500">{{ $delivery->driver_name }}</div></td>
                                 <td>{!! $delivery->items->map(fn ($i) => e($i->variant->display_name).': <b>'.qty($i->quantity).'</b>')->implode('<br>') !!}</td>
                                 <td class="text-right"><a href="{{ route('deliveries.pdf', $delivery) }}" target="_blank" class="text-sm font-medium text-indigo-600 hover:underline">Cetak</a></td>

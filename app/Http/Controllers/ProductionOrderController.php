@@ -15,6 +15,7 @@ use App\Models\ProductionOrder;
 use App\Models\ProductionOrderItem;
 use App\Models\ProductionStage;
 use App\Models\SalesOrder;
+use App\Models\Warehouse;
 use App\Services\Accounting\AutoJournal;
 use App\Services\DocumentNumber;
 use App\Services\PieceworkService;
@@ -267,9 +268,11 @@ class ProductionOrderController extends Controller implements HasMiddleware
             'start_date' => ['required', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'notes' => ['nullable', 'string'],
+            'warehouse_id' => ['nullable', Warehouse::rule()],
             'items' => ['required', 'array'],
             'items.*' => ['nullable', 'numeric', 'min:0'],
-        ]);
+        ], [], ['warehouse_id' => 'gudang']);
+        $data['warehouse_id'] = Warehouse::resolveId($data['warehouse_id'] ?? null);
 
         $bom = Bom::where('product_id', $data['product_id'])->where('is_active', true)->latest()->first();
 

@@ -15,6 +15,7 @@
                 <div><dt class="text-gray-500">Jenis</dt><dd><x-badge :color="$handling->type->color()">{{ $handling->type->label() }}</x-badge></dd></div>
                 <div><dt class="text-gray-500">Status</dt><dd><x-status-badge :status="$handling->status" />@if ($handling->cancel_reason)<span class="ml-1 text-gray-500">{{ $handling->cancel_reason }}</span>@endif</dd></div>
                 <div><dt class="text-gray-500">Tanggal</dt><dd>{{ tanggal($handling->date) }}</dd></div>
+                <x-warehouse-tag :warehouse="$handling->warehouse" block />
                 <div><dt class="text-gray-500">Alur Stok</dt><dd>{{ $handling->type->fromDefect() ? 'Stok cacat' : 'Stok jual' }} → {{ match ($handling->type) { DefectHandlingType::Scrap => 'dimusnahkan', DefectHandlingType::Quarantine => 'stok cacat', default => 'stok jual' } }}</dd></div>
                 @if ($handling->notes)<div><dt class="text-gray-500">Catatan</dt><dd>{{ $handling->notes }}</dd></div>@endif
                 @can('costing.view')

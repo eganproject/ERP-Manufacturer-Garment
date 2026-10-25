@@ -119,7 +119,7 @@
                     @forelse ($order->receipts as $receipt)
                         <tr>
                             <td class="font-medium">{{ $receipt->number }}</td>
-                            <td>{{ tanggal($receipt->receipt_date) }}</td>
+                            <td>{{ tanggal($receipt->receipt_date) }}<x-warehouse-tag :warehouse="$receipt->warehouse" /></td>
                             <td>{{ $receipt->delivery_note ?: '-' }}</td>
                             <td>{!! $receipt->items->map(fn ($i) => e($i->material->name).': <b>'.qty($i->quantity).'</b>')->implode('<br>') !!}</td>
                             <td class="text-right"><a href="{{ route('goods-receipts.pdf', $receipt) }}" target="_blank" class="text-sm font-medium text-indigo-600 hover:underline">Cetak</a></td>

@@ -8,6 +8,7 @@ use App\Models\Bill;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseReturn;
 use App\Models\Supplier;
+use App\Models\Warehouse;
 use App\Services\ReturnService;
 use App\Support\DocumentPdf;
 use App\Support\ReturnKind;
@@ -150,6 +151,7 @@ class PurchaseReturnController extends Controller implements HasMiddleware
         return $request->validate([
             'order_id' => ['required', "exists:{$orderTable},id"],
             'return_date' => ['required', 'date'],
+            'warehouse_id' => ['nullable', Warehouse::rule()],
             'reason' => ['required', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array'],
