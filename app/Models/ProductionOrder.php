@@ -104,6 +104,11 @@ class ProductionOrder extends Model
         ];
     }
 
+    public function pieceworkSheets()
+    {
+        return $this->hasMany(PieceworkSheet::class)->orderBy('date')->orderBy('id');
+    }
+
     public function subcontractOrders()
     {
         return $this->hasMany(SubcontractOrder::class)->orderBy('id');

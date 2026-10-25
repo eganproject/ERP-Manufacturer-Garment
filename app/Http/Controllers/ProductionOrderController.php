@@ -16,6 +16,7 @@ use App\Models\ProductionStage;
 use App\Models\SalesOrder;
 use App\Services\Accounting\AutoJournal;
 use App\Services\DocumentNumber;
+use App\Services\PieceworkService;
 use App\Services\ProductionService;
 use App\Services\SubcontractService;
 use App\Support\DocumentPdf;
@@ -84,12 +85,13 @@ class ProductionOrderController extends Controller implements HasMiddleware
 
     public function show(ProductionOrder $productionOrder)
     {
-        $productionOrder->load(['product.unit', 'bom.items.material', 'salesOrder.customer', 'items.variant', 'materials.material.unit', 'stages.subcontractOrder.supplier', 'costs', 'creator', 'activities.user', 'subcontractOrders.supplier']);
+        $productionOrder->load(['product.unit', 'bom.items.material', 'salesOrder.customer', 'items.variant', 'materials.material.unit', 'stages.subcontractOrder.supplier', 'costs', 'creator', 'activities.user', 'subcontractOrders.supplier', 'pieceworkSheets.entries', 'product.operations']);
 
         return view('production-orders.show', [
             'order' => $productionOrder,
             'stageStatuses' => StageStatus::cases(),
             'costTypes' => ProductionCostType::options(),
+            'pieceworkProgress' => app(PieceworkService::class)->progress($productionOrder),
         ]);
     }
 

@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call(MasterDataSeeder::class);
+        $this->call(PieceworkDemoSeeder::class);
 
         // Jurnal saldo awal persediaan dari stok contoh
         if (! AccountingPeriod::whereNotNull('closed_at')->exists()) {

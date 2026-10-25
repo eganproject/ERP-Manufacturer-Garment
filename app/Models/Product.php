@@ -13,6 +13,7 @@ class Product extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'full_garment_rate' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 
@@ -34,6 +35,18 @@ class Product extends Model
     public function boms()
     {
         return $this->hasMany(Bom::class);
+    }
+
+    /** Operasi / segmen borongan beserta tarif per pcs. */
+    public function operations()
+    {
+        return $this->hasMany(ProductOperation::class)->orderBy('sequence')->orderBy('id');
+    }
+
+    /** Produk ini memakai upah borongan (tarif operasi atau tarif pcs jadi sudah diisi). */
+    public function usesPiecework(): bool
+    {
+        return (float) $this->full_garment_rate > 0 || $this->operations()->where('is_active', true)->exists();
     }
 
     public function activeBom()

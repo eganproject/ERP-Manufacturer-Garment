@@ -86,4 +86,22 @@ class Setting extends Model
             'invoice_notes' => static::get('invoice_notes'),
         ];
     }
+
+    /** Siklus penggajian borongan yang tersedia. */
+    public const PAYROLL_CYCLES = ['weekly' => 'Mingguan (7 hari)', 'biweekly' => 'Dua mingguan (14 hari)', 'monthly' => 'Bulanan'];
+
+    /**
+     * Pengaturan penggajian borongan: siklus (default mingguan) dan hari awal periode.
+     *
+     * @return array{cycle: string, week_start: int}
+     */
+    public static function payroll(): array
+    {
+        $cycle = (string) static::get('payroll_cycle', 'weekly');
+
+        return [
+            'cycle' => array_key_exists($cycle, self::PAYROLL_CYCLES) ? $cycle : 'weekly',
+            'week_start' => min(7, max(1, (int) static::get('payroll_week_start', 1))), // 1 = Senin ... 7 = Minggu
+        ];
+    }
 }

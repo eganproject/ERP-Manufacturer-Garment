@@ -15,6 +15,7 @@ class SettingController extends Controller
             'company' => Setting::company(),
             'invoice' => Setting::invoice(),
             'poApprovalThreshold' => Setting::poApprovalThreshold(),
+            'payroll' => Setting::payroll(),
         ]);
     }
 
@@ -33,7 +34,12 @@ class SettingController extends Controller
             'invoice_bank_info' => ['nullable', 'string', 'max:500'],
             'invoice_notes' => ['nullable', 'string', 'max:500'],
             'po_approval_threshold' => ['nullable', 'numeric', 'min:0'],
-        ], [], ['invoice_tax_rate' => 'PPN default', 'invoice_bank_info' => 'rekening pembayaran', 'po_approval_threshold' => 'batas persetujuan PO']);
+            'payroll_cycle' => ['nullable', 'in:'.implode(',', array_keys(Setting::PAYROLL_CYCLES))],
+            'payroll_week_start' => ['nullable', 'integer', 'between:1,7'],
+        ], [], ['invoice_tax_rate' => 'PPN default', 'invoice_bank_info' => 'rekening pembayaran', 'po_approval_threshold' => 'batas persetujuan PO', 'payroll_cycle' => 'siklus penggajian']);
+
+        $data['payroll_cycle'] ??= 'weekly';
+        $data['payroll_week_start'] = (int) ($data['payroll_week_start'] ?? 1);
 
         $data['po_approval_threshold'] = (float) ($data['po_approval_threshold'] ?? 0);
 

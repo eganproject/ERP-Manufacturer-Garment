@@ -104,6 +104,58 @@
             </x-card>
         @endif
 
+        @php
+            $usesPiecework = $order->product->usesPiecework();
+            $canPiecework = $order->status === ProductionOrderStatus::InProgress && auth()->user()->can('piecework.record');
+        @endphp
+        @if (($usesPiecework || $order->pieceworkSheets->isNotEmpty()) && auth()->user()->can('payroll.view'))
+            <x-card title="Upah Borongan Karyawan" :padding="false" class="lg:col-span-3">
+                @if ($canPiecework)
+                    <x-slot:header>
+                        <a href="{{ route('piecework.create', ['production_order_id' => $order->id]) }}" class="btn-secondary py-1.5">+ Input Hasil Kerja</a>
+                    </x-slot:header>
+                @endif
+                <div class="grid grid-cols-1 lg:grid-cols-2">
+                    <div class="overflow-x-auto border-b border-gray-200 lg:border-r lg:border-b-0">
+                        <table class="table-base">
+                            <thead><tr><th>Operasi</th><th class="text-right">Selesai</th><th class="text-right">Reject</th><th class="text-right">Sisa</th></tr></thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach ($pieceworkProgress as $key => $row)
+                                    @continue($key === 'full' && $row['rate'] <= 0 && $row['used'] <= 0)
+                                    <tr>
+                                        <td>{{ $row['name'] }}@if ($row['stage'])<span class="text-xs text-gray-500"> · {{ $row['stage'] }}</span>@endif</td>
+                                        <td class="text-right">{{ qty($row['good']) }} <span class="text-xs text-gray-500">/ {{ qty($row['capacity']) }}</span></td>
+                                        <td class="text-right">{{ qty($row['reject']) }}</td>
+                                        <td @class(['text-right font-medium', 'text-emerald-600' => $row['remaining'] <= 0])>{{ qty($row['remaining']) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="table-base">
+                            <thead><tr><th>Lembar</th><th>Tanggal</th><th class="text-right">Karyawan</th><th class="text-right">Upah</th></tr></thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @forelse ($order->pieceworkSheets as $sheet)
+                                    <tr>
+                                        <td><a href="{{ route('piecework.show', $sheet) }}" class="font-medium text-indigo-600 hover:underline">{{ $sheet->number }}</a></td>
+                                        <td class="whitespace-nowrap">{{ tanggal($sheet->date) }}</td>
+                                        <td class="text-right">{{ $sheet->entries->pluck('employee_id')->unique()->count() }}</td>
+                                        <td class="text-right whitespace-nowrap">{{ rupiah($sheet->total_amount) }}</td>
+                                    </tr>
+                                @empty
+                                    <x-empty-row colspan="4" message="Belum ada hasil kerja harian." />
+                                @endforelse
+                            </tbody>
+                            @if ($order->pieceworkSheets->isNotEmpty())
+                                <tfoot class="bg-gray-50 font-semibold"><tr><td colspan="3" class="px-4 py-3">Total upah borongan (masuk HPP)</td><td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($order->pieceworkSheets->sum('total_amount')) }}</td></tr></tfoot>
+                            @endif
+                        </table>
+                    </div>
+                </div>
+            </x-card>
+        @endif
+
         <x-card title="Tahapan Produksi" class="lg:col-span-3">
             <ol class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
                 @foreach ($order->stages as $stage)
@@ -209,7 +261,9 @@
                                     <td class="text-right whitespace-nowrap">{{ rupiah($line->amount) }}</td>
                                     @if ($canCost)
                                         <td class="text-right">
-                                            @if ($line->subcontract_receipt_id)
+                                            @if ($line->piecework_sheet_id)
+                                                <a href="{{ route('piecework.show', $line->piecework_sheet_id) }}" class="text-xs text-gray-400 hover:text-indigo-600" title="Otomatis dari hasil kerja borongan">Borongan</a>
+                                            @elseif ($line->subcontract_receipt_id)
                                                 <span class="text-xs text-gray-400" title="Otomatis dari penerimaan hasil maklon">Maklon</span>
                                             @else
                                                 <x-delete-button :action="route('production-orders.costs.destroy', [$order, $line])" confirm="Biaya ini akan dihapus dari SPK." />
@@ -218,7 +272,7 @@
                                     @endif
                                 </tr>
                             @empty
-                                <x-empty-row :colspan="$canCost ? 5 : 4" :message="$order->isEditable() ? 'Upah & overhead standar BOM dibebankan otomatis saat produksi dimulai. Biaya CMT/maklon dapat dicatat di sini.' : 'Belum ada biaya konversi.'" />
+                                <x-empty-row :colspan="$canCost ? 5 : 4" :message="$order->isEditable() ? ($order->product->usesPiecework() ? 'Overhead standar BOM dibebankan saat produksi dimulai; upah masuk dari hasil kerja borongan harian.' : 'Upah & overhead standar BOM dibebankan otomatis saat produksi dimulai. Biaya CMT/maklon dapat dicatat di sini.') : 'Belum ada biaya konversi.'" />
                             @endforelse
                         </tbody>
                     </table>

@@ -5,6 +5,7 @@ namespace App\Services\Accounting;
 use App\Enums\InvoiceStatus;
 use App\Enums\JournalType;
 use App\Enums\PaymentStatus;
+use App\Enums\PayrollStatus;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\ReturnStatus;
 use App\Enums\StockMovementType;
@@ -12,10 +13,12 @@ use App\Enums\SubcontractStatus;
 use App\Models\AccountingPeriod;
 use App\Models\Bill;
 use App\Models\Delivery;
+use App\Models\EmployeeAdvance;
 use App\Models\GoodsReceipt;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
 use App\Models\Payment;
+use App\Models\Payroll;
 use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\PurchaseReturn;
@@ -81,6 +84,9 @@ class LedgerRebuilder
                 SubcontractTransfer::whereHas('subcontractOrder', fn ($q) => $q->where('status', '!=', SubcontractStatus::Cancelled))
                     ->orderBy('date')->orderBy('id')
                     ->each(fn ($t) => $this->auto->subcontractTransfer($t));
+
+                EmployeeAdvance::where('status', ReturnStatus::Posted)->orderBy('date')->orderBy('id')->each(fn ($a) => $this->auto->employeeAdvance($a));
+                Payroll::where('status', PayrollStatus::Paid)->orderBy('payment_date')->orderBy('id')->each(fn ($p) => $this->auto->payrollPayment($p));
 
                 StockMovement::where('type', StockMovementType::Adjustment)->orderBy('date')->orderBy('id')->each(fn ($m) => $this->auto->stockAdjustment($m));
 
