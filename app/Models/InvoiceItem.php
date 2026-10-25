@@ -12,6 +12,8 @@ class InvoiceItem extends Model
         'quantity' => 'decimal:2',
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'unit_cost' => 'decimal:2',
+        'cost' => 'decimal:2',
     ];
 
     public function invoice()

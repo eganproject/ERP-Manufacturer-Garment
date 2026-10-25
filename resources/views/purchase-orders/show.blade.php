@@ -1,4 +1,9 @@
-@php use App\Enums\PurchaseOrderStatus; @endphp
+@php
+    use App\Enums\PurchaseOrderStatus;
+    $needsApproval = $order->requiresApproval();
+    $canDecide = $order->isPendingApproval() && auth()->user()->can('purchase.approve')
+        && ($order->created_by !== auth()->id() || auth()->user()->isAdmin());
+@endphp
 <x-layouts.app :title="'PO '.$order->number">
     <x-slot:actions>
         <a href="{{ route('purchase-orders.pdf', $order) }}" target="_blank" class="btn-secondary">Cetak PO</a>
@@ -6,9 +11,13 @@
         @if ($order->isEditable())
             <x-delete-button :action="route('purchase-orders.destroy', $order)" class="btn-secondary !text-red-600" />
             <a href="{{ route('purchase-orders.edit', $order) }}" class="btn-secondary">Ubah</a>
-            <x-action-form :action="route('purchase-orders.submit', $order)" confirm="PO akan dikunci dan ditandai sudah dipesan ke supplier." icon="question" button="Ya, pesan" class="btn-primary">Tandai Dipesan</x-action-form>
+            @if ($needsApproval)
+                <x-action-form :action="route('purchase-orders.submit', $order)" confirm="Nilai PO melewati batas persetujuan. PO akan dikunci dan diajukan ke penyetuju." icon="question" button="Ya, ajukan" class="btn-primary">Ajukan Persetujuan</x-action-form>
+            @else
+                <x-action-form :action="route('purchase-orders.submit', $order)" confirm="PO akan dikunci dan ditandai sudah dipesan ke supplier." icon="question" button="Ya, pesan" class="btn-primary">Tandai Dipesan</x-action-form>
+            @endif
         @endif
-        @if (in_array($order->status, [PurchaseOrderStatus::Draft, PurchaseOrderStatus::Ordered], true))
+        @if ($order->canCancel())
             <x-action-form :action="route('purchase-orders.cancel', $order)" confirm="PO akan dibatalkan." button="Ya, batalkan">Batalkan</x-action-form>
         @endif
         @endcan
@@ -20,6 +29,42 @@
         @endif
     </x-slot:actions>
 
+    @if ($order->isPendingApproval())
+        <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+            <p class="text-sm font-semibold text-indigo-900">Menunggu persetujuan</p>
+            <p class="mt-1 text-sm text-indigo-800">
+                Nilai PO {{ rupiah($order->total) }} mencapai batas persetujuan {{ rupiah(\App\Models\Setting::poApprovalThreshold()) }}.
+                Diajukan {{ $order->submitted_at?->translatedFormat('d M Y H:i') ?? '-' }} oleh {{ $order->creator?->name ?? '-' }}.
+                PO belum boleh dikirim ke supplier sebelum disetujui.
+            </p>
+            @if ($canDecide)
+                <form method="POST" action="{{ route('purchase-orders.approve', $order) }}" class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-start">
+                    @csrf
+                    <div class="flex-1">
+                        <textarea name="approval_notes" rows="2" class="form-control" placeholder="Catatan persetujuan (opsional) / alasan penolakan (wajib bila menolak)">{{ old('approval_notes') }}</textarea>
+                        @error('approval_notes')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit" class="btn-success">Setujui</button>
+                        <button type="submit" formaction="{{ route('purchase-orders.reject', $order) }}" class="btn-secondary !text-red-600">Tolak</button>
+                    </div>
+                </form>
+            @elseif (auth()->user()->can('purchase.approve'))
+                <p class="mt-2 text-xs text-indigo-700">PO ini Anda buat sendiri, jadi harus disetujui pengguna lain yang berwenang.</p>
+            @endif
+        </div>
+    @elseif ($order->isEditable() && $order->approval_notes)
+        <div class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <p class="font-semibold">PO ditolak penyetuju</p>
+            <p class="mt-1">{{ $order->approval_notes }}</p>
+            <p class="mt-1 text-xs text-red-700">Revisi PO lalu ajukan ulang.</p>
+        </div>
+    @elseif ($order->isEditable() && $needsApproval)
+        <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            Nilai PO mencapai batas persetujuan {{ rupiah(\App\Models\Setting::poApprovalThreshold()) }}, jadi perlu disetujui sebelum dipesan ke supplier.
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <x-card title="Informasi">
             <dl class="space-y-3 text-sm">
@@ -28,6 +73,13 @@
                 <div><dt class="text-gray-500">Tanggal PO</dt><dd>{{ tanggal($order->order_date) }}</dd></div>
                 <div><dt class="text-gray-500">Estimasi Datang</dt><dd>{{ tanggal($order->expected_date) }}</dd></div>
                 <div><dt class="text-gray-500">Dibuat oleh</dt><dd>{{ $order->creator?->name ?? '-' }}</dd></div>
+                @if ($order->approver)
+                    <div>
+                        <dt class="text-gray-500">Disetujui oleh</dt>
+                        <dd>{{ $order->approver->name }} <span class="text-gray-500">· {{ $order->approved_at->translatedFormat('d M Y H:i') }}</span></dd>
+                        @if ($order->approval_notes)<dd class="text-gray-500">{{ $order->approval_notes }}</dd>@endif
+                    </div>
+                @endif
                 @if ($order->notes)<div><dt class="text-gray-500">Catatan</dt><dd>{{ $order->notes }}</dd></div>@endif
             </dl>
         </x-card>

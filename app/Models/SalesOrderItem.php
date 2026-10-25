@@ -26,6 +26,22 @@ class SalesOrderItem extends Model
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
+    public function deliveryItems()
+    {
+        return $this->hasMany(DeliveryItem::class);
+    }
+
+    /**
+     * HPP rata-rata per pcs dari semua surat jalan baris ini. Dipakai sebagai HPP invoice
+     * karena invoice menagih barang terkirim tanpa menunjuk surat jalan tertentu.
+     */
+    public function deliveredUnitCost(): float
+    {
+        $totals = $this->deliveryItems()->selectRaw('COALESCE(SUM(quantity), 0) as qty, COALESCE(SUM(cost), 0) as cost')->first();
+
+        return (float) $totals->qty > 0 ? round((float) $totals->cost / (float) $totals->qty, 2) : 0.0;
+    }
+
     public function outstandingQuantity(): float
     {
         return max(0, (float) $this->quantity - (float) $this->delivered_quantity);

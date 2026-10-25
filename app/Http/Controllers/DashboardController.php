@@ -56,9 +56,25 @@ class DashboardController extends Controller
         $payables = $user->can('payables.view') ? $metrics->openBalance(Bill::class) : null;
         $production = $user->can('production.view') ? $metrics->productionThisMonth() : null;
         $stockValue = $user->can('costing.view') ? $valuation->grandTotal() : null;
+        $withCost = $user->can('receivables.view') && $user->can('costing.view');
         $topCustomers = $user->can('receivables.view')
-            ? $trade->build('sales', today()->startOfMonth(), today())['rows']->take(5)
+            ? $trade->build('sales', today()->startOfMonth(), today(), 'party', null, $withCost)['rows']->take(5)
             : collect();
+
+        // Laba kotor bulan berjalan + produk dengan laba kotor terbesar
+        $grossProfit = null;
+        $topProducts = collect();
+        if ($withCost) {
+            $byItem = $trade->build('sales', today()->startOfMonth(), today(), 'item', null, true);
+            $lastMonth = $trade->build('sales', today()->subMonthNoOverflow()->startOfMonth(), today()->subMonthNoOverflow()->endOfMonth(), 'party', null, true)['totals'];
+            $grossProfit = $byItem['totals'] + ['previous_margin' => $lastMonth['dpp'] > 0 ? $lastMonth['margin'] : null];
+            $topProducts = $byItem['rows']->sortByDesc('gross_profit')->take(5)->values();
+        }
+
+        $pendingApprovals = $user->can('purchase.approve') ? [
+            'count' => PurchaseOrder::where('status', PurchaseOrderStatus::PendingApproval)->count(),
+            'total' => (float) PurchaseOrder::where('status', PurchaseOrderStatus::PendingApproval)->sum('total'),
+        ] : null;
 
         $invoiced = [
             'current' => (float) ($trend->last()['sales'] ?? 0),
@@ -69,6 +85,7 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'stats', 'lowStockMaterials', 'activeProduction', 'recentSales', 'overdueInvoices', 'upcomingBills',
             'trend', 'receivables', 'payables', 'production', 'stockValue', 'topCustomers', 'invoiced',
+            'withCost', 'grossProfit', 'topProducts', 'pendingApprovals',
         ));
     }
 }

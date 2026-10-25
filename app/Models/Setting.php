@@ -66,6 +66,14 @@ class Setting extends Model
     }
 
     /**
+     * Batas nilai PO yang wajib disetujui sebelum dipesan ke supplier. 0 = tanpa persetujuan.
+     */
+    public static function poApprovalThreshold(): float
+    {
+        return max(0, (float) static::get('po_approval_threshold', 0));
+    }
+
+    /**
      * Pengaturan invoice: PPN default dan rekening tujuan pembayaran.
      *
      * @return array{tax_rate: float, bank_info: string|null, invoice_notes: string|null}

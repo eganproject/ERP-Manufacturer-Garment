@@ -4,6 +4,26 @@
     $partyLabel = $isSales ? 'Pelanggan' : 'Supplier';
     $docLabel = $isSales ? 'Invoice' : 'Tagihan';
     $pct = fn ($v) => number_format((float) $v, 1, ',', '.').'%';
+    $withCost ??= false;
+    $profitCells = function (array $row, bool $footer = false) use ($pct) {
+        $pad = $footer ? 'px-4 py-3 ' : '';
+        $tone = $row['gross_profit'] < 0 ? 'text-red-600' : 'text-emerald-700';
+
+        return '<td class="'.$pad.'text-right whitespace-nowrap">'.e(rupiah($row['cost'], false)).'</td>'
+            .'<td class="'.$pad.'text-right whitespace-nowrap font-semibold '.$tone.'">'.e(rupiah($row['gross_profit'], false)).'</td>'
+            .'<td class="'.$pad.'text-right whitespace-nowrap '.$tone.'">'.e($pct($row['margin'])).'</td>';
+    };
+    $cards = $withCost ? [
+        ['Penjualan (DPP)', rupiah($totals['dpp']), $totals['count'].' invoice · termasuk PPN '.rupiah($totals['total'])],
+        ['Laba kotor', rupiah($totals['gross_profit']), 'Margin '.$pct($totals['margin']).' · HPP '.rupiah($totals['cost'])],
+        ['Belum diterima', rupiah($totals['outstanding']), 'Terbayar '.rupiah($totals['paid'])],
+        ['Nilai SO dikonfirmasi', rupiah($summary['orders']), 'Pesanan dibuat pada periode yang sama'],
+    ] : [
+        [$isSales ? 'Penjualan (DPP)' : 'Pembelian (DPP)', rupiah($totals['dpp']), $totals['count'].' '.strtolower($docLabel).' · rata-rata '.rupiah($summary['average'])],
+        ['Total termasuk PPN', rupiah($totals['total']), 'PPN '.rupiah($totals['tax'])],
+        [$isSales ? 'Belum diterima' : 'Belum dibayar', rupiah($totals['outstanding']), 'Terbayar '.rupiah($totals['paid'])],
+        [$isSales ? 'Nilai SO dikonfirmasi' : 'Nilai PO dipesan', rupiah($summary['orders']), 'Pesanan dibuat pada periode yang sama'],
+    ];
 @endphp
 <x-layouts.app :title="$isSales ? 'Laporan Penjualan' : 'Laporan Pembelian'">
     <x-card class="mb-6">
@@ -26,16 +46,12 @@
         </div>
         <p class="mt-2 text-xs text-gray-500">
                 Dihitung dari {{ strtolower($docLabel) }} {{ $isSales ? 'penjualan' : 'supplier' }} yang tidak dibatalkan. Nilai = DPP (subtotal − diskon, sebelum PPN).
+                @if ($withCost) HPP = harga pokok rata-rata barang saat dikirim (surat jalan); laba kotor = DPP − HPP. @endif
             </p>
     </x-card>
 
     <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        @foreach ([
-            [$isSales ? 'Penjualan (DPP)' : 'Pembelian (DPP)', rupiah($totals['dpp']), $totals['count'].' '.strtolower($docLabel).' · rata-rata '.rupiah($summary['average'])],
-            ['Total termasuk PPN', rupiah($totals['total']), 'PPN '.rupiah($totals['tax'])],
-            [$isSales ? 'Belum diterima' : 'Belum dibayar', rupiah($totals['outstanding']), 'Terbayar '.rupiah($totals['paid'])],
-            [$isSales ? 'Nilai SO dikonfirmasi' : 'Nilai PO dipesan', rupiah($summary['orders']), 'Pesanan dibuat pada periode yang sama'],
-        ] as [$label, $value, $hint])
+        @foreach ($cards as [$label, $value, $hint])
             <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                 <p class="text-sm text-gray-500">{{ $label }}</p>
                 <p class="mt-1 text-xl font-semibold text-gray-900">{{ $value }}</p>
@@ -56,11 +72,13 @@
                             <th class="text-right">Qty</th>
                             <th class="text-right">Harga Rata-rata</th>
                             <th class="text-right">Nilai (DPP)</th>
+                            @if ($withCost)<th class="text-right">HPP</th><th class="text-right">Laba Kotor</th><th class="text-right">Margin</th>@endif
                         @else
                             <th>{{ $groupBy === 'month' ? 'Bulan' : $partyLabel }}</th>
                             <th class="text-right">{{ $docLabel }}</th>
                             @if ($isSales)<th class="text-right">Qty (pcs)</th>@endif
                             <th class="text-right">Nilai (DPP)</th>
+                            @if ($withCost)<th class="text-right">HPP</th><th class="text-right">Laba Kotor</th><th class="text-right">Margin</th>@endif
                             <th class="text-right">PPN</th>
                             <th class="text-right">Total</th>
                             <th class="text-right">Sisa</th>
@@ -87,9 +105,11 @@
                                 <td class="text-right whitespace-nowrap">{{ qty($row['quantity']) }} <span class="text-xs text-gray-500">{{ $row['unit'] }}</span></td>
                                 <td class="text-right whitespace-nowrap">{{ rupiah($row['average_price'], false) }}</td>
                                 <td class="text-right font-semibold whitespace-nowrap">{{ rupiah($row['dpp'], false) }}</td>
+                                @if ($withCost){!! $profitCells($row) !!}@endif
                             @else
                                 @if ($isSales)<td class="text-right whitespace-nowrap">{{ qty($row['quantity']) }}</td>@endif
                                 <td class="text-right font-semibold whitespace-nowrap">{{ rupiah($row['dpp'], false) }}</td>
+                                @if ($withCost){!! $profitCells($row) !!}@endif
                                 <td class="text-right whitespace-nowrap">{{ rupiah($row['tax'], false) }}</td>
                                 <td class="text-right whitespace-nowrap">{{ rupiah($row['total'], false) }}</td>
                                 <td @class(['text-right whitespace-nowrap', 'text-amber-600' => $row['outstanding'] > 0, 'text-gray-300' => $row['outstanding'] <= 0])>{{ rupiah($row['outstanding'], false) }}</td>
@@ -102,7 +122,7 @@
                             </td>
                         </tr>
                     @empty
-                        <x-empty-row colspan="8" :message="'Tidak ada '.strtolower($docLabel).' pada periode ini.'" />
+                        <x-empty-row :colspan="$withCost ? 11 : 8" :message="'Tidak ada '.strtolower($docLabel).' pada periode ini.'" />
                     @endforelse
                 </tbody>
                 @if ($rows->isNotEmpty())
@@ -114,9 +134,11 @@
                                 <td class="px-4 py-3 text-right">{{ $isSales ? qty($totals['quantity']) : '' }}</td>
                                 <td></td>
                                 <td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($totals['dpp'], false) }}</td>
+                                @if ($withCost){!! $profitCells($totals, true) !!}@endif
                             @else
                                 @if ($isSales)<td class="px-4 py-3 text-right">{{ qty($totals['quantity']) }}</td>@endif
                                 <td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($totals['dpp'], false) }}</td>
+                                @if ($withCost){!! $profitCells($totals, true) !!}@endif
                                 <td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($totals['tax'], false) }}</td>
                                 <td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($totals['total'], false) }}</td>
                                 <td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($totals['outstanding'], false) }}</td>

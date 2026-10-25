@@ -31,7 +31,7 @@
             @endif
         </form>
         <p class="mt-3 text-xs text-gray-500">
-            Kebutuhan barang jadi = sisa SO − stok barang jadi − rencana SPK berjalan. Kekurangan bahan = kebutuhan (BOM aktif + SPK draft) + stok minimum − stok gudang − PO yang belum diterima (termasuk PO draft).
+            Kebutuhan barang jadi = sisa SO − stok barang jadi − rencana SPK berjalan. Kekurangan bahan = kebutuhan (BOM aktif + SPK draft) + stok minimum − stok gudang − PO yang belum diterima (termasuk PO draft / menunggu persetujuan).
         </p>
     </x-card>
 

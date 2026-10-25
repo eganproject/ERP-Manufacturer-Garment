@@ -8,7 +8,11 @@ class DeliveryItem extends Model
 {
     protected $guarded = ['id'];
 
-    protected $casts = ['quantity' => 'decimal:2'];
+    protected $casts = [
+        'quantity' => 'decimal:2',
+        'unit_cost' => 'decimal:2',
+        'cost' => 'decimal:2',
+    ];
 
     public function delivery()
     {

@@ -120,7 +120,8 @@ class MrpService
 
         $draftPo = PurchaseOrderItem::query()
             ->join('purchase_orders', 'purchase_orders.id', '=', 'purchase_order_items.purchase_order_id')
-            ->where('purchase_orders.status', PurchaseOrderStatus::Draft->value)
+            // PO draft & menunggu persetujuan: sudah direncanakan tetapi belum dipesan
+            ->whereIn('purchase_orders.status', [PurchaseOrderStatus::Draft->value, PurchaseOrderStatus::PendingApproval->value])
             ->selectRaw('material_id, SUM(quantity) as qty')
             ->groupBy('material_id')
             ->pluck('qty', 'material_id');

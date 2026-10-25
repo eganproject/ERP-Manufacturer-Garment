@@ -9,6 +9,18 @@
                 'tone' => $growth === null ? null : ($growth >= 0 ? 'green' : 'red'),
                 'link' => route('reports.sales'),
             ] : null,
+            $grossProfit !== null ? [
+                'label' => 'Laba kotor bulan ini', 'value' => rupiah($grossProfit['gross_profit']),
+                'hint' => 'Margin '.$pct($grossProfit['margin']).($grossProfit['previous_margin'] !== null ? ' · bulan lalu '.$pct($grossProfit['previous_margin']) : '').' · HPP '.rupiah($grossProfit['cost']),
+                'tone' => $grossProfit['gross_profit'] < 0 ? 'red' : ($grossProfit['previous_margin'] !== null && $grossProfit['dpp'] > 0 ? ($grossProfit['margin'] >= $grossProfit['previous_margin'] ? 'green' : 'amber') : null),
+                'link' => route('reports.sales', ['group' => 'item']),
+            ] : null,
+            $pendingApprovals !== null ? [
+                'label' => 'PO menunggu persetujuan', 'value' => $pendingApprovals['count'],
+                'hint' => $pendingApprovals['count'] > 0 ? 'Senilai '.rupiah($pendingApprovals['total']) : 'Tidak ada PO yang perlu disetujui',
+                'tone' => $pendingApprovals['count'] > 0 ? 'amber' : null,
+                'link' => route('purchase-orders.index', ['status' => \App\Enums\PurchaseOrderStatus::PendingApproval->value]),
+            ] : null,
             auth()->user()->can('sales.view') ? [
                 'label' => 'Pesanan (SO) bulan ini', 'value' => rupiah($stats['sales_this_month']),
                 'hint' => $stats['open_sales'].' SO menunggu dikirim', 'link' => route('sales-orders.index'),
@@ -99,7 +111,10 @@
                                     <td>
                                         <div class="flex justify-between gap-2"><span class="font-medium">{{ $row['name'] }}</span><span class="whitespace-nowrap">{{ rupiah($row['dpp'], false) }}</span></div>
                                         <div class="mt-1 h-1.5 rounded-full bg-gray-100"><div class="h-1.5 rounded-full bg-indigo-500" style="width: {{ $row['share'] }}%"></div></div>
-                                        <div class="mt-0.5 text-xs text-gray-500">{{ $row['count'] }} invoice · {{ $pct($row['share']) }}</div>
+                                        <div class="mt-0.5 text-xs text-gray-500">
+                                            {{ $row['count'] }} invoice · {{ $pct($row['share']) }}
+                                            @if ($withCost) · <span @class(['text-emerald-700' => $row['margin'] >= 0, 'text-red-600' => $row['margin'] < 0])>margin {{ $pct($row['margin']) }}</span>@endif
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -136,6 +151,28 @@
         </x-card>
 
         @endcan
+
+        @if ($withCost)
+        <x-card title="Produk paling menguntungkan bulan ini" :padding="false">
+            <x-slot:header><a href="{{ route('reports.sales', ['group' => 'item']) }}" class="text-xs text-indigo-600 hover:underline">Laba per produk</a></x-slot:header>
+            <table class="table-base">
+                <thead><tr><th>Produk</th><th class="text-right">Qty</th><th class="text-right">Penjualan</th><th class="text-right">Laba Kotor</th><th class="text-right">Margin</th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse ($topProducts as $row)
+                        <tr>
+                            <td><span class="font-medium">{{ $row['name'] }}</span><div class="text-xs text-gray-500">{{ $row['code'] }}</div></td>
+                            <td class="text-right">{{ qty($row['quantity']) }}</td>
+                            <td class="text-right whitespace-nowrap">{{ rupiah($row['dpp'], false) }}</td>
+                            <td @class(['text-right whitespace-nowrap font-medium', 'text-emerald-700' => $row['gross_profit'] >= 0, 'text-red-600' => $row['gross_profit'] < 0])>{{ rupiah($row['gross_profit'], false) }}</td>
+                            <td class="text-right">{{ $pct($row['margin']) }}</td>
+                        </tr>
+                    @empty
+                        <x-empty-row colspan="5" message="Belum ada invoice bulan ini." />
+                    @endforelse
+                </tbody>
+            </table>
+        </x-card>
+        @endif
 
         @can('stock.view')
         <x-card title="Stok bahan menipis" :padding="false">

@@ -26,6 +26,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
             new Middleware('can:purchase.view', only: ['index', 'show', 'pdf', 'receiptPdf']),
             new Middleware('can:purchase.manage', only: ['create', 'store', 'edit', 'update', 'destroy', 'submit', 'cancel']),
             new Middleware('can:purchase.receive', only: ['receiveForm', 'receive']),
+            new Middleware('can:purchase.approve', only: ['approve', 'reject']),
         ];
     }
 
@@ -71,7 +72,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
 
     public function show(PurchaseOrder $purchaseOrder)
     {
-        $purchaseOrder->load(['supplier', 'items.material.unit', 'receipts.items.material', 'bills', 'creator', 'activities.user']);
+        $purchaseOrder->load(['supplier', 'items.material.unit', 'receipts.items.material', 'bills', 'creator', 'approver', 'activities.user']);
 
         return view('purchase-orders.show', ['order' => $purchaseOrder]);
     }
@@ -108,18 +109,38 @@ class PurchaseOrderController extends Controller implements HasMiddleware
         return redirect()->route('purchase-orders.index')->with('success', 'PO berhasil dihapus.');
     }
 
-    public function submit(PurchaseOrder $purchaseOrder)
+    public function submit(PurchaseOrder $purchaseOrder, PurchaseService $service)
     {
         abort_unless($purchaseOrder->isEditable(), 403);
-        $purchaseOrder->update(['status' => PurchaseOrderStatus::Ordered]);
-        ActivityLog::record('ordered', 'Menandai PO sudah dipesan ke supplier', $purchaseOrder);
+        $service->submit($purchaseOrder);
 
-        return back()->with('success', 'PO ditandai sudah dipesan ke supplier.');
+        return back()->with('success', $purchaseOrder->isPendingApproval()
+            ? 'PO diajukan dan menunggu persetujuan sebelum dipesan ke supplier.'
+            : 'PO ditandai sudah dipesan ke supplier.');
+    }
+
+    public function approve(Request $request, PurchaseOrder $purchaseOrder, PurchaseService $service)
+    {
+        $data = $request->validate(['approval_notes' => ['nullable', 'string', 'max:500']]);
+        $service->approve($purchaseOrder, $request->user(), $data['approval_notes'] ?? null);
+
+        return back()->with('success', 'PO disetujui dan siap dipesan ke supplier.');
+    }
+
+    public function reject(Request $request, PurchaseOrder $purchaseOrder, PurchaseService $service)
+    {
+        $data = $request->validate(
+            ['approval_notes' => ['required', 'string', 'max:500']],
+            ['approval_notes.required' => 'Isi alasan penolakan agar pembuat PO bisa merevisinya.'],
+        );
+        $service->reject($purchaseOrder, $request->user(), $data['approval_notes']);
+
+        return back()->with('success', 'PO ditolak dan dikembalikan ke draft.');
     }
 
     public function cancel(PurchaseOrder $purchaseOrder)
     {
-        abort_unless(in_array($purchaseOrder->status, [PurchaseOrderStatus::Draft, PurchaseOrderStatus::Ordered], true), 403, 'PO yang sudah ada penerimaan tidak dapat dibatalkan.');
+        abort_unless($purchaseOrder->canCancel(), 403, 'PO yang sudah ada penerimaan tidak dapat dibatalkan.');
         $purchaseOrder->update(['status' => PurchaseOrderStatus::Cancelled]);
         ActivityLog::record('cancelled', 'Membatalkan PO', $purchaseOrder);
 
@@ -152,7 +173,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
 
     public function pdf(PurchaseOrder $purchaseOrder)
     {
-        $purchaseOrder->load(['supplier', 'items.material.unit', 'creator']);
+        $purchaseOrder->load(['supplier', 'items.material.unit', 'creator', 'approver']);
 
         return DocumentPdf::stream('pdf.purchase-order', ['order' => $purchaseOrder], $purchaseOrder->number);
     }

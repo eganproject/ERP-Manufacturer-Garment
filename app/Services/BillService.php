@@ -23,7 +23,7 @@ class BillService
      */
     public function createFromPurchaseOrder(PurchaseOrder $po, array $lines, array $data): Bill
     {
-        if (in_array($po->status, [PurchaseOrderStatus::Draft, PurchaseOrderStatus::Cancelled], true)) {
+        if (in_array($po->status, [PurchaseOrderStatus::Draft, PurchaseOrderStatus::PendingApproval, PurchaseOrderStatus::Cancelled], true)) {
             throw ValidationException::withMessages(['status' => 'PO draft atau dibatalkan tidak dapat dibuatkan tagihan.']);
         }
 

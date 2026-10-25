@@ -15,6 +15,8 @@ class PurchaseOrder extends Model
     protected $casts = [
         'order_date' => 'date',
         'expected_date' => 'date',
+        'submitted_at' => 'datetime',
+        'approved_at' => 'datetime',
         'status' => PurchaseOrderStatus::class,
         'total' => 'decimal:2',
     ];
@@ -49,6 +51,29 @@ class PurchaseOrder extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function isPendingApproval(): bool
+    {
+        return $this->status === PurchaseOrderStatus::PendingApproval;
+    }
+
+    /** PO dengan nilai ini perlu persetujuan sebelum dipesan ke supplier. */
+    public function requiresApproval(): bool
+    {
+        $threshold = Setting::poApprovalThreshold();
+
+        return $threshold > 0 && (float) $this->total >= $threshold;
+    }
+
+    public function canCancel(): bool
+    {
+        return in_array($this->status, [PurchaseOrderStatus::Draft, PurchaseOrderStatus::PendingApproval, PurchaseOrderStatus::Ordered], true);
     }
 
     public function isEditable(): bool

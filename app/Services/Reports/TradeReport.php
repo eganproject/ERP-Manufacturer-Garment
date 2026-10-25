@@ -19,6 +19,8 @@ use Illuminate\Support\Collection;
  *
  * Nilai penjualan/pembelian memakai DPP (subtotal dikurangi diskon, sebelum PPN).
  * Diskon header dibagi proporsional ke tiap baris saat dikelompokkan per produk/bahan.
+ *
+ * Penjualan dengan $withCost juga menghitung HPP (dari invoice_items.cost), laba kotor, dan margin.
  */
 class TradeReport
 {
@@ -33,9 +35,10 @@ class TradeReport
      * @param  'party'|'item'|'month'  $groupBy
      * @return array{rows: Collection, totals: array<string, float>, summary: array<string, float>, documents: Collection}
      */
-    public function build(string $kind, Carbon $from, Carbon $to, string $groupBy = 'party', ?int $partyId = null): array
+    public function build(string $kind, Carbon $from, Carbon $to, string $groupBy = 'party', ?int $partyId = null, bool $withCost = false): array
     {
         $isSales = $kind === 'sales';
+        $withCost = $withCost && $isSales;
         [$model, $dateColumn, $partyColumn, $partyRelation, $itemRelation] = $isSales
             ? [Invoice::class, 'invoice_date', 'customer_id', 'customer', 'items.variant.product.unit']
             : [Bill::class, 'bill_date', 'supplier_id', 'supplier', 'items.material.unit'];
@@ -48,8 +51,9 @@ class TradeReport
             ->orderBy($dateColumn)
             ->orderBy('id')
             ->get()
-            ->each(function ($doc) {
+            ->each(function ($doc) use ($withCost) {
                 $doc->dpp = round((float) $doc->subtotal - (float) $doc->discount, 2);
+                $doc->cost = $withCost ? round((float) $doc->items->sum('cost'), 2) : 0.0;
                 $doc->outstanding_amount = $doc->outstanding();
                 $doc->quantity = (float) $doc->items->sum('quantity');
             });
@@ -68,13 +72,15 @@ class TradeReport
             'total' => round($documents->sum(fn ($d) => (float) $d->total), 2),
             'paid' => round($documents->sum(fn ($d) => (float) $d->paid_amount), 2),
             'outstanding' => round($documents->sum('outstanding_amount'), 2),
+            'cost' => round($documents->sum('cost'), 2),
         ];
+        $totals = self::withProfit($totals);
 
         // Pembanding: nilai pesanan (SO/PO) yang dibuat pada periode yang sama
         $orders = $isSales
             ? SalesOrder::whereNotIn('status', [SalesOrderStatus::Draft, SalesOrderStatus::Cancelled])
                 ->when($partyId, fn ($q, $id) => $q->where('customer_id', $id))
-            : PurchaseOrder::whereNotIn('status', [PurchaseOrderStatus::Draft, PurchaseOrderStatus::Cancelled])
+            : PurchaseOrder::whereNotIn('status', [PurchaseOrderStatus::Draft, PurchaseOrderStatus::PendingApproval, PurchaseOrderStatus::Cancelled])
                 ->when($partyId, fn ($q, $id) => $q->where('supplier_id', $id));
 
         $summary = [
@@ -98,7 +104,8 @@ class TradeReport
             'total' => round($docs->sum(fn ($d) => (float) $d->total), 2),
             'paid' => round($docs->sum(fn ($d) => (float) $d->paid_amount), 2),
             'outstanding' => round($docs->sum('outstanding_amount'), 2),
-        ])->sortByDesc('dpp')->values()->pipe(fn ($rows) => $this->withShare($rows));
+            'cost' => round($docs->sum('cost'), 2),
+        ])->map(fn ($row) => self::withProfit($row))->sortByDesc('dpp')->values()->pipe(fn ($rows) => $this->withShare($rows));
     }
 
     private function byItem(Collection $documents, bool $isSales): Collection
@@ -114,6 +121,7 @@ class TradeReport
                     'doc' => $doc->id,
                     'quantity' => (float) $item->quantity,
                     'dpp' => (float) $item->subtotal * $factor,
+                    'cost' => $isSales ? (float) $item->cost : 0.0,
                 ];
             });
         });
@@ -132,8 +140,9 @@ class TradeReport
                 'quantity' => round($qty, 2),
                 'dpp' => round($dpp, 2),
                 'average_price' => $qty > 0 ? round($dpp / $qty, 2) : 0,
+                'cost' => round($lines->sum('cost'), 2),
             ];
-        })->sortByDesc('dpp')->values()->pipe(fn ($rows) => $this->withShare($rows));
+        })->map(fn ($row) => self::withProfit($row))->sortByDesc('dpp')->values()->pipe(fn ($rows) => $this->withShare($rows));
     }
 
     private function byMonth(Collection $documents, string $dateColumn): Collection
@@ -148,7 +157,24 @@ class TradeReport
             'total' => round($docs->sum(fn ($d) => (float) $d->total), 2),
             'paid' => round($docs->sum(fn ($d) => (float) $d->paid_amount), 2),
             'outstanding' => round($docs->sum('outstanding_amount'), 2),
-        ])->sortKeys()->values()->pipe(fn ($rows) => $this->withShare($rows));
+            'cost' => round($docs->sum('cost'), 2),
+        ])->map(fn ($row) => self::withProfit($row))->sortKeys()->values()->pipe(fn ($rows) => $this->withShare($rows));
+    }
+
+    /**
+     * Tambahkan laba kotor (DPP − HPP) dan margin (% dari DPP).
+     *
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
+    public static function withProfit(array $row): array
+    {
+        $profit = round((float) $row['dpp'] - (float) $row['cost'], 2);
+
+        return $row + [
+            'gross_profit' => $profit,
+            'margin' => (float) $row['dpp'] != 0.0 ? round($profit / (float) $row['dpp'] * 100, 1) : 0.0,
+        ];
     }
 
     private function withShare(Collection $rows): Collection
@@ -161,9 +187,15 @@ class TradeReport
     /**
      * @param  array{rows: Collection, totals: array<string, float>}  $data
      */
-    public function table(string $kind, array $data, string $groupBy, Carbon $from, Carbon $to, ?string $partyName = null): ReportTable
+    public function table(string $kind, array $data, string $groupBy, Carbon $from, Carbon $to, ?string $partyName = null, bool $withCost = false): ReportTable
     {
         $isSales = $kind === 'sales';
+        $withCost = $withCost && $isSales;
+        $profitColumns = $withCost ? [
+            'cost' => ['HPP', 'money'],
+            'gross_profit' => ['Laba Kotor', 'money'],
+            'margin' => ['Margin', 'percent'],
+        ] : [];
         $title = $isSales ? 'Laporan Penjualan' : 'Laporan Pembelian';
 
         $columns = match ($groupBy) {
@@ -175,6 +207,7 @@ class TradeReport
                 'quantity' => ['Qty', 'qty'],
                 'average_price' => ['Harga Rata-rata', 'money'],
                 'dpp' => ['Nilai (DPP)', 'money'],
+                ...$profitColumns,
                 'share' => ['Kontribusi', 'percent'],
             ],
             default => [
@@ -185,9 +218,11 @@ class TradeReport
                 // Qty pembelian berbeda-beda satuannya, jadi hanya ditampilkan untuk penjualan (pcs)
                 ...($isSales ? ['quantity' => ['Qty (pcs)', 'qty']] : []),
                 'dpp' => ['Nilai (DPP)', 'money'],
+                ...$profitColumns,
                 'tax' => ['PPN', 'money'],
                 'total' => ['Total', 'money'],
-                'paid' => ['Terbayar', 'money'],
+                // Kolom terbayar dilepas saat ada HPP agar tabel tetap muat di PDF landscape
+                ...($withCost ? [] : ['paid' => ['Terbayar', 'money']]),
                 'outstanding' => ['Sisa', 'money'],
                 'share' => ['Kontribusi', 'percent'],
             ],
@@ -209,6 +244,10 @@ class TradeReport
             [$isSales ? 'Penjualan (DPP)' : 'Pembelian (DPP)', rupiah($data['totals']['dpp'])],
             ['Total termasuk PPN', rupiah($data['totals']['total'])],
             ['Belum dibayar', rupiah($data['totals']['outstanding'])],
+            ...($withCost ? [
+                ['HPP', rupiah($data['totals']['cost'])],
+                ['Laba kotor', rupiah($data['totals']['gross_profit']).' ('.number_format($data['totals']['margin'], 1, ',', '.').'%)'],
+            ] : []),
         ], 'landscape');
     }
 }
