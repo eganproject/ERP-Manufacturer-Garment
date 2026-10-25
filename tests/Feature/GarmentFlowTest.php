@@ -101,7 +101,11 @@ class GarmentFlowTest extends TestCase
         $this->assertSame(SalesOrderStatus::Confirmed, $so->fresh()->status);
 
         // Belum ada stok barang jadi -> pengiriman ditolak
-        $this->post(route('sales-orders.deliver', $so))->assertSessionHasErrors('stock');
+        $soItems = $so->items()->get()->keyBy('product_variant_id');
+        $this->post(route('sales-orders.deliver.store', $so), [
+            'delivery_date' => '2026-10-24',
+            'items' => [$soItems[$s->id]->id => 30],
+        ])->assertSessionHasErrors('stock');
 
         // 2. SPK produksi dari SO
         $this->post(route('production-orders.store'), [
@@ -148,9 +152,29 @@ class GarmentFlowTest extends TestCase
         $this->assertEquals(30, (float) $s->fresh()->stock);
         $this->assertEquals(20, (float) $m->fresh()->stock);
 
-        // 5. Kirim SO -> stok barang jadi berkurang
-        $this->post(route('sales-orders.deliver', $so))->assertSessionHasNoErrors();
+        // 5. Kirim SO bertahap (surat jalan) -> stok barang jadi berkurang
+        $this->get(route('sales-orders.deliver', $so))->assertOk();
+        $this->post(route('sales-orders.deliver.store', $so), [
+            'delivery_date' => '2026-10-27',
+            'vehicle_number' => 'D 1234 AB',
+            'items' => [$soItems[$s->id]->id => 30],
+        ])->assertSessionHasNoErrors();
+        $this->assertSame(SalesOrderStatus::Partial, $so->fresh()->status);
+        $this->assertEquals(0, (float) $s->fresh()->stock);
+
+        // Tidak boleh melebihi sisa pesanan
+        $this->post(route('sales-orders.deliver.store', $so), [
+            'delivery_date' => '2026-10-27',
+            'items' => [$soItems[$m->id]->id => 25],
+        ])->assertSessionHasErrors();
+
+        $this->post(route('sales-orders.deliver.store', $so), [
+            'delivery_date' => '2026-10-28',
+            'items' => [$soItems[$m->id]->id => 20],
+        ])->assertSessionHasNoErrors();
         $this->assertSame(SalesOrderStatus::Delivered, $so->fresh()->status);
+        $this->assertSame(['SJ-202610-0001', 'SJ-202610-0002'], $so->deliveries()->orderBy('id')->pluck('number')->all());
+        $this->assertSame('delivery', $s->stockMovements()->where('type', 'sales_delivery')->value('reference_type'));
         $this->get(route('sales-orders.show', $so))->assertOk()->assertSee($spk->number);
         $this->get(route('production-orders.show', $spk))->assertOk();
         $this->get(route('dashboard'))->assertOk();

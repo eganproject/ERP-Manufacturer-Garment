@@ -16,12 +16,23 @@ php artisan key:generate
 
 # buat database MySQL "erp_garment", sesuaikan DB_* di .env, lalu:
 php artisan migrate --seed
+php artisan storage:link   # untuk logo perusahaan
 
 npm run build      # atau `npm run dev` saat pengembangan
 php artisan serve
 ```
 
-Login awal: **admin@erp.test** / **password** (segera ganti di produksi).
+Akun contoh (password semua **password**, segera ganti di produksi):
+
+| Email | Peran | Akses utama |
+| --- | --- | --- |
+| admin@erp.test | Administrator | Semua menu, pengguna, pengaturan perusahaan, log aktivitas |
+| purchasing@erp.test | Purchasing | PO, supplier, bahan baku |
+| gudang@erp.test | Gudang | Terima barang, kirim barang (surat jalan), stock opname |
+| produksi@erp.test | Produksi | BOM, SPK produksi |
+| sales@erp.test | Sales | SO, pelanggan, produk |
+
+Matriks hak akses lengkap ada di `App\Enums\Role` dan ditampilkan di menu **Pengguna & Hak Akses**.
 
 Seeder mengisi data contoh: satuan, kategori, 9 bahan baku dengan saldo awal, 2 supplier, 2 pelanggan, 2 produk (kaos & kemeja, ukuran S–XXL) lengkap dengan BOM.
 
@@ -32,11 +43,13 @@ Seeder mengisi data contoh: satuan, kategori, 9 bahan baku dengan saldo awal, 2 
 | Master Data | Satuan, kategori, supplier, pelanggan, bahan baku, produk + varian ukuran/warna |
 | Bill of Materials | Kebutuhan bahan per pcs + persentase waste, simulasi kebutuhan & biaya |
 | Pembelian (PO) | Draft → Dipesan → Diterima sebagian/lengkap. Penerimaan barang menambah stok bahan |
-| Penjualan (SO) | Draft → Dikonfirmasi → Terkirim. Pengiriman mengurangi stok barang jadi |
+| Penjualan (SO) | Draft → Dikonfirmasi → Terkirim sebagian/lengkap. Tiap pengiriman membuat surat jalan (bisa bertahap) dan mengurangi stok barang jadi |
 | Produksi (SPK) | Jumlah per ukuran, kebutuhan bahan otomatis dari BOM, mulai produksi = bahan keluar dari gudang, 5 tahapan berurutan, selesai = barang jadi masuk stok |
 | Persediaan | Stok bahan & barang jadi, kartu stok (mutasi), penyesuaian / stock opname |
+| Cetak PDF | PO, bukti penerimaan barang, SO, surat jalan, SPK (dengan lembar kontrol tahapan). Kop surat dari menu Pengaturan Perusahaan |
+| Administrasi | Pengguna & peran, profil/ganti password, pengaturan perusahaan + logo, log aktivitas per dokumen |
 
-Semua perubahan stok lewat `App\Services\StockService` sehingga setiap mutasi tercatat di tabel `stock_movements` beserta saldo dan dokumen referensinya. Nomor dokumen otomatis per bulan: `PO-202610-0001`, `SO-…`, `SPK-…`, `GR-…`.
+Semua perubahan stok lewat `App\Services\StockService` sehingga setiap mutasi tercatat di tabel `stock_movements` beserta saldo dan dokumen referensinya. Nomor dokumen otomatis per bulan: `PO-202610-0001`, `SO-…`, `SPK-…`, `GR-…`, `SJ-…`.
 
 ## Komponen form (untuk pengembangan)
 

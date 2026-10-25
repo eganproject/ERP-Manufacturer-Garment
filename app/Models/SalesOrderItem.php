@@ -10,6 +10,7 @@ class SalesOrderItem extends Model
 
     protected $casts = [
         'quantity' => 'decimal:2',
+        'delivered_quantity' => 'decimal:2',
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
     ];
@@ -22,5 +23,10 @@ class SalesOrderItem extends Model
     public function variant()
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
+    public function outstandingQuantity(): float
+    {
+        return max(0, (float) $this->quantity - (float) $this->delivered_quantity);
     }
 }

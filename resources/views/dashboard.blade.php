@@ -1,11 +1,11 @@
 <x-layouts.app title="Dashboard">
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        @foreach ([
-            ['label' => 'Penjualan bulan ini', 'value' => rupiah($stats['sales_this_month']), 'link' => route('sales-orders.index')],
-            ['label' => 'SO menunggu dikirim', 'value' => $stats['open_sales'], 'link' => route('sales-orders.index', ['status' => 'confirmed'])],
-            ['label' => 'SPK dalam proses', 'value' => $stats['active_production'], 'link' => route('production-orders.index', ['status' => 'in_progress'])],
-            ['label' => 'PO belum diterima', 'value' => $stats['open_purchases'], 'link' => route('purchase-orders.index')],
-        ] as $card)
+        @foreach (array_filter([
+            ['label' => 'Penjualan bulan ini', 'value' => rupiah($stats['sales_this_month']), 'link' => route('sales-orders.index'), 'can' => 'sales.view'],
+            ['label' => 'SO menunggu dikirim', 'value' => $stats['open_sales'], 'link' => route('sales-orders.index', ['status' => 'confirmed']), 'can' => 'sales.view'],
+            ['label' => 'SPK dalam proses', 'value' => $stats['active_production'], 'link' => route('production-orders.index', ['status' => 'in_progress']), 'can' => 'production.view'],
+            ['label' => 'PO belum diterima', 'value' => $stats['open_purchases'], 'link' => route('purchase-orders.index'), 'can' => 'purchase.view'],
+        ], fn ($card) => auth()->user()->can($card['can'])) as $card)
             <a href="{{ $card['link'] }}" class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-indigo-300">
                 <p class="text-sm text-gray-500">{{ $card['label'] }}</p>
                 <p class="mt-2 text-2xl font-semibold text-gray-900">{{ $card['value'] }}</p>
@@ -14,6 +14,7 @@
     </div>
 
     <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+        @can('production.view')
         <x-card title="Produksi berjalan" :padding="false">
             <table class="table-base">
                 <thead><tr><th>SPK</th><th>Produk</th><th>Target</th><th class="w-40">Progres</th></tr></thead>
@@ -35,6 +36,9 @@
             </table>
         </x-card>
 
+        @endcan
+
+        @can('stock.view')
         <x-card title="Stok bahan menipis" :padding="false">
             <x-slot:header><a href="{{ route('stock.materials', ['low_stock' => 1]) }}" class="text-xs text-indigo-600 hover:underline">Lihat semua</a></x-slot:header>
             <table class="table-base">
@@ -53,6 +57,9 @@
             </table>
         </x-card>
 
+        @endcan
+
+        @can('sales.view')
         <x-card title="Sales order terbaru" :padding="false" class="xl:col-span-2">
             <table class="table-base">
                 <thead><tr><th>No. SO</th><th>Pelanggan</th><th>Tanggal</th><th class="text-right">Total</th><th>Status</th></tr></thead>
@@ -71,5 +78,6 @@
                 </tbody>
             </table>
         </x-card>
+        @endcan
     </div>
 </x-layouts.app>

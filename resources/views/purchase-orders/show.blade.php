@@ -1,6 +1,8 @@
 @php use App\Enums\PurchaseOrderStatus; @endphp
 <x-layouts.app :title="'PO '.$order->number">
     <x-slot:actions>
+        <a href="{{ route('purchase-orders.pdf', $order) }}" target="_blank" class="btn-secondary">Cetak PO</a>
+        @can('purchase.manage')
         @if ($order->isEditable())
             <x-delete-button :action="route('purchase-orders.destroy', $order)" class="btn-secondary !text-red-600" />
             <a href="{{ route('purchase-orders.edit', $order) }}" class="btn-secondary">Ubah</a>
@@ -9,7 +11,8 @@
         @if (in_array($order->status, [PurchaseOrderStatus::Draft, PurchaseOrderStatus::Ordered], true))
             <x-action-form :action="route('purchase-orders.cancel', $order)" confirm="PO akan dibatalkan." button="Ya, batalkan">Batalkan</x-action-form>
         @endif
-        @if ($order->canReceive())
+        @endcan
+        @if ($order->canReceive() && auth()->user()->can('purchase.receive'))
             <a href="{{ route('purchase-orders.receive', $order) }}" class="btn-success">Terima Barang</a>
         @endif
     </x-slot:actions>
@@ -36,19 +39,19 @@
                                 <td>{{ $item->material->display_name }}</td>
                                 <td class="text-right">{{ qty($item->quantity) }} {{ $item->material->unit->code }}</td>
                                 <td @class(['text-right', 'text-emerald-600 font-medium' => $item->outstandingQuantity() <= 0])>{{ qty($item->received_quantity) }}</td>
-                                <td class="text-right">{{ rupiah($item->price) }}</td>
-                                <td class="text-right">{{ rupiah($item->subtotal) }}</td>
+                                <td class="text-right whitespace-nowrap">{{ rupiah($item->price) }}</td>
+                                <td class="text-right whitespace-nowrap">{{ rupiah($item->subtotal) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
-                    <tfoot><tr class="bg-gray-50 font-semibold"><td colspan="4" class="px-4 py-3 text-right">Total</td><td class="px-4 py-3 text-right">{{ rupiah($order->total) }}</td></tr></tfoot>
+                    <tfoot><tr class="bg-gray-50 font-semibold"><td colspan="4" class="px-4 py-3 text-right">Total</td><td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($order->total) }}</td></tr></tfoot>
                 </table>
             </div>
         </x-card>
 
         <x-card title="Riwayat Penerimaan Barang" :padding="false" class="lg:col-span-3">
             <table class="table-base">
-                <thead><tr><th>No. Penerimaan</th><th>Tanggal</th><th>Surat Jalan</th><th>Item</th></tr></thead>
+                <thead><tr><th>No. Penerimaan</th><th>Tanggal</th><th>Surat Jalan</th><th>Item</th><th></th></tr></thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($order->receipts as $receipt)
                         <tr>
@@ -56,12 +59,15 @@
                             <td>{{ tanggal($receipt->receipt_date) }}</td>
                             <td>{{ $receipt->delivery_note ?: '-' }}</td>
                             <td>{!! $receipt->items->map(fn ($i) => e($i->material->name).': <b>'.qty($i->quantity).'</b>')->implode('<br>') !!}</td>
+                            <td class="text-right"><a href="{{ route('goods-receipts.pdf', $receipt) }}" target="_blank" class="text-sm font-medium text-indigo-600 hover:underline">Cetak</a></td>
                         </tr>
                     @empty
-                        <x-empty-row colspan="4" message="Belum ada penerimaan barang." />
+                        <x-empty-row colspan="5" message="Belum ada penerimaan barang." />
                     @endforelse
                 </tbody>
             </table>
         </x-card>
+
+        <x-activity-log :activities="$order->activities" class="lg:col-span-3" />
     </div>
 </x-layouts.app>

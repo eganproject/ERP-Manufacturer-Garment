@@ -37,8 +37,15 @@ class LoginController extends Controller
             throw ValidationException::withMessages(['email' => 'Email atau password salah.']);
         }
 
+        if (! Auth::user()->is_active) {
+            Auth::logout();
+
+            throw ValidationException::withMessages(['email' => 'Akun Anda sudah dinonaktifkan. Hubungi administrator.']);
+        }
+
         RateLimiter::clear($key);
         $request->session()->regenerate();
+        Auth::user()->forceFill(['last_login_at' => now()])->save();
 
         return redirect()->intended(route('dashboard'));
     }

@@ -1,5 +1,7 @@
 <x-layouts.app title="Purchase Order (Pembelian)">
+    @can('purchase.manage')
     <x-slot:actions><a href="{{ route('purchase-orders.create') }}" class="btn-primary">+ Buat PO</a></x-slot:actions>
+    @endcan
 
     <x-card :padding="false">
         <div class="border-b border-gray-200 p-4">

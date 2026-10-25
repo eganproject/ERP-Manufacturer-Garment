@@ -3,18 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PurchaseOrderStatus;
+use App\Models\ActivityLog;
+use App\Models\GoodsReceipt;
 use App\Models\Material;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Services\DocumentNumber;
 use App\Services\PurchaseService;
+use App\Support\DocumentPdf;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
-class PurchaseOrderController extends Controller
+class PurchaseOrderController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('can:purchase.view', only: ['index', 'show', 'pdf', 'receiptPdf']),
+            new Middleware('can:purchase.manage', only: ['create', 'store', 'edit', 'update', 'destroy', 'submit', 'cancel']),
+            new Middleware('can:purchase.receive', only: ['receiveForm', 'receive']),
+        ];
+    }
+
     public function index(Request $request)
     {
         $orders = PurchaseOrder::with('supplier')
@@ -47,6 +61,7 @@ class PurchaseOrderController extends Controller
                 'created_by' => auth()->id(),
             ]);
             $order->items()->createMany($items);
+            ActivityLog::record('created', "Membuat PO {$order->number}", $order);
 
             return $order;
         });
@@ -56,7 +71,7 @@ class PurchaseOrderController extends Controller
 
     public function show(PurchaseOrder $purchaseOrder)
     {
-        $purchaseOrder->load(['supplier', 'items.material.unit', 'receipts.items.material', 'creator']);
+        $purchaseOrder->load(['supplier', 'items.material.unit', 'receipts.items.material', 'creator', 'activities.user']);
 
         return view('purchase-orders.show', ['order' => $purchaseOrder]);
     }
@@ -78,6 +93,7 @@ class PurchaseOrderController extends Controller
             $purchaseOrder->update($data + ['total' => collect($items)->sum('subtotal')]);
             $purchaseOrder->items()->delete();
             $purchaseOrder->items()->createMany($items);
+            ActivityLog::record('updated', 'Mengubah PO', $purchaseOrder);
         });
 
         return redirect()->route('purchase-orders.show', $purchaseOrder)->with('success', 'PO berhasil diperbarui.');
@@ -86,6 +102,7 @@ class PurchaseOrderController extends Controller
     public function destroy(PurchaseOrder $purchaseOrder)
     {
         abort_unless($purchaseOrder->isEditable(), 403, 'Hanya PO draft yang dapat dihapus.');
+        ActivityLog::record('deleted', "Menghapus PO {$purchaseOrder->number}");
         $purchaseOrder->delete();
 
         return redirect()->route('purchase-orders.index')->with('success', 'PO berhasil dihapus.');
@@ -95,6 +112,7 @@ class PurchaseOrderController extends Controller
     {
         abort_unless($purchaseOrder->isEditable(), 403);
         $purchaseOrder->update(['status' => PurchaseOrderStatus::Ordered]);
+        ActivityLog::record('ordered', 'Menandai PO sudah dipesan ke supplier', $purchaseOrder);
 
         return back()->with('success', 'PO ditandai sudah dipesan ke supplier.');
     }
@@ -103,6 +121,7 @@ class PurchaseOrderController extends Controller
     {
         abort_unless(in_array($purchaseOrder->status, [PurchaseOrderStatus::Draft, PurchaseOrderStatus::Ordered], true), 403, 'PO yang sudah ada penerimaan tidak dapat dibatalkan.');
         $purchaseOrder->update(['status' => PurchaseOrderStatus::Cancelled]);
+        ActivityLog::record('cancelled', 'Membatalkan PO', $purchaseOrder);
 
         return back()->with('success', 'PO dibatalkan.');
     }
@@ -129,6 +148,20 @@ class PurchaseOrderController extends Controller
 
         return redirect()->route('purchase-orders.show', $purchaseOrder)
             ->with('success', "Penerimaan {$receipt->number} tersimpan, stok bahan bertambah.");
+    }
+
+    public function pdf(PurchaseOrder $purchaseOrder)
+    {
+        $purchaseOrder->load(['supplier', 'items.material.unit', 'creator']);
+
+        return DocumentPdf::stream('pdf.purchase-order', ['order' => $purchaseOrder], $purchaseOrder->number);
+    }
+
+    public function receiptPdf(GoodsReceipt $receipt)
+    {
+        $receipt->load(['purchaseOrder.supplier', 'items.material.unit', 'items.purchaseOrderItem', 'creator']);
+
+        return DocumentPdf::stream('pdf.goods-receipt', ['receipt' => $receipt], $receipt->number);
     }
 
     private function formData(PurchaseOrder $order): array

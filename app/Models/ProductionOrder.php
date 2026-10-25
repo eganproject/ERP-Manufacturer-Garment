@@ -4,10 +4,13 @@ namespace App\Models;
 
 use App\Enums\ProductionOrderStatus;
 use App\Enums\StageStatus;
+use App\Models\Concerns\HasActivityLog;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductionOrder extends Model
 {
+    use HasActivityLog;
+
     protected $guarded = ['id'];
 
     protected $casts = [

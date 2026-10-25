@@ -1,5 +1,7 @@
 <x-layouts.app title="SPK Produksi">
+    @can('production.manage')
     <x-slot:actions><a href="{{ route('production-orders.create') }}" class="btn-primary">+ Buat SPK</a></x-slot:actions>
+    @endcan
 
     <x-card :padding="false">
         <div class="border-b border-gray-200 p-4">

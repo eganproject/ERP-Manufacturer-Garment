@@ -1,13 +1,14 @@
 @php
     use App\Enums\ProductionOrderStatus;
     use App\Enums\StageStatus;
-    $inProgress = $order->status === ProductionOrderStatus::InProgress;
+    $inProgress = $order->status === ProductionOrderStatus::InProgress && auth()->user()->can('production.manage');
     $allStagesDone = $order->stages->every(fn ($s) => $s->status === StageStatus::Done);
 @endphp
 
 <x-layouts.app :title="'SPK '.$order->number">
     <x-slot:actions>
-        @if ($order->isEditable())
+        <a href="{{ route('production-orders.pdf', $order) }}" target="_blank" class="btn-secondary">Cetak SPK</a>
+        @if ($order->isEditable() && auth()->user()->can('production.manage'))
             <x-delete-button :action="route('production-orders.destroy', $order)" class="btn-secondary !text-red-600" />
             <x-action-form :action="route('production-orders.cancel', $order)" confirm="SPK akan dibatalkan." button="Ya, batalkan">Batalkan</x-action-form>
             <a href="{{ route('production-orders.edit', $order) }}" class="btn-secondary">Ubah</a>
@@ -124,5 +125,7 @@
                 </tbody>
             </table>
         </x-card>
+
+        <x-activity-log :activities="$order->activities" class="lg:col-span-3" />
     </div>
 </x-layouts.app>
