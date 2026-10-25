@@ -14,6 +14,7 @@ use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\ProductionStage;
 use App\Models\SalesOrder;
+use App\Services\Accounting\AutoJournal;
 use App\Services\DocumentNumber;
 use App\Services\ProductionService;
 use App\Services\SubcontractService;
@@ -192,6 +193,8 @@ class ProductionOrderController extends Controller implements HasMiddleware
             $productionOrder->subcontractOrders()->where('status', SubcontractStatus::Open)->get()
                 ->each(fn ($order) => $this->subcontracts->cancel($order, 'SPK dibatalkan'));
             $productionOrder->update(['status' => ProductionOrderStatus::Cancelled]);
+            // Biaya yang sempat dicatat saat draft dibalik dari barang dalam proses
+            app(AutoJournal::class)->reverse($productionOrder, 'SPK dibatalkan');
         });
         ActivityLog::record('cancelled', 'Membatalkan SPK', $productionOrder);
 

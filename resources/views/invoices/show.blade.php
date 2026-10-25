@@ -15,4 +15,6 @@
     </x-slot:actions>
 
     @include('invoices.partials.document', ['doc' => $invoice, 'party' => $invoice->customer, 'source' => $invoice->salesOrder, 'sourceRoute' => 'sales-orders.show', 'sourceLabel' => 'Sales Order', 'sourceCan' => 'sales.view'])
+
+    <x-journal-entries :sources="$invoice" class="mt-6" />
 </x-layouts.app>

@@ -47,6 +47,9 @@ enum Role: string
             'receivables.manage' => 'Buat invoice & catat penerimaan pelanggan',
             'payables.view' => 'Lihat tagihan & hutang supplier',
             'payables.manage' => 'Catat tagihan & pembayaran supplier',
+            'accounting.view' => 'Lihat jurnal, buku besar & laporan keuangan',
+            'accounting.manage' => 'Kelola bagan akun, pemetaan akun & jurnal manual',
+            'accounting.close' => 'Tutup / buka periode akuntansi',
             'stock.view' => 'Lihat stok & kartu stok',
             'stock.adjust' => 'Penyesuaian stok (stock opname)',
             'users.manage' => 'Kelola pengguna',
@@ -87,7 +90,7 @@ enum Role: string
             self::Gudang => 'Menerima barang, mengirim barang (surat jalan), retur penjualan & pembelian, kirim/retur bahan maklon, dan stock opname.',
             self::Produksi => 'Mengelola BOM, SPK produksi dari potong sampai packing, order maklon ke vendor, MRP, dan biaya produksi (HPP).',
             self::Sales => 'Mengelola pelanggan, sales order, dan retur penjualan, memantau piutang.',
-            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, nota kredit/debit retur, menyetujui PO bernilai besar, serta umur piutang/hutang dan laporan HPP & laba kotor.',
+            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, nota kredit/debit retur, menyetujui PO bernilai besar, jurnal & tutup buku, serta laporan keuangan (buku besar, neraca saldo, laba rugi, neraca), umur piutang/hutang dan HPP.',
         };
     }
 
@@ -132,6 +135,7 @@ enum Role: string
                 'receivables.view', 'receivables.manage',
                 'payables.view', 'payables.manage',
                 'costing.view',
+                'accounting.view', 'accounting.manage', 'accounting.close',
             ],
         };
     }

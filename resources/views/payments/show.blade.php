@@ -54,6 +54,7 @@
             </div>
         </x-card>
 
+        <x-journal-entries :sources="$payment" class="lg:col-span-3" />
         <x-activity-log :activities="$payment->activities" class="lg:col-span-3" />
     </div>
 </x-layouts.app>

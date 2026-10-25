@@ -7,6 +7,7 @@ use App\Enums\SalesOrderStatus;
 use App\Models\ActivityLog;
 use App\Models\Invoice;
 use App\Models\SalesOrder;
+use App\Services\Accounting\AutoJournal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,8 @@ use Illuminate\Validation\ValidationException;
  */
 class InvoiceService
 {
+    public function __construct(private AutoJournal $journal) {}
+
     /**
      * @param  array<int, float>  $quantities  sales_order_item_id => qty ditagih
      * @param  array{invoice_date: string, due_date?: string|null, tax_rate?: float|string|null, notes?: string|null}  $data
@@ -92,6 +95,7 @@ class InvoiceService
                 'created_by' => auth()->id(),
             ]);
             $invoice->items()->createMany($lines);
+            $this->journal->invoice($invoice);
 
             ActivityLog::record('created', "Membuat invoice {$invoice->number} dari SO {$order->number}", $invoice);
             ActivityLog::record('invoiced', "Membuat invoice {$invoice->number}", $order);
@@ -114,6 +118,7 @@ class InvoiceService
             }
 
             $invoice->update(['status' => InvoiceStatus::Cancelled]);
+            $this->journal->reverse($invoice, 'invoice dibatalkan'.($reason ? " – {$reason}" : ''));
 
             ActivityLog::record('cancelled', 'Membatalkan invoice'.($reason ? ": {$reason}" : ''), $invoice);
             ActivityLog::record('invoice_cancelled', "Invoice {$invoice->number} dibatalkan", $invoice->salesOrder);

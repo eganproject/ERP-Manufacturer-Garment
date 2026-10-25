@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\Bill;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Services\Accounting\AutoJournal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -18,6 +19,8 @@ use Illuminate\Validation\ValidationException;
  */
 class PaymentService
 {
+    public function __construct(private AutoJournal $journal) {}
+
     /**
      * @param  array<int, float|string|null>  $allocations  id invoice/tagihan => jumlah dibayar
      * @param  array{payment_date: string, method: string, reference?: string|null, notes?: string|null}  $data
@@ -82,6 +85,8 @@ class PaymentService
                 ActivityLog::record('paid', "Pembayaran {$payment->number} sebesar ".rupiah($amount), $doc);
             }
 
+            $this->journal->payment($payment);
+
             ActivityLog::record('created', "Mencatat {$type->label()} {$payment->number}", $payment);
 
             return $payment;
@@ -96,6 +101,7 @@ class PaymentService
 
         DB::transaction(function () use ($payment, $reason) {
             $payment->update(['status' => PaymentStatus::Cancelled, 'cancel_reason' => $reason]);
+            $this->journal->reverse($payment, "pembayaran dibatalkan – {$reason}");
 
             foreach ($payment->allocations()->with('payable')->get() as $allocation) {
                 $doc = $allocation->payable()->lockForUpdate()->first();

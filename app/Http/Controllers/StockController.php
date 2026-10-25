@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\StockMovementType;
 use App\Models\Material;
 use App\Models\ProductVariant;
+use App\Services\Accounting\AutoJournal;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -56,7 +57,7 @@ class StockController extends Controller
         ]);
     }
 
-    public function adjust(Request $request, StockService $stock)
+    public function adjust(Request $request, StockService $stock, AutoJournal $journal)
     {
         $data = $request->validate([
             'item' => ['required', 'string', 'regex:/^(material|variant):\d+$/'],
@@ -81,9 +82,9 @@ class StockController extends Controller
             return back()->with('error', 'Tidak ada perubahan stok.');
         }
 
-        DB::transaction(fn () => $stock->move(
+        DB::transaction(fn () => $journal->stockAdjustment($stock->move(
             $item, $qty, StockMovementType::Adjustment, null, null, $data['notes'], Carbon::parse($data['date']),
-        ));
+        )));
 
         return redirect()->route($type === 'material' ? 'stock.materials.card' : 'stock.products.card', $id)
             ->with('success', 'Penyesuaian stok tersimpan.');

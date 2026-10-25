@@ -6,13 +6,14 @@ use App\Enums\StockMovementType;
 use App\Models\ActivityLog;
 use App\Models\Delivery;
 use App\Models\SalesOrder;
+use App\Services\Accounting\AutoJournal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class SalesService
 {
-    public function __construct(private StockService $stock) {}
+    public function __construct(private StockService $stock, private AutoJournal $journal) {}
 
     /**
      * Buat surat jalan (boleh sebagian) dan kurangi stok barang jadi.
@@ -78,6 +79,7 @@ class SalesService
             }
 
             $order->refreshDeliveryStatus();
+            $this->journal->delivery($delivery);
 
             ActivityLog::record('delivered', "Membuat surat jalan {$delivery->number}", $order);
 

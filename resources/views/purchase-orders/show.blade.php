@@ -157,6 +157,7 @@
         </x-card>
         @endcan
 
+        <x-journal-entries :sources="$order->receipts->all()" class="lg:col-span-3" />
         <x-activity-log :activities="$order->activities" class="lg:col-span-3" />
     </div>
 </x-layouts.app>

@@ -17,6 +17,7 @@ use App\Models\SubcontractOrderMaterial;
 use App\Models\SubcontractReceipt;
 use App\Models\SubcontractTransfer;
 use App\Models\Supplier;
+use App\Services\Accounting\AutoJournal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -32,7 +33,7 @@ use Illuminate\Validation\ValidationException;
  */
 class SubcontractService
 {
-    public function __construct(private StockService $stock) {}
+    public function __construct(private StockService $stock, private AutoJournal $journal) {}
 
     /**
      * @param  array{supplier_id: int, order_date: string, due_date?: string|null, stages: list<string>, quantity: float|string, rate: float|string, notes?: string|null}  $data
@@ -231,6 +232,8 @@ class SubcontractService
                 ]);
             }
 
+            $this->journal->subcontractTransfer($transfer);
+
             if ($type === SubcontractTransferType::Dispatch && ! $spk->materials_issued_at) {
                 $spk->update(['materials_issued_at' => now()]);
             }
@@ -292,7 +295,7 @@ class SubcontractService
             ]);
 
             if ($amount > 0) {
-                $spk->costs()->create([
+                $cost = $spk->costs()->create([
                     'subcontract_receipt_id' => $receipt->id,
                     'type' => ProductionCostType::Cmt,
                     'description' => "Jasa maklon {$order->supplier->name} {$receipt->number} (".qty($good).' pcs × '.rupiah($order->rate).')',
@@ -300,6 +303,7 @@ class SubcontractService
                     'date' => $date,
                     'created_by' => auth()->id(),
                 ]);
+                $this->journal->productionCost($cost);
             }
 
             $order->update([
@@ -348,6 +352,7 @@ class SubcontractService
             ]);
 
             $this->syncStages($order, $order->productionStages()->get(), true);
+            $this->journal->subcontractClose($order);
 
             $summary = $shrinkage ? ' Selisih pemakaian vs standar: '.implode(', ', $shrinkage).'.' : '';
             ActivityLog::record('closed', 'Menutup order maklon, saldo bahan di vendor direkonsiliasi.'.$summary, $order);

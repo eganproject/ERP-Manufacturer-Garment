@@ -147,6 +147,7 @@
             </table>
         </x-card>
 
+        <x-journal-entries :sources="$order->deliveries->all()" />
         <x-activity-log :activities="$order->activities" />
     </div>
 </x-layouts.app>

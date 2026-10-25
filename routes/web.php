@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Accounting\AccountController;
+use App\Http\Controllers\Accounting\FinancialReportController;
+use App\Http\Controllers\Accounting\JournalController;
+use App\Http\Controllers\Accounting\PeriodController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AgingController;
 use App\Http\Controllers\Auth\LoginController;
@@ -153,6 +157,33 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('production', 'production')->name('production')->middleware('can:production.view');
         Route::get('stock-valuation', 'stockValuation')->name('stock-valuation')->middleware('can:costing.view');
         Route::get('subcontract', 'subcontract')->name('subcontract')->middleware('can:production.view');
+    });
+
+    // Akuntansi: bagan akun, jurnal, tutup buku, laporan keuangan
+    Route::prefix('accounting')->group(function () {
+        Route::get('accounts', [AccountController::class, 'index'])->name('accounts.index')->middleware('can:accounting.view');
+        Route::middleware('can:accounting.manage')->group(function () {
+            Route::resource('accounts', AccountController::class)->except(['index', 'show']);
+            Route::get('account-mapping', [AccountController::class, 'mapping'])->name('accounts.mapping');
+            Route::put('account-mapping', [AccountController::class, 'updateMapping'])->name('accounts.mapping.update');
+        });
+
+        Route::resource('journals', JournalController::class)->only(['index', 'create', 'store', 'show']);
+        Route::post('journals/{journal}/reverse', [JournalController::class, 'reverse'])->name('journals.reverse');
+        Route::post('journals-rebuild', [JournalController::class, 'rebuild'])->name('journals.rebuild');
+
+        Route::controller(PeriodController::class)->prefix('periods')->name('periods.')->middleware('can:accounting.close')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('close', 'close')->name('close');
+            Route::post('reopen', 'reopen')->name('reopen');
+        });
+
+        Route::controller(FinancialReportController::class)->prefix('reports')->name('reports.')->middleware('can:accounting.view')->group(function () {
+            Route::get('general-ledger', 'ledger')->name('ledger');
+            Route::get('trial-balance', 'trialBalance')->name('trial-balance');
+            Route::get('profit-loss', 'profitLoss')->name('profit-loss');
+            Route::get('balance-sheet', 'balanceSheet')->name('balance-sheet');
+        });
     });
 
     // Persediaan
