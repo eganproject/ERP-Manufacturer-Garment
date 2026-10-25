@@ -11,6 +11,7 @@ use App\Models\PurchaseOrder;
 use App\Models\SubcontractOrder;
 use App\Models\SubcontractReceipt;
 use App\Models\Supplier;
+use App\Services\Accounting\AutoJournal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +22,8 @@ use Illuminate\Validation\ValidationException;
  */
 class BillService
 {
+    public function __construct(private AutoJournal $journal) {}
+
     /**
      * @param  array<int, array{quantity?: float|string|null, price?: float|string|null}>  $lines  purchase_order_item_id => qty & harga
      * @param  array{bill_date: string, due_date?: string|null, supplier_invoice_number?: string|null, discount?: float|string|null, tax_rate?: float|string|null, notes?: string|null}  $data
@@ -170,6 +173,7 @@ class BillService
             'created_by' => auth()->id(),
         ]);
         $bill->items()->createMany($rows);
+        $this->journal->bill($bill);
 
         return $bill;
     }
@@ -193,6 +197,7 @@ class BillService
             SubcontractReceipt::where('bill_id', $bill->id)->update(['bill_id' => null]);
 
             $bill->update(['status' => InvoiceStatus::Cancelled]);
+            $this->journal->reverse($bill, 'tagihan dibatalkan'.($reason ? " – {$reason}" : ''));
 
             ActivityLog::record('cancelled', 'Membatalkan tagihan'.($reason ? ": {$reason}" : ''), $bill);
             ActivityLog::record('bill_cancelled', "Tagihan {$bill->number} dibatalkan", $bill->source());

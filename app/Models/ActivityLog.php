@@ -54,6 +54,8 @@ class ActivityLog extends Model
             'purchase_return' => 'Retur Pembelian',
             'production_order' => 'SPK',
             'subcontract_order' => 'Order Maklon',
+            'journal_entry' => 'Jurnal',
+            'accounting_period' => 'Periode Akuntansi',
             'user' => 'Pengguna',
             default => $this->subject_type,
         };
@@ -65,6 +67,7 @@ class ActivityLog extends Model
 
         return match (true) {
             $subject instanceof PurchaseOrder => route('purchase-orders.show', $subject),
+            $subject instanceof JournalEntry => route('journals.show', $subject),
             $subject instanceof GoodsReceipt => route('purchase-orders.show', $subject->purchase_order_id),
             $subject instanceof SalesOrder => route('sales-orders.show', $subject),
             $subject instanceof Delivery => route('sales-orders.show', $subject->sales_order_id),

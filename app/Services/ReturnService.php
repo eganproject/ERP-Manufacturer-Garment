@@ -15,6 +15,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseReturn;
 use App\Models\SalesOrder;
 use App\Models\SalesReturn;
+use App\Services\Accounting\AutoJournal;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +33,7 @@ use Illuminate\Validation\ValidationException;
  */
 class ReturnService
 {
-    public function __construct(private StockService $stock) {}
+    public function __construct(private StockService $stock, private AutoJournal $journal) {}
 
     /**
      * @param  array<int, float|string|null>  $quantities  sales_order_item_id => qty diretur
@@ -106,6 +107,7 @@ class ReturnService
 
             $taxRate = (float) ($order->invoices()->where('status', '!=', InvoiceStatus::Cancelled)->latest('invoice_date')->latest('id')->value('tax_rate') ?? 0);
             $this->finalizeNote($return, $taxRate);
+            $this->journal->salesReturn($return);
 
             $this->autoApply($return, $order->invoices()->open()->orderBy('invoice_date')->orderBy('id')->get(), $date);
 
@@ -193,6 +195,7 @@ class ReturnService
             }
 
             $this->finalizeNote($return, $taxRate ?? 0);
+            $this->journal->purchaseReturn($return);
 
             $this->autoApply($return, $po->bills()->open()->orderBy('bill_date')->orderBy('id')->get(), $date);
 
@@ -258,6 +261,8 @@ class ReturnService
                 'refund_reference' => $data['refund_reference'] ?? null,
             ]);
 
+            $this->journal->returnRefund($return, $amount, Carbon::parse($data['refund_date']), $data['refund_method']);
+
             $verb = $return instanceof SalesReturn ? 'Mengembalikan dana ke pelanggan' : 'Menerima pengembalian dana dari supplier';
             ActivityLog::record('refunded', "{$verb} ".rupiah($amount), $return);
         });
@@ -292,6 +297,8 @@ class ReturnService
                         unitCost: (float) $line->unit_cost > 0 ? (float) $line->unit_cost : null);
                 }
             }
+
+            $this->journal->reverse($return, "retur dibatalkan – {$reason}");
 
             $documents = $return->applications()->with('payable')->get()->pluck('payable');
             $return->applications()->delete();
@@ -363,7 +370,7 @@ class ReturnService
 
     private function applyTo(SalesReturn|PurchaseReturn $return, Model $doc, float $amount, Carbon $date): void
     {
-        $return->applications()->create([
+        $application = $return->applications()->create([
             'payable_type' => $doc->getMorphClass(),
             'payable_id' => $doc->id,
             'applied_date' => $date,
@@ -372,6 +379,7 @@ class ReturnService
         ]);
         $return->refreshAppliedAmount();
         $doc->refreshPaymentStatus();
+        $this->journal->creditApplication($return, $application);
 
         $label = $return instanceof SalesReturn ? 'Nota kredit' : 'Nota debit';
         ActivityLog::record('credited', "{$label} retur {$return->number} sebesar ".rupiah($amount), $doc);

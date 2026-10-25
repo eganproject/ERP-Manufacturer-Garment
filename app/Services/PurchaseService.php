@@ -8,13 +8,14 @@ use App\Models\ActivityLog;
 use App\Models\GoodsReceipt;
 use App\Models\PurchaseOrder;
 use App\Models\User;
+use App\Services\Accounting\AutoJournal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class PurchaseService
 {
-    public function __construct(private StockService $stock) {}
+    public function __construct(private StockService $stock, private AutoJournal $journal) {}
 
     /**
      * Kunci PO draft. PO di bawah batas nilai langsung berstatus Dipesan; di atas batas
@@ -151,6 +152,7 @@ class PurchaseService
             }
 
             $po->refreshReceiptStatus();
+            $this->journal->goodsReceipt($receipt);
 
             ActivityLog::record('received', "Menerima barang {$receipt->number}", $po);
 

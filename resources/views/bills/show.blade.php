@@ -18,4 +18,6 @@
     @else
         @include('invoices.partials.document', ['doc' => $bill, 'party' => $bill->supplier, 'source' => $bill->purchaseOrder, 'sourceRoute' => 'purchase-orders.show', 'sourceLabel' => 'Purchase Order', 'sourceCan' => 'purchase.view'])
     @endif
+
+    <x-journal-entries :sources="$bill" class="mt-6" />
 </x-layouts.app>

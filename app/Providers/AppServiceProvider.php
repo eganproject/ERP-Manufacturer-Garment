@@ -3,10 +3,13 @@
 namespace App\Providers;
 
 use App\Enums\Role;
+use App\Models\AccountingPeriod;
 use App\Models\Bill;
+use App\Models\Customer;
 use App\Models\Delivery;
 use App\Models\GoodsReceipt;
 use App\Models\Invoice;
+use App\Models\JournalEntry;
 use App\Models\Material;
 use App\Models\Payment;
 use App\Models\ProductionOrder;
@@ -15,10 +18,13 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseReturn;
 use App\Models\SalesOrder;
 use App\Models\SalesReturn;
+use App\Models\StockMovement;
 use App\Models\SubcontractOrder;
 use App\Models\SubcontractReceipt;
 use App\Models\SubcontractTransfer;
+use App\Models\Supplier;
 use App\Models\User;
+use App\Support\LedgerAccounts;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
@@ -28,7 +34,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Cache pemetaan akun per request
+        $this->app->scoped(LedgerAccounts::class);
     }
 
     public function boot(): void
@@ -52,6 +59,11 @@ class AppServiceProvider extends ServiceProvider
             'subcontract_receipt' => SubcontractReceipt::class,
             'sales_return' => SalesReturn::class,
             'purchase_return' => PurchaseReturn::class,
+            'stock_movement' => StockMovement::class,
+            'customer' => Customer::class,
+            'supplier' => Supplier::class,
+            'journal_entry' => JournalEntry::class,
+            'accounting_period' => AccountingPeriod::class,
             'user' => User::class,
         ]);
 

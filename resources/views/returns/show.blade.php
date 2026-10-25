@@ -143,6 +143,7 @@
             @endcan
         @endif
 
+        <x-journal-entries :sources="$return" class="lg:col-span-3" />
         <x-activity-log :activities="$return->activities" class="lg:col-span-3" />
     </div>
 </x-layouts.app>

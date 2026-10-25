@@ -13,12 +13,13 @@ use App\Models\Bom;
 use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\ProductionStage as Stage;
+use App\Services\Accounting\AutoJournal;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ProductionService
 {
-    public function __construct(private StockService $stock) {}
+    public function __construct(private StockService $stock, private AutoJournal $journal) {}
 
     /**
      * Simpan rincian varian + hitung ulang kebutuhan bahan dari BOM.
@@ -93,6 +94,7 @@ class ProductionService
                 ]);
             }
 
+            $this->journal->productionIssue($order);
             $this->addStandardCosts($order);
 
             $order->update([
@@ -206,6 +208,8 @@ class ProductionService
                 }
             }
 
+            $this->journal->productionComplete($order);
+
             ActivityLog::record('completed', 'Menyelesaikan produksi, hasil '.qty($total).' pcs masuk stok, HPP '.rupiah($unitCost).'/pcs', $order);
         });
     }
@@ -230,6 +234,8 @@ class ProductionService
                 'created_by' => auth()->id(),
             ]);
 
+            $this->journal->productionCost($cost);
+
             ActivityLog::record('cost', "Mencatat biaya {$cost->type->label()}: {$cost->description} ".rupiah($cost->amount), $order);
 
             return $cost;
@@ -249,6 +255,7 @@ class ProductionService
         }
 
         DB::transaction(function () use ($cost, $order) {
+            $this->journal->reverse($order, 'biaya dihapus', AutoJournal::costEvent($cost));
             $cost->delete();
             ActivityLog::record('cost', "Menghapus biaya {$cost->type->label()}: {$cost->description} ".rupiah($cost->amount), $order);
         });
@@ -272,13 +279,14 @@ class ProductionService
 
         foreach ($standards as [$type, $label, $rate]) {
             if ($rate > 0) {
-                $order->costs()->create([
+                $cost = $order->costs()->create([
                     'type' => $type,
                     'description' => $label.' ('.qty($qty).' pcs × '.rupiah($rate).')',
                     'amount' => round($rate * $qty, 2),
                     'date' => now()->toDateString(),
                     'created_by' => auth()->id(),
                 ]);
+                $this->journal->productionCost($cost);
             }
         }
     }

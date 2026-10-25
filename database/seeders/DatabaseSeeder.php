@@ -3,8 +3,10 @@
 namespace Database\Seeders;
 
 use App\Enums\Role;
+use App\Models\AccountingPeriod;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\Accounting\LedgerRebuilder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -41,5 +43,10 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call(MasterDataSeeder::class);
+
+        // Jurnal saldo awal persediaan dari stok contoh
+        if (! AccountingPeriod::whereNotNull('closed_at')->exists()) {
+            app(LedgerRebuilder::class)->rebuild();
+        }
     }
 }
