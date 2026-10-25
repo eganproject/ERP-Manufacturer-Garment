@@ -183,6 +183,7 @@ class PayrollService
                 'status' => PayrollStatus::Paid,
                 'payment_date' => $date,
                 'payment_method' => PaymentMethod::from($data['payment_method']),
+                'cash_account_id' => $data['cash_account_id'] ?? null,
                 'paid_by' => auth()->id(),
             ]);
             $this->journal->payrollPayment($payroll);
@@ -227,6 +228,7 @@ class PayrollService
                 'date' => $date,
                 'amount' => $amount,
                 'payment_method' => PaymentMethod::from($data['payment_method']),
+                'cash_account_id' => $data['cash_account_id'] ?? null,
                 'status' => ReturnStatus::Posted,
                 'notes' => $data['notes'] ?? null,
                 'created_by' => auth()->id(),

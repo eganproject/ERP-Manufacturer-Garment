@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Payroll;
 
 use App\Enums\PaymentMethod;
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\Employee;
 use App\Models\EmployeeAdvance;
 use App\Services\PayrollService;
@@ -24,6 +25,7 @@ class EmployeeAdvanceController extends Controller
             'amount' => ['required', 'numeric', 'gt:0'],
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
             'notes' => ['nullable', 'string', 'max:255'],
+            'cash_account_id' => ['nullable', Account::cashRule()],
         ], [], ['amount' => 'jumlah kasbon', 'payment_method' => 'cara bayar']);
 
         $advance = $this->service->recordAdvance($data + ['employee_id' => $employee->id]);

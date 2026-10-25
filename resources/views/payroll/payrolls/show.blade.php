@@ -46,6 +46,7 @@
                 @csrf
                 <div class="w-44"><x-form.input name="payment_date" label="Tanggal Bayar" :value="now()->toDateString()" required data-date /></div>
                 <div class="w-48"><x-form.select name="payment_method" label="Cara Bayar" :options="$methods" value="cash" :placeholder="false" required /></div>
+                <div class="w-64"><x-form.cash-account label="Dari Rekening" /></div>
                 <button type="submit" class="btn-success">Tandai Dibayar</button>
             </form>
         </x-card>

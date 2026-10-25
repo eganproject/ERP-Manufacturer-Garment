@@ -83,6 +83,9 @@ class JournalEntry extends Model
             $source instanceof ProductionOrder => route('production-orders.show', $source),
             $source instanceof SubcontractOrder => route('subcontract-orders.show', $source),
             $source instanceof SubcontractTransfer => route('subcontract-orders.show', $source->subcontract_order_id),
+            $source instanceof CashTransaction => route('cash-transactions.show', $source),
+            $source instanceof EmployeeAdvance => route('employees.show', $source->employee_id),
+            $source instanceof Payroll => route('payrolls.show', $source),
             $source instanceof StockMovement => $source->stockable_type === 'material'
                 ? route('stock.materials.card', $source->stockable_id)
                 : route('stock.products.card', $source->stockable_id),
@@ -108,6 +111,9 @@ class JournalEntry extends Model
             'subcontract_order' => 'Order Maklon',
             'subcontract_transfer' => 'Bahan Maklon',
             'stock_movement' => 'Penyesuaian Stok',
+            'cash_transaction' => 'Bukti Kas & Bank',
+            'employee_advance' => 'Kasbon Karyawan',
+            'payroll' => 'Penggajian Borongan',
             default => $this->source_type,
         };
     }

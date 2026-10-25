@@ -2,12 +2,14 @@
 
 namespace App\Services\Accounting;
 
+use App\Enums\CashTransactionType;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
 use App\Enums\ProductionCostType;
 use App\Enums\StockMovementType;
 use App\Enums\SubcontractTransferType;
 use App\Models\Bill;
+use App\Models\CashTransaction;
 use App\Models\CreditApplication;
 use App\Models\Delivery;
 use App\Models\EmployeeAdvance;
@@ -50,6 +52,8 @@ use Illuminate\Support\Carbon;
  * - Kasbon karyawan    : Dr Piutang karyawan         / Cr Kas/Bank
  * - Bayar upah borongan: Dr Hutang upah + bonus/tunjangan / Cr Kas/Bank + Piutang karyawan (potong kasbon) + pendapatan lain (potongan lain)
  * - Penyesuaian stok   : Persediaan ↔ Selisih persediaan (penyesuaian pertama = saldo awal → Ekuitas saldo awal)
+ * - Kas masuk / keluar : Dr Kas/Bank / Cr akun lawan (pendapatan, pinjaman, modal, ...) dan sebaliknya
+ * - Transfer rekening  : Dr rekening tujuan / Cr rekening asal
  */
 class AutoJournal
 {
@@ -111,7 +115,7 @@ class AutoJournal
     public function payment(Payment $payment): ?JournalEntry
     {
         $party = $payment->party();
-        $cash = $this->cashAccount($payment->method);
+        $cash = $this->cashAccount($payment->method, $payment->cash_account_id);
         $amount = (float) $payment->amount;
 
         $lines = $payment->type === PaymentType::Receipt
@@ -167,9 +171,9 @@ class AutoJournal
     }
 
     /** Pengembalian sisa nota sebagai uang. */
-    public function returnRefund(SalesReturn|PurchaseReturn $return, float $amount, \DateTimeInterface $date, PaymentMethod|string|null $method): ?JournalEntry
+    public function returnRefund(SalesReturn|PurchaseReturn $return, float $amount, \DateTimeInterface $date, PaymentMethod|string|null $method, ?int $cashAccountId = null): ?JournalEntry
     {
-        $cash = $this->cashAccount($method);
+        $cash = $this->cashAccount($method, $cashAccountId);
 
         $lines = $return instanceof SalesReturn
             ? [['account' => 'customer_credit', 'amount' => $amount, 'reference' => $return->customer], ['account' => $cash, 'amount' => -$amount]]
@@ -294,7 +298,7 @@ class AutoJournal
 
         return $this->post($advance, $advance->date, "Kasbon {$advance->number} – {$advance->employee->name}".($advance->notes ? " ({$advance->notes})" : ''), [
             ['account' => 'employee_advance', 'amount' => (float) $advance->amount, 'reference' => $advance->employee],
-            ['account' => $this->cashAccount($advance->payment_method), 'amount' => -(float) $advance->amount],
+            ['account' => $this->cashAccount($advance->payment_method, $advance->cash_account_id), 'amount' => -(float) $advance->amount],
         ]);
     }
 
@@ -306,7 +310,7 @@ class AutoJournal
         $lines = [
             ['account' => 'wages_payable', 'amount' => (float) $payroll->total_gross],
             ['account' => 'wage_allowance', 'amount' => (float) $payroll->total_allowance],
-            ['account' => $this->cashAccount($payroll->payment_method), 'amount' => -(float) $payroll->total_net],
+            ['account' => $this->cashAccount($payroll->payment_method, $payroll->cash_account_id), 'amount' => -(float) $payroll->total_net],
             ['account' => 'payroll_other_income', 'amount' => -round((float) $payroll->lines->sum('other_deduction'), 2)],
         ];
 
@@ -317,14 +321,44 @@ class AutoJournal
         return $this->post($payroll, $payroll->payment_date ?? today(), "Pembayaran upah borongan {$payroll->number} periode {$payroll->periodLabel()}", $lines, 'paid');
     }
 
+    /** Bukti kas masuk, kas keluar, atau transfer antar rekening. */
+    public function cashTransaction(CashTransaction $transaction): ?JournalEntry
+    {
+        $transaction->loadMissing('lines', 'cashAccount', 'toAccount');
+        $amount = (float) $transaction->amount;
+
+        if ($transaction->type === CashTransactionType::Transfer) {
+            return $this->post($transaction, $transaction->date, "Transfer {$transaction->cashAccount->name} ke {$transaction->toAccount->name}: {$transaction->description}", [
+                ['account' => $transaction->to_account_id, 'amount' => $amount],
+                ['account' => $transaction->cash_account_id, 'amount' => -$amount],
+            ]);
+        }
+
+        $sign = $transaction->type === CashTransactionType::In ? 1 : -1;
+        $lines = [['account' => $transaction->cash_account_id, 'amount' => $sign * $amount]];
+
+        foreach ($transaction->lines as $line) {
+            $lines[] = ['account' => $line->account_id, 'amount' => -$sign * (float) $line->amount, 'description' => $line->description];
+        }
+
+        $party = $transaction->party_name ? ($sign > 0 ? " dari {$transaction->party_name}" : " ke {$transaction->party_name}") : '';
+
+        return $this->post($transaction, $transaction->date, "{$transaction->type->label()}{$party}: {$transaction->description}", $lines);
+    }
+
     /** Batalkan semua jurnal dokumen (invoice/tagihan/pembayaran/retur dibatalkan). */
     public function reverse(Model $source, ?string $reason = null, ?string $event = null): void
     {
         $this->journals->reverseSource($source, $event, today(), $reason);
     }
 
-    private function cashAccount(PaymentMethod|string|null $method): string
+    /** Rekening kas/bank yang dipilih di transaksi; bila kosong akun default menurut metode bayar. */
+    private function cashAccount(PaymentMethod|string|null $method, ?int $accountId = null): string|int
     {
+        if ($accountId) {
+            return $accountId;
+        }
+
         $method = is_string($method) ? PaymentMethod::tryFrom($method) : $method;
 
         return $method === PaymentMethod::Cash ? 'cash' : 'bank';

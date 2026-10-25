@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
+use App\Models\Account;
 use App\Models\Bill;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -82,6 +83,7 @@ class PaymentController extends Controller
             'payment_date' => ['required', 'date'],
             'method' => ['required', Rule::enum(PaymentMethod::class)],
             'reference' => ['nullable', 'string', 'max:100'],
+            'cash_account_id' => ['nullable', Account::cashRule()],
             'notes' => ['nullable', 'string'],
             'allocations' => ['required', 'array'],
             'allocations.*' => ['nullable', 'numeric', 'min:0'],

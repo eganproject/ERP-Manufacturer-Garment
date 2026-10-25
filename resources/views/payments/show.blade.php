@@ -24,7 +24,7 @@
                 <div><dt class="text-gray-500">Status</dt><dd><x-status-badge :status="$payment->status" /></dd></div>
                 <div><dt class="text-gray-500">{{ $payment->type->partyLabel() }}</dt><dd class="font-medium">{{ $party?->name }}</dd></div>
                 <div><dt class="text-gray-500">Tanggal</dt><dd>{{ tanggal($payment->payment_date) }}</dd></div>
-                <div><dt class="text-gray-500">Metode</dt><dd>{{ $payment->method->label() }}</dd></div>
+                <div><dt class="text-gray-500">Metode</dt><dd>{{ $payment->method->label() }}@if ($payment->cashAccount) <span class="text-gray-500">· {{ $payment->cashAccount->name }}</span>@endif</dd></div>
                 <div><dt class="text-gray-500">No. Referensi</dt><dd>{{ $payment->reference ?: '-' }}</dd></div>
                 <div><dt class="text-gray-500">Jumlah</dt><dd class="text-lg font-semibold">{{ rupiah($payment->amount) }}</dd></div>
                 <div><dt class="text-gray-500">Dicatat oleh</dt><dd>{{ $payment->creator?->name ?? '-' }}</dd></div>

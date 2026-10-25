@@ -66,6 +66,7 @@ class PaymentService
                 $partyColumn => $partyId,
                 'payment_date' => $date,
                 'method' => $data['method'],
+                'cash_account_id' => $data['cash_account_id'] ?? null,
                 'reference' => $data['reference'] ?? null,
                 'amount' => array_sum($allocations),
                 'status' => PaymentStatus::Posted,
