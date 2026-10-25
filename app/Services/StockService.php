@@ -14,6 +14,9 @@ class StockService
     /**
      * Catat mutasi stok dan perbarui saldo. Quantity positif = masuk, negatif = keluar.
      * Harus dipanggil di dalam DB::transaction.
+     *
+     * $unitCost pada barang masuk memperbarui harga pokok rata-rata tertimbang (moving average).
+     * Barang keluar dicatat dengan harga pokok rata-rata saat itu.
      */
     public function move(
         Material|ProductVariant $item,
@@ -24,6 +27,7 @@ class StockService
         ?string $notes = null,
         ?\DateTimeInterface $date = null,
         bool $allowNegative = false,
+        ?float $unitCost = null,
     ): StockMovement {
         /** @var Material|ProductVariant $locked */
         $locked = $item->newQuery()->lockForUpdate()->findOrFail($item->getKey());
@@ -37,14 +41,29 @@ class StockService
             ]);
         }
 
-        $locked->forceFill(['stock' => $newBalance])->save();
-        $item->setAttribute('stock', $newBalance);
+        $currentCost = $locked instanceof Material ? $locked->costPrice() : (float) $locked->average_cost;
+        $attributes = ['stock' => $newBalance];
+
+        if ($quantity > 0 && $unitCost !== null) {
+            $previousQty = max(0, (float) $locked->stock);
+            $averageCost = $previousQty > 0 && $currentCost > 0
+                ? ($previousQty * $currentCost + $quantity * $unitCost) / ($previousQty + $quantity)
+                : $unitCost;
+            $attributes['average_cost'] = round($averageCost, $locked instanceof Material ? 4 : 2);
+        }
+
+        $locked->forceFill($attributes)->save();
+
+        foreach ($attributes as $key => $value) {
+            $item->setAttribute($key, $value);
+        }
 
         return $locked->stockMovements()->create([
             'date' => ($date ?? now())->format('Y-m-d'),
             'type' => $type,
             'quantity' => $quantity,
             'balance' => $newBalance,
+            'unit_cost' => $quantity > 0 && $unitCost !== null ? $unitCost : $currentCost,
             'reference_type' => $reference?->getMorphClass(),
             'reference_id' => $reference?->getKey(),
             'reference_number' => $referenceNumber,

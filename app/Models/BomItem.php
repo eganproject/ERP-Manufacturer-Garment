@@ -23,8 +23,14 @@ class BomItem extends Model
         return $this->belongsTo(Material::class);
     }
 
+    /** Kebutuhan per 1 pcs termasuk waste. */
+    public function factor(): float
+    {
+        return (float) $this->quantity * (1 + (float) $this->waste_percent / 100);
+    }
+
     public function requiredFor(float $quantity): float
     {
-        return round((float) $this->quantity * $quantity * (1 + (float) $this->waste_percent / 100), 2);
+        return round($this->factor() * $quantity, 2);
     }
 }

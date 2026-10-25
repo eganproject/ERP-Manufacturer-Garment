@@ -57,14 +57,21 @@ class MasterDataSeeder extends Seeder
                 $material = Material::firstOrCreate(['code' => $row['code']], $row);
 
                 if ($material->wasRecentlyCreated && $initial > 0) {
-                    $stock->move($material, $initial, StockMovementType::Adjustment, notes: 'Saldo awal');
+                    $stock->move($material, $initial, StockMovementType::Adjustment, notes: 'Saldo awal', unitCost: (float) $material->price);
                 }
 
                 return [$row['code'] => $material];
             });
 
-            Supplier::firstOrCreate(['code' => 'SUP-001'], ['name' => 'PT Tekstil Nusantara', 'contact_person' => 'Budi', 'phone' => '0812-3456-7890', 'address' => 'Bandung, Jawa Barat']);
-            Supplier::firstOrCreate(['code' => 'SUP-002'], ['name' => 'CV Aksesoris Garmen Jaya', 'contact_person' => 'Sari', 'phone' => '0813-2222-3333', 'address' => 'Jakarta Pusat']);
+            $textile = Supplier::firstOrCreate(['code' => 'SUP-001'], ['name' => 'PT Tekstil Nusantara', 'contact_person' => 'Budi', 'phone' => '0812-3456-7890', 'address' => 'Bandung, Jawa Barat']);
+            $accessories = Supplier::firstOrCreate(['code' => 'SUP-002'], ['name' => 'CV Aksesoris Garmen Jaya', 'contact_person' => 'Sari', 'phone' => '0813-2222-3333', 'address' => 'Jakarta Pusat']);
+
+            // Supplier utama untuk saran PO dari MRP
+            foreach ($materials as $material) {
+                if (! $material->default_supplier_id) {
+                    $material->update(['default_supplier_id' => in_array($material->category_id, [$kain->id, $benang->id], true) ? $textile->id : $accessories->id]);
+                }
+            }
             Customer::firstOrCreate(['code' => 'CUS-001'], ['name' => 'Toko Busana Sejahtera', 'contact_person' => 'Andi', 'phone' => '0857-1111-2222', 'address' => 'Surabaya']);
             Customer::firstOrCreate(['code' => 'CUS-002'], ['name' => 'PT Seragam Mandiri', 'contact_person' => 'Rina', 'phone' => '0821-4444-5555', 'address' => 'Semarang']);
 
@@ -85,7 +92,7 @@ class MasterDataSeeder extends Seeder
             }
 
             if (! $tshirt->boms()->exists()) {
-                $bom = Bom::create(['product_id' => $tshirt->id, 'name' => 'BOM Kaos Basic v1', 'is_active' => true]);
+                $bom = Bom::create(['product_id' => $tshirt->id, 'name' => 'BOM Kaos Basic v1', 'is_active' => true, 'labor_cost' => 6000, 'overhead_cost' => 2500]);
                 $bom->items()->createMany([
                     ['material_id' => $materials['KN-CMB30-HTM']->id, 'quantity' => 0.22, 'waste_percent' => 8, 'notes' => 'Badan + lengan'],
                     ['material_id' => $materials['RIB-HTM']->id, 'quantity' => 0.015, 'waste_percent' => 5],
@@ -96,7 +103,7 @@ class MasterDataSeeder extends Seeder
             }
 
             if (! $shirt->boms()->exists()) {
-                $bom = Bom::create(['product_id' => $shirt->id, 'name' => 'BOM Kemeja Oxford v1', 'is_active' => true]);
+                $bom = Bom::create(['product_id' => $shirt->id, 'name' => 'BOM Kemeja Oxford v1', 'is_active' => true, 'labor_cost' => 15000, 'overhead_cost' => 4000]);
                 $bom->items()->createMany([
                     ['material_id' => $materials['KN-OXF-BRU']->id, 'quantity' => 1.6, 'waste_percent' => 10, 'notes' => 'Badan, lengan, kerah'],
                     ['material_id' => $materials['BNG-POL-PTH']->id, 'quantity' => 0.03, 'waste_percent' => 0],

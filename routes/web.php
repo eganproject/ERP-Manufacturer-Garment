@@ -5,6 +5,7 @@ use App\Http\Controllers\AgingController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BillController;
 use App\Http\Controllers\BomController;
+use App\Http\Controllers\CostingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\Master\CategoryController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Master\MaterialController;
 use App\Http\Controllers\Master\ProductController;
 use App\Http\Controllers\Master\SupplierController;
 use App\Http\Controllers\Master\UnitController;
+use App\Http\Controllers\MrpController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProfileController;
@@ -81,7 +83,14 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('complete', 'complete')->name('complete');
         Route::post('cancel', 'cancel')->name('cancel');
         Route::get('pdf', 'pdf')->name('pdf');
+        Route::post('costs', 'storeCost')->name('costs.store');
+        Route::delete('costs/{cost}', 'destroyCost')->name('costs.destroy');
     });
+
+    // Perencanaan & biaya produksi
+    Route::get('planning/mrp', [MrpController::class, 'index'])->name('mrp.index');
+    Route::post('planning/mrp/purchase-orders', [MrpController::class, 'store'])->name('mrp.purchase-orders');
+    Route::get('reports/production-costing', CostingController::class)->name('reports.costing')->middleware('can:costing.view');
 
     // Keuangan: piutang (invoice & penerimaan) dan hutang (tagihan & pembayaran supplier)
     Route::resource('invoices', InvoiceController::class)->only(['index', 'create', 'store', 'show']);

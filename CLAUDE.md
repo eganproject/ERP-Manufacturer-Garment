@@ -2,6 +2,7 @@
 
 - Laravel 13 + Blade + Tailwind 4 + Alpine. Bahasa UI: Indonesia (`APP_LOCALE=id`, pesan validasi di `lang/id/validation.php`).
 - Semua perubahan stok WAJIB lewat `App\Services\StockService::move()` di dalam `DB::transaction` (mencatat `stock_movements` dan saldo).
+- Barang masuk yang punya nilai (penerimaan PO, hasil produksi) kirim `unitCost:` ke `StockService::move()` agar harga pokok rata-rata (`average_cost`) ikut diperbarui; HPP SPK = bahan dikeluarkan + `production_costs`.
 - Logika bisnis transaksi ada di `app/Services` (Purchase/Sales/Production); controller hanya validasi + memanggil service.
 - Status dokumen memakai enum di `app/Enums` (label & warna badge ada di enum).
 - Nomor dokumen: `App\Services\DocumentNumber::generate()`.

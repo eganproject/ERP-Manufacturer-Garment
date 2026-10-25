@@ -9,12 +9,17 @@
                 <x-form.select name="category_id" label="Kategori" :options="$categories->pluck('name', 'id')" :value="$material->category_id" data-select />
                 <x-form.select name="unit_id" label="Satuan" :options="$units->mapWithKeys(fn ($u) => [$u->id => $u->code.' - '.$u->name])" :value="$material->unit_id" required data-select />
                 <x-form.input name="color" label="Warna" :value="$material->color" placeholder="mis. Hitam" />
+                <x-form.select name="default_supplier_id" label="Supplier Utama" :options="$suppliers" :value="$material->default_supplier_id" placeholder="-- Tidak ada --" data-select help="Dipakai sebagai supplier default saat MRP membuat PO draft." />
                 <x-form.input name="price" label="Harga Beli Standar (Rp)" :value="$material->price" data-money inputmode="numeric" />
                 <x-form.input name="min_stock" label="Stok Minimum" :value="$material->min_stock" data-money="2" inputmode="decimal" help="Peringatan muncul saat stok di bawah angka ini." />
                 @if ($material->exists)
                     <div>
                         <span class="form-label">Stok Saat Ini</span>
                         <p class="py-2 text-sm font-semibold">{{ qty($material->stock) }} {{ $material->unit?->code }} <span class="font-normal text-gray-500">(ubah lewat Penyesuaian Stok)</span></p>
+                    </div>
+                    <div>
+                        <span class="form-label">Harga Pokok Rata-rata</span>
+                        <p class="py-2 text-sm font-semibold">{{ rupiah($material->costPrice()) }} <span class="font-normal text-gray-500">/ {{ $material->unit?->code }} (otomatis dari penerimaan PO)</span></p>
                     </div>
                 @endif
                 <x-form.textarea name="notes" label="Catatan" :value="$material->notes" class="sm:col-span-2" />

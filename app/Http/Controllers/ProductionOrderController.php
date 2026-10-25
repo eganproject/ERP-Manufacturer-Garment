@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProductionCostType;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\SalesOrderStatus;
 use App\Enums\StageStatus;
 use App\Models\ActivityLog;
 use App\Models\Bom;
 use App\Models\Product;
+use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\ProductionStage;
 use App\Models\SalesOrder;
@@ -79,11 +81,12 @@ class ProductionOrderController extends Controller implements HasMiddleware
 
     public function show(ProductionOrder $productionOrder)
     {
-        $productionOrder->load(['product.unit', 'bom', 'salesOrder.customer', 'items.variant', 'materials.material.unit', 'stages', 'creator', 'activities.user']);
+        $productionOrder->load(['product.unit', 'bom.items.material', 'salesOrder.customer', 'items.variant', 'materials.material.unit', 'stages', 'costs', 'creator', 'activities.user']);
 
         return view('production-orders.show', [
             'order' => $productionOrder,
             'stageStatuses' => StageStatus::cases(),
+            'costTypes' => ProductionCostType::options(),
         ]);
     }
 
@@ -153,6 +156,28 @@ class ProductionOrderController extends Controller implements HasMiddleware
         $this->service->complete($productionOrder, $data['finished'], (float) ($data['reject_quantity'] ?? 0));
 
         return back()->with('success', 'Produksi selesai, barang jadi masuk ke stok.');
+    }
+
+    public function storeCost(Request $request, ProductionOrder $productionOrder)
+    {
+        $data = $request->validate([
+            'type' => ['required', Rule::enum(ProductionCostType::class)],
+            'description' => ['required', 'string', 'max:255'],
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'date' => ['required', 'date'],
+        ]);
+
+        $this->service->addCost($productionOrder, $data);
+
+        return back()->with('success', 'Biaya produksi dicatat.');
+    }
+
+    public function destroyCost(ProductionOrder $productionOrder, ProductionCost $cost)
+    {
+        abort_unless($cost->production_order_id === $productionOrder->id, 404);
+        $this->service->removeCost($cost);
+
+        return back()->with('success', 'Biaya produksi dihapus.');
     }
 
     public function cancel(ProductionOrder $productionOrder)

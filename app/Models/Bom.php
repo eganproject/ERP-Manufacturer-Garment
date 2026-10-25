@@ -8,7 +8,11 @@ class Bom extends Model
 {
     protected $guarded = ['id'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = [
+        'is_active' => 'boolean',
+        'labor_cost' => 'decimal:2',
+        'overhead_cost' => 'decimal:2',
+    ];
 
     public function product()
     {
@@ -34,5 +38,19 @@ class Bom extends Model
         }
 
         return $result;
+    }
+
+    /** Biaya bahan standar per 1 pcs (termasuk waste) berdasarkan harga pokok bahan saat ini. */
+    public function standardMaterialCost(): float
+    {
+        $this->loadMissing('items.material');
+
+        return round($this->items->sum(fn (BomItem $item) => $item->factor() * $item->material->costPrice()), 2);
+    }
+
+    /** HPP standar per 1 pcs: bahan + upah/CMT + overhead. */
+    public function standardUnitCost(): float
+    {
+        return round($this->standardMaterialCost() + (float) $this->labor_cost + (float) $this->overhead_cost, 2);
     }
 }

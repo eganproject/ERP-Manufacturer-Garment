@@ -14,6 +14,7 @@ class StockMovement extends Model
         'type' => StockMovementType::class,
         'quantity' => 'decimal:2',
         'balance' => 'decimal:2',
+        'unit_cost' => 'decimal:4',
     ];
 
     public function stockable()

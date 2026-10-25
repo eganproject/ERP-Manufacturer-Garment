@@ -66,6 +66,7 @@ class PurchaseService
                 $this->stock->move(
                     $item->material, $qty, StockMovementType::PurchaseReceipt,
                     $receipt, $receipt->number, 'Penerimaan '.$po->number, $date,
+                    unitCost: (float) $item->price,
                 );
             }
 
