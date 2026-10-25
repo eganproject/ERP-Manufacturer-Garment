@@ -1,0 +1,97 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+
+@import 'tom-select/dist/css/tom-select.css';
+@import 'flatpickr/dist/flatpickr.min.css';
+@import 'sweetalert2/dist/sweetalert2.min.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../js/**/*.js';
+
+@theme {
+    --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+@layer components {
+    .form-control {
+        @apply block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100;
+    }
+
+    .form-label {
+        @apply mb-1 block text-sm font-medium text-gray-700;
+    }
+
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-success {
+        @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50;
+    }
+
+    .btn-primary {
+        @apply bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500;
+    }
+
+    .btn-secondary {
+        @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-indigo-500;
+    }
+
+    .btn-danger {
+        @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+    }
+
+    .btn-success {
+        @apply bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500;
+    }
+
+    .table-base {
+        @apply min-w-full divide-y divide-gray-200 text-sm;
+    }
+
+    .table-base thead th {
+        @apply bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase;
+    }
+
+    .table-base tbody td {
+        @apply px-4 py-3 align-top text-gray-700;
+    }
+
+    .table-base tbody tr {
+        @apply hover:bg-gray-50;
+    }
+}
+
+/* Selaraskan Tom Select dengan gaya input Tailwind */
+.ts-wrapper.single .ts-control,
+.ts-wrapper.multi .ts-control {
+    @apply min-h-[38px] rounded-lg border-gray-300 py-2 text-sm shadow-sm;
+}
+
+.ts-wrapper.focus .ts-control {
+    @apply border-indigo-500 ring-1 ring-indigo-500;
+}
+
+.ts-dropdown {
+    @apply rounded-lg text-sm shadow-lg;
+}
+
+.ts-dropdown .active {
+    @apply bg-indigo-50 text-indigo-700;
+}
+
+.is-invalid,
+.is-invalid + .ts-wrapper .ts-control {
+    @apply border-red-500;
+}
+
+/* Tom Select menyalin class dari <select>, jadi netralkan gaya input di wrapper-nya */
+.ts-wrapper.form-control {
+    @apply border-0 p-0 shadow-none;
+}
