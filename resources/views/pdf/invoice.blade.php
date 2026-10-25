@@ -62,7 +62,10 @@
                 <tr><td colspan="6" class="r">PPN {{ qty($invoice->tax_rate) }}%</td><td class="r">{{ rupiah($invoice->tax_amount) }}</td></tr>
             @endif
             <tr><td colspan="6" class="r">TOTAL TAGIHAN</td><td class="r">{{ rupiah($invoice->total) }}</td></tr>
-            @if ((float) $invoice->paid_amount > 0)
+            @if ((float) $invoice->credited_amount > 0)
+                <tr><td colspan="6" class="r">Nota Kredit Retur</td><td class="r">- {{ rupiah($invoice->credited_amount) }}</td></tr>
+            @endif
+            @if ((float) $invoice->paid_amount > 0 || (float) $invoice->credited_amount > 0)
                 <tr><td colspan="6" class="r">Sudah Dibayar</td><td class="r">- {{ rupiah($invoice->paid_amount) }}</td></tr>
                 <tr><td colspan="6" class="r">SISA TAGIHAN</td><td class="r">{{ rupiah($invoice->outstanding()) }}</td></tr>
             @endif

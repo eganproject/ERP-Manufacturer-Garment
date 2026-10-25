@@ -26,6 +26,7 @@ class Invoice extends Model
         'tax_amount' => 'decimal:2',
         'total' => 'decimal:2',
         'paid_amount' => 'decimal:2',
+        'credited_amount' => 'decimal:2',
     ];
 
     public function customer()

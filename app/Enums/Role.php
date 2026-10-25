@@ -32,9 +32,11 @@ enum Role: string
             'purchase.manage' => 'Buat/ubah/pesan PO',
             'purchase.approve' => 'Setujui / tolak PO di atas batas nilai',
             'purchase.receive' => 'Terima barang dari supplier',
+            'purchase-returns.manage' => 'Catat & batalkan retur pembelian',
             'sales.view' => 'Lihat SO & surat jalan',
             'sales.manage' => 'Buat/ubah/konfirmasi SO',
             'sales.deliver' => 'Kirim barang (surat jalan)',
+            'sales-returns.manage' => 'Catat & batalkan retur penjualan',
             'production.view' => 'Lihat SPK produksi',
             'production.manage' => 'Buat & jalankan SPK produksi, catat biaya produksi',
             'subcontract.manage' => 'Buat order maklon, terima hasil & tutup order maklon',
@@ -81,11 +83,11 @@ enum Role: string
     {
         return match ($this) {
             self::Admin => 'Akses penuh, termasuk pengguna dan pengaturan.',
-            self::Purchasing => 'Membuat PO ke supplier (termasuk dari MRP) dan mengelola data supplier & bahan.',
-            self::Gudang => 'Menerima barang, mengirim barang (surat jalan), kirim/retur bahan maklon, dan stock opname.',
+            self::Purchasing => 'Membuat PO ke supplier (termasuk dari MRP), retur pembelian, dan mengelola data supplier & bahan.',
+            self::Gudang => 'Menerima barang, mengirim barang (surat jalan), retur penjualan & pembelian, kirim/retur bahan maklon, dan stock opname.',
             self::Produksi => 'Mengelola BOM, SPK produksi dari potong sampai packing, order maklon ke vendor, MRP, dan biaya produksi (HPP).',
-            self::Sales => 'Mengelola pelanggan dan sales order, memantau piutang.',
-            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, menyetujui PO bernilai besar, serta umur piutang/hutang dan laporan HPP & laba kotor.',
+            self::Sales => 'Mengelola pelanggan, sales order, dan retur penjualan, memantau piutang.',
+            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, nota kredit/debit retur, menyetujui PO bernilai besar, serta umur piutang/hutang dan laporan HPP & laba kotor.',
         };
     }
 
@@ -98,14 +100,14 @@ enum Role: string
             self::Admin => array_keys(self::abilities()),
             self::Purchasing => [
                 'master.basic', 'suppliers.manage', 'materials.manage',
-                'purchase.view', 'purchase.manage', 'purchase.receive',
+                'purchase.view', 'purchase.manage', 'purchase.receive', 'purchase-returns.manage',
                 'mrp.view',
                 'payables.view',
                 'stock.view',
             ],
             self::Gudang => [
-                'purchase.view', 'purchase.receive',
-                'sales.view', 'sales.deliver',
+                'purchase.view', 'purchase.receive', 'purchase-returns.manage',
+                'sales.view', 'sales.deliver', 'sales-returns.manage',
                 'production.view', 'subcontract.transfer',
                 'stock.view', 'stock.adjust',
             ],
@@ -119,14 +121,14 @@ enum Role: string
             ],
             self::Sales => [
                 'customers.manage', 'products.manage',
-                'sales.view', 'sales.manage',
+                'sales.view', 'sales.manage', 'sales-returns.manage',
                 'receivables.view',
                 'production.view',
                 'stock.view',
             ],
             self::Keuangan => [
                 'customers.manage', 'suppliers.manage',
-                'sales.view', 'purchase.view', 'purchase.approve',
+                'sales.view', 'purchase.view', 'purchase.approve', 'sales-returns.manage', 'purchase-returns.manage',
                 'receivables.view', 'receivables.manage',
                 'payables.view', 'payables.manage',
                 'costing.view',

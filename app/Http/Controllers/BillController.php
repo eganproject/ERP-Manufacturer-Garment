@@ -38,9 +38,9 @@ class BillController extends Controller implements HasMiddleware
             ->withQueryString();
 
         $summary = [
-            'outstanding' => (float) Bill::open()->selectRaw('COALESCE(SUM(total - paid_amount), 0) as v')->value('v'),
-            'overdue' => (float) Bill::overdue()->selectRaw('COALESCE(SUM(total - paid_amount), 0) as v')->value('v'),
-            'due_soon' => (float) Bill::open()->whereBetween('due_date', [today(), today()->addDays(7)])->selectRaw('COALESCE(SUM(total - paid_amount), 0) as v')->value('v'),
+            'outstanding' => (float) Bill::open()->selectRaw('COALESCE(SUM(total - paid_amount - credited_amount), 0) as v')->value('v'),
+            'overdue' => (float) Bill::overdue()->selectRaw('COALESCE(SUM(total - paid_amount - credited_amount), 0) as v')->value('v'),
+            'due_soon' => (float) Bill::open()->whereBetween('due_date', [today(), today()->addDays(7)])->selectRaw('COALESCE(SUM(total - paid_amount - credited_amount), 0) as v')->value('v'),
         ];
 
         $suppliers = Supplier::orderBy('name')->pluck('name', 'id');
@@ -72,7 +72,7 @@ class BillController extends Controller implements HasMiddleware
         }
 
         $billableOrders = PurchaseOrder::with('supplier')
-            ->whereHas('items', fn ($q) => $q->whereColumn('received_quantity', '>', 'billed_quantity'))
+            ->whereHas('items', fn ($q) => $q->whereRaw('received_quantity - billed_quantity - returned_quantity + returned_billed_quantity > 0'))
             ->latest('order_date')
             ->get();
 
@@ -132,7 +132,7 @@ class BillController extends Controller implements HasMiddleware
 
     public function show(Bill $bill)
     {
-        $bill->load(['supplier', 'purchaseOrder', 'subcontractOrder', 'items.material.unit', 'allocations.payment', 'creator', 'activities.user']);
+        $bill->load(['supplier', 'purchaseOrder', 'subcontractOrder', 'items.material.unit', 'allocations.payment', 'creditApplications.source', 'creator', 'activities.user']);
 
         return view('bills.show', compact('bill'));
     }

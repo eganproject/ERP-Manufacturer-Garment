@@ -4,6 +4,7 @@ namespace App\Models\Concerns;
 
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
+use App\Models\CreditApplication;
 use App\Models\PaymentAllocation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -18,6 +19,12 @@ trait Payable
         return $this->morphMany(PaymentAllocation::class, 'payable');
     }
 
+    /** Nota kredit / debit retur yang dipakai untuk mengurangi dokumen ini. */
+    public function creditApplications()
+    {
+        return $this->morphMany(CreditApplication::class, 'payable');
+    }
+
     /** Alokasi dari pembayaran yang masih berlaku (tidak dibatalkan). */
     public function activeAllocations()
     {
@@ -30,7 +37,7 @@ trait Payable
             return 0;
         }
 
-        return max(0, round((float) $this->total - (float) $this->paid_amount, 2));
+        return max(0, round((float) $this->total - (float) $this->paid_amount - (float) $this->credited_amount, 2));
     }
 
     public function isOpen(): bool
@@ -52,10 +59,10 @@ trait Payable
 
     public function canCancel(): bool
     {
-        return $this->isOpen() && (float) $this->paid_amount <= 0;
+        return $this->isOpen() && (float) $this->paid_amount <= 0 && (float) $this->credited_amount <= 0;
     }
 
-    /** Hitung ulang jumlah terbayar dan status dari alokasi pembayaran yang berlaku. */
+    /** Hitung ulang jumlah terbayar, nota retur terpakai, dan status dari alokasi yang berlaku. */
     public function refreshPaymentStatus(): void
     {
         if ($this->status === InvoiceStatus::Cancelled) {
@@ -63,9 +70,11 @@ trait Payable
         }
 
         $this->paid_amount = round((float) $this->activeAllocations()->sum('amount'), 2);
+        $this->credited_amount = round((float) $this->creditApplications()->sum('amount'), 2);
+        $settled = (float) $this->paid_amount + (float) $this->credited_amount;
         $this->status = match (true) {
-            $this->paid_amount <= 0 => InvoiceStatus::Unpaid,
-            $this->paid_amount + 0.009 >= (float) $this->total => InvoiceStatus::Paid,
+            $settled <= 0 => InvoiceStatus::Unpaid,
+            $settled + 0.009 >= (float) $this->total => InvoiceStatus::Paid,
             default => InvoiceStatus::Partial,
         };
         $this->save();

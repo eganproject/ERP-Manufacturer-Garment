@@ -72,6 +72,9 @@
                     @endif
                     <tr class="font-semibold"><td colspan="3" class="px-4 py-2 text-right">Total</td><td class="px-4 py-2 text-right whitespace-nowrap">{{ rupiah($doc->total) }}</td></tr>
                     <tr><td colspan="3" class="px-4 py-2 text-right text-emerald-700">Sudah dibayar</td><td class="px-4 py-2 text-right whitespace-nowrap text-emerald-700">{{ rupiah($doc->paid_amount) }}</td></tr>
+                    @if ((float) $doc->credited_amount > 0)
+                        <tr><td colspan="3" class="px-4 py-2 text-right text-emerald-700">{{ $isInvoice ? 'Nota kredit retur' : 'Nota debit retur' }}</td><td class="px-4 py-2 text-right whitespace-nowrap text-emerald-700">{{ rupiah($doc->credited_amount) }}</td></tr>
+                    @endif
                     <tr class="font-semibold"><td colspan="3" class="px-4 py-3 text-right">Sisa Tagihan</td><td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($doc->outstanding()) }}</td></tr>
                 </tfoot>
             </table>
@@ -100,6 +103,26 @@
             </table>
         </div>
     </x-card>
+
+    @if ($doc->creditApplications->isNotEmpty())
+        <x-card :title="($isInvoice ? 'Nota Kredit' : 'Nota Debit').' Retur'" :padding="false" class="lg:col-span-3">
+            <div class="overflow-x-auto">
+                <table class="table-base">
+                    <thead><tr><th>No. Retur</th><th>Tanggal Pakai</th><th>Alasan Retur</th><th class="text-right">Mengurangi</th></tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach ($doc->creditApplications as $application)
+                            <tr>
+                                <td><a href="{{ route($isInvoice ? 'sales-returns.show' : 'purchase-returns.show', $application->source) }}" class="font-medium text-indigo-600 hover:underline">{{ $application->source->number }}</a></td>
+                                <td>{{ tanggal($application->applied_date) }}</td>
+                                <td>{{ $application->source->reason }}</td>
+                                <td class="text-right whitespace-nowrap">{{ rupiah($application->amount) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </x-card>
+    @endif
 
     <x-activity-log :activities="$doc->activities" class="lg:col-span-3" />
 </div>

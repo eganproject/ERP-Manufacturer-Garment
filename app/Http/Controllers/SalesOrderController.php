@@ -67,7 +67,7 @@ class SalesOrderController extends Controller implements HasMiddleware
 
     public function show(SalesOrder $salesOrder)
     {
-        $salesOrder->load(['customer', 'items.variant.product', 'productionOrders.product', 'deliveries.items.variant.product', 'invoices', 'creator', 'activities.user']);
+        $salesOrder->load(['customer', 'items.variant.product', 'productionOrders.product', 'deliveries.items.variant.product', 'invoices', 'returns.items.variant', 'creator', 'activities.user']);
 
         return view('sales-orders.show', ['order' => $salesOrder]);
     }

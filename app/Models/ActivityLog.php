@@ -50,6 +50,8 @@ class ActivityLog extends Model
             'invoice' => 'Invoice',
             'bill' => 'Tagihan Supplier',
             'payment' => 'Pembayaran',
+            'sales_return' => 'Retur Penjualan',
+            'purchase_return' => 'Retur Pembelian',
             'production_order' => 'SPK',
             'subcontract_order' => 'Order Maklon',
             'user' => 'Pengguna',
@@ -71,6 +73,8 @@ class ActivityLog extends Model
             $subject instanceof Bill => route('bills.show', $subject),
             $subject instanceof Payment => route('payments.show', $subject),
             $subject instanceof SubcontractOrder => route('subcontract-orders.show', $subject),
+            $subject instanceof SalesReturn => route('sales-returns.show', $subject),
+            $subject instanceof PurchaseReturn => route('purchase-returns.show', $subject),
             default => null,
         };
     }

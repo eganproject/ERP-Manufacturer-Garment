@@ -4,11 +4,14 @@ namespace App\Services\Reports;
 
 use App\Enums\InvoiceStatus;
 use App\Enums\PurchaseOrderStatus;
+use App\Enums\ReturnStatus;
 use App\Enums\SalesOrderStatus;
 use App\Models\Bill;
 use App\Models\Invoice;
 use App\Models\PurchaseOrder;
+use App\Models\PurchaseReturn;
 use App\Models\SalesOrder;
+use App\Models\SalesReturn;
 use App\Support\ReportTable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -21,6 +24,9 @@ use Illuminate\Support\Collection;
  * Diskon header dibagi proporsional ke tiap baris saat dikelompokkan per produk/bahan.
  *
  * Penjualan dengan $withCost juga menghitung HPP (dari invoice_items.cost), laba kotor, dan margin.
+ *
+ * Nota retur (bagian retur yang sudah ditagih) pada periode yang sama ikut dihitung sebagai
+ * pengurang bernilai negatif: DPP, PPN, total, qty, dan HPP (koreksi HPP penjualan).
  */
 class TradeReport
 {
@@ -52,11 +58,15 @@ class TradeReport
             ->orderBy('id')
             ->get()
             ->each(function ($doc) use ($withCost) {
+                $doc->is_return = false;
                 $doc->dpp = round((float) $doc->subtotal - (float) $doc->discount, 2);
                 $doc->cost = $withCost ? round((float) $doc->items->sum('cost'), 2) : 0.0;
                 $doc->outstanding_amount = $doc->outstanding();
                 $doc->quantity = (float) $doc->items->sum('quantity');
             });
+
+        $returns = $this->returnDocuments($isSales, $from, $to, $partyId, $withCost, $dateColumn);
+        $documents = $documents->concat($returns)->values();
 
         $rows = match ($groupBy) {
             'item' => $this->byItem($documents, $isSales),
@@ -65,7 +75,8 @@ class TradeReport
         };
 
         $totals = [
-            'count' => $documents->count(),
+            'count' => self::countInvoices($documents),
+            'returns' => round(-1 * $returns->sum('dpp'), 2),
             'quantity' => round($documents->sum('quantity'), 2),
             'dpp' => round($documents->sum('dpp'), 2),
             'tax' => round($documents->sum(fn ($d) => (float) $d->tax_amount), 2),
@@ -85,10 +96,61 @@ class TradeReport
 
         $summary = [
             'orders' => (float) $orders->whereBetween('order_date', [$from->toDateString(), $to->toDateString()])->sum('total'),
-            'average' => $totals['count'] > 0 ? round($totals['dpp'] / $totals['count'], 2) : 0,
+            'average' => $totals['count'] > 0 ? round(($totals['dpp'] + $totals['returns']) / $totals['count'], 2) : 0,
         ];
 
         return compact('rows', 'totals', 'summary', 'documents');
+    }
+
+    /**
+     * Nota retur pada periode, dibentuk seperti invoice/tagihan bernilai negatif agar bisa
+     * dikelompokkan bersama. Retur tanpa nilai nota (barang belum ditagih) tidak memengaruhi penjualan.
+     */
+    private function returnDocuments(bool $isSales, Carbon $from, Carbon $to, ?int $partyId, bool $withCost, string $dateColumn): Collection
+    {
+        [$model, $partyColumn, $relations] = $isSales
+            ? [SalesReturn::class, 'customer_id', ['customer', 'items.variant.product.unit']]
+            : [PurchaseReturn::class, 'supplier_id', ['supplier', 'items.material.unit']];
+
+        return $model::query()
+            ->with($relations)
+            ->where('status', ReturnStatus::Posted)
+            ->where('total', '>', 0)
+            ->whereBetween('return_date', [$from->toDateString(), $to->toDateString()])
+            ->when($partyId, fn ($q, $id) => $q->where($partyColumn, $id))
+            ->orderBy('return_date')
+            ->get()
+            ->map(function ($return) use ($withCost, $dateColumn) {
+                $items = $return->items->filter(fn ($i) => (float) $i->billed_quantity > 0)->map(function ($item) {
+                    $line = clone $item;
+                    $line->quantity = -1 * (float) $item->billed_quantity;
+                    $line->subtotal = -1 * (float) $item->amount;
+                    $line->cost = -1 * (float) $item->billed_cost;
+
+                    return $line;
+                })->values();
+
+                $doc = clone $return;
+                $doc->setRelation('items', $items);
+                $doc->is_return = true;
+                $doc->{$dateColumn} = $return->return_date;
+                $doc->subtotal = -1 * (float) $return->amount;
+                $doc->discount = 0;
+                $doc->dpp = -1 * (float) $return->amount;
+                $doc->tax_amount = -1 * (float) $return->tax_amount;
+                $doc->total = -1 * (float) $return->total;
+                $doc->paid_amount = 0;
+                $doc->outstanding_amount = 0.0;
+                $doc->cost = $withCost ? -1 * $return->billedCost() : 0.0;
+                $doc->quantity = (float) $items->sum('quantity');
+
+                return $doc;
+            });
+    }
+
+    private static function countInvoices(Collection $documents): int
+    {
+        return $documents->reject(fn ($d) => $d->is_return)->count();
     }
 
     private function byParty(Collection $documents, string $partyColumn, string $partyRelation): Collection
@@ -97,7 +159,7 @@ class TradeReport
             'key' => $docs->first()->{$partyColumn},
             'code' => $docs->first()->{$partyRelation}->code,
             'name' => $docs->first()->{$partyRelation}->name,
-            'count' => $docs->count(),
+            'count' => self::countInvoices($docs),
             'quantity' => round($docs->sum('quantity'), 2),
             'dpp' => round($docs->sum('dpp'), 2),
             'tax' => round($docs->sum(fn ($d) => (float) $d->tax_amount), 2),
@@ -120,6 +182,7 @@ class TradeReport
                 return [
                     'owner' => $owner,
                     'doc' => $doc->id,
+                    'is_return' => $doc->is_return,
                     'quantity' => (float) $item->quantity,
                     'dpp' => (float) $item->subtotal * $factor,
                     'cost' => $isSales ? (float) $item->cost : 0.0,
@@ -137,7 +200,7 @@ class TradeReport
                 'code' => $owner->code,
                 'name' => $owner->name.(isset($owner->color) && $owner->color ? ' ('.$owner->color.')' : ''),
                 'unit' => $owner->unit?->code,
-                'count' => $lines->pluck('doc')->unique()->count(),
+                'count' => $lines->reject(fn ($line) => $line['is_return'])->pluck('doc')->unique()->count(),
                 'quantity' => round($qty, 2),
                 'dpp' => round($dpp, 2),
                 'average_price' => $qty > 0 ? round($dpp / $qty, 2) : 0,
@@ -151,7 +214,7 @@ class TradeReport
         return $documents->groupBy(fn ($doc) => $doc->{$dateColumn}->format('Y-m'))->map(fn (Collection $docs, string $month) => [
             'key' => $month,
             'name' => Carbon::createFromFormat('Y-m-d', $month.'-01')->translatedFormat('F Y'),
-            'count' => $docs->count(),
+            'count' => self::countInvoices($docs),
             'quantity' => round($docs->sum('quantity'), 2),
             'dpp' => round($docs->sum('dpp'), 2),
             'tax' => round($docs->sum(fn ($d) => (float) $d->tax_amount), 2),
@@ -243,6 +306,7 @@ class TradeReport
 
         return new ReportTable($title, $subtitle, $columns, $data['rows'], $totals, [
             [$isSales ? 'Penjualan (DPP)' : 'Pembelian (DPP)', rupiah($data['totals']['dpp'])],
+            ...($data['totals']['returns'] > 0 ? [['Sudah dikurangi nota retur', rupiah($data['totals']['returns'])]] : []),
             ['Total termasuk PPN', rupiah($data['totals']['total'])],
             ['Belum dibayar', rupiah($data['totals']['outstanding'])],
             ...($withCost ? [

@@ -24,6 +24,9 @@
         @if ($order->canReceive() && auth()->user()->can('purchase.receive'))
             <a href="{{ route('purchase-orders.receive', $order) }}" class="btn-success">Terima Barang</a>
         @endif
+        @if ($order->canReturn() && auth()->user()->can('purchase-returns.manage'))
+            <a href="{{ route('purchase-returns.create', ['order_id' => $order->id]) }}" class="btn-secondary">Retur ke Supplier</a>
+        @endif
         @if ($order->canBill() && auth()->user()->can('payables.manage'))
             <a href="{{ route('bills.create', ['purchase_order_id' => $order->id]) }}" class="btn-primary">Catat Tagihan</a>
         @endif
@@ -87,7 +90,7 @@
         <x-card title="Item" :padding="false" class="lg:col-span-2">
             <div class="overflow-x-auto">
                 <table class="table-base">
-                    <thead><tr><th>Bahan</th><th class="text-right">Qty</th><th class="text-right">Diterima</th><th class="text-right">Ditagih</th><th class="text-right">Harga</th><th class="text-right">Subtotal</th></tr></thead>
+                    <thead><tr><th>Bahan</th><th class="text-right">Qty</th><th class="text-right">Diterima</th><th class="text-right">Ditagih</th><th class="text-right">Retur</th><th class="text-right">Harga</th><th class="text-right">Subtotal</th></tr></thead>
                     <tbody class="divide-y divide-gray-100">
                         @foreach ($order->items as $item)
                             <tr>
@@ -95,12 +98,13 @@
                                 <td class="text-right">{{ qty($item->quantity) }} {{ $item->material->unit->code }}</td>
                                 <td @class(['text-right', 'text-emerald-600 font-medium' => $item->outstandingQuantity() <= 0])>{{ qty($item->received_quantity) }}</td>
                                 <td @class(['text-right', 'text-amber-600' => $item->unbilledQuantity() > 0])>{{ qty($item->billed_quantity) }}</td>
+                                <td @class(['text-right', 'text-red-600' => (float) $item->returned_quantity > 0])>{{ qty($item->returned_quantity) }}</td>
                                 <td class="text-right whitespace-nowrap">{{ rupiah($item->price) }}</td>
                                 <td class="text-right whitespace-nowrap">{{ rupiah($item->subtotal) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
-                    <tfoot><tr class="bg-gray-50 font-semibold"><td colspan="5" class="px-4 py-3 text-right">Total</td><td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($order->total) }}</td></tr></tfoot>
+                    <tfoot><tr class="bg-gray-50 font-semibold"><td colspan="6" class="px-4 py-3 text-right">Total</td><td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($order->total) }}</td></tr></tfoot>
                 </table>
             </div>
         </x-card>
@@ -123,6 +127,10 @@
                 </tbody>
             </table>
         </x-card>
+
+        @if ($order->returns->isNotEmpty())
+            @include('returns.partials.order-returns', ['kind' => \App\Support\ReturnKind::purchases(), 'returns' => $order->returns])
+        @endif
 
         @can('payables.view')
         <x-card title="Tagihan Supplier" :padding="false" class="lg:col-span-3">

@@ -19,8 +19,10 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\PurchaseReturnController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalesOrderController;
+use App\Http\Controllers\SalesReturnController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SubcontractOrderController;
@@ -78,6 +80,18 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('pdf', 'pdf')->name('pdf');
     });
     Route::get('deliveries/{delivery}/pdf', [SalesOrderController::class, 'deliveryPdf'])->name('deliveries.pdf');
+
+    // Retur penjualan & pembelian (nota kredit / debit)
+    foreach (['sales-returns' => SalesReturnController::class, 'purchase-returns' => PurchaseReturnController::class] as $name => $controller) {
+        $param = str_replace('-', '_', str($name)->singular());
+        Route::resource($name, $controller)->only(['index', 'create', 'store', 'show']);
+        Route::controller($controller)->prefix("{$name}/{{$param}}")->name("{$name}.")->group(function () {
+            Route::post('cancel', 'cancel')->name('cancel');
+            Route::post('apply', 'apply')->name('apply');
+            Route::post('refund', 'refund')->name('refund');
+            Route::get('pdf', 'pdf')->name('pdf');
+        });
+    }
 
     // Produksi (SPK)
     Route::resource('production-orders', ProductionOrderController::class);
