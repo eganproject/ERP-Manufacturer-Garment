@@ -14,6 +14,7 @@ Penawaran ──► Sales Order ──► SPK Produksi ──► (Order Maklon) 
                    │               │                                      │
                    └──► MRP ──► Purchase Order ──► Persetujuan ──► Penerimaan Barang ──► Tagihan Supplier ──► Pembayaran
                                                                           └──► Penggajian borongan ──► Bayar upah
+Marketplace (TikTok Shop / Shopee): Impor pesanan ──► Kirim (stok gudang toko keluar) ──► Selesai / Retur ──► Impor pencairan dana ──► Posting
 Retur penjualan cacat ──► Stok Cacat ──► Perbaiki / Musnahkan / Kembalikan ke stok jual
 Aset tetap (tunai / kredit / saldo awal) ──► Penyusutan bulanan ──► Pelepasan (jual / hapus)
 Semua transaksi bernilai otomatis membuat jurnal → Buku Besar, Laba Rugi, Neraca, Arus Kas.
@@ -27,6 +28,29 @@ Semua transaksi bernilai otomatis membuat jurnal → Buku Besar, Laba Rugi, Nera
 1. **Penjualan → Sales Order (SO)** → *+ Buat SO*: pilih pelanggan, produk per ukuran, qty & harga (harga terisi dari master produk).
 2. Periksa lalu klik **Konfirmasi**. SO terkunci dan siap diproduksi / dikirim.
 3. Bila pelanggan membatalkan sebelum ada pengiriman: **Batalkan**. Bila sebagian sudah terkirim dan sisanya tidak jadi: **Tutup Sisa SO** (wajib isi alasan). SO yang ditutup keluar dari daftar pesanan terbuka dan MRP.
+
+## 1a. Penjualan marketplace (TikTok Shop & Shopee) — Sales / Gudang / Keuangan
+
+Hanya untuk dua platform: **TikTok Shop** dan **Shopee**.
+
+1. **Marketplace → Toko Marketplace** → *+ Tambah Toko* (Sales / Gudang): platform, nama toko, **gudang sumber stok** (disarankan gudang khusus online, mis. *Gudang Online*), PPN dalam harga (isi 11 bila PKP), dan rekening **Saldo Penjual** (default akun *1110 Saldo Penjual Marketplace*, sudah tercatat sebagai rekening kas). Kredensial API bersifat opsional.
+2. **Mapping SKU**: SKU penjual di Seller Center yang sama persis dengan SKU varian ERP terpetakan otomatis. Yang berbeda dipetakan di halaman ini; isi *Isi per Paket* untuk bundling (mis. 1 SKU = 3 pcs).
+3. **Pesanan Marketplace → Impor Pesanan**: unggah file ekspor pesanan dari Seller Center (.xlsx / .csv) atau [template CSV]. Impor ulang file yang lebih baru aman karena pesanan tidak digandakan dan status ikut diperbarui:
+   - *Belum Bayar* / *Perlu Dikirim*: belum ada efek stok. Pesanan Perlu Dikirim **mengalokasikan** stok di **Stok Marketplace** (stok tersedia = stok gudang − pesanan perlu dikirim, bisa diunduh CSV untuk update stok massal di Seller Center).
+   - *Dikirim* / *Selesai*: stok keluar dari gudang toko, penjualan dicatat **Dr Piutang Marketplace / Cr Penjualan Marketplace (+ PPN)** dan HPP. Bisa juga dikirim manual (*Kirim Pesanan* / centang lalu *Kirim yang Dipilih*).
+   - *Batal* sebelum dikirim: tanpa efek. *Batal* setelah dikirim (gagal kirim) atau *Pengembalian*: status **Retur Diproses**, menunggu paket kembali.
+   - SKU yang belum dipetakan menahan pengiriman; daftar peringatan muncul setelah impor.
+4. **Terima retur** (Gudang, di halaman pesanan): pilih **kondisi paket saat dibuka**, lalu per barang isi qty direfund, qty barang **kita** yang kembali, dan berapa yang cacat. Rekam video unboxing.
+   - *Sesuai* → stok kembali ke gudang toko. *Cacat* → masuk stok cacat (diproses di Barang Cacat).
+   - *Bukan barang kita / tertukar*, *paket kosong / isi kurang*, *paket tidak sampai*: isi **Kembali = 0**. Barang asing **tidak** masuk stok. HPP barang yang hilang dicatat ke **Kerugian Retur & Klaim Marketplace**, lalu muncul kartu **Banding**.
+   - *Refund tanpa pengembalian barang* / refund sebagian: isi **Nilai Refund** sesuai nominal dari platform.
+   - Penjualan & PPN bagian yang direfund dibalik (Retur Penjualan), piutang marketplace berkurang.
+5. **Banding / klaim**: ajukan banding di Seller Center dengan bukti (video unboxing, foto paket & resi retur), lalu *Catat Banding Diajukan*. Saat ada keputusan, *Simpan Hasil Banding*. Bila **diterima**, kompensasi menjadi piutang marketplace (mengurangi kerugian) dan tertutup ketika kompensasi ikut dicairkan. Bila **ditolak**, kerugian tetap.
+6. **Pencairan Dana → Impor Laporan Penghasilan** (Keuangan): unggah laporan penghasilan / settlement (Shopee: *Penghasilan Saya*; TikTok: rincian settlement). Hasilnya berupa draft per pesanan: nilai pesanan, voucher penjual, komisi/biaya admin, biaya layanan, biaya transaksi, ongkir ditanggung penjual, biaya lain (afiliasi), penyesuaian, dan dana bersih. Komponen yang tidak terbaca masuk ke penyesuaian agar dana bersih selalu sesuai file.
+   - Periksa peringatan: pesanan belum dikirim (impor ulang file pesanan), pesanan tidak ditemukan (*Cocokkan Ulang*), atau pesanan yang **sudah pernah cair** (cegah file ganda).
+   - **Posting**: Dr Saldo Penjual + Voucher + Biaya Marketplace + Ongkir Penjual ± Selisih / Cr Piutang Marketplace. Retur yang terjadi setelah dana cair tampil sebagai *kelebihan cair* dan tertutup oleh potongan di pencairan berikutnya.
+   - Penarikan saldo ke rekening bank: **Kas & Bank → Transfer** dari *Saldo Penjual Marketplace* ke bank.
+7. **Laporan → Laporan Marketplace**: penjualan, retur, voucher, biaya platform, ongkir, HPP & margin per platform/toko, per produk, atau per pesanan, serta pesanan yang belum cair. PPN penjualan marketplace masuk **Laporan PPN** (digunggung per toko).
 
 ## 2. Perencanaan & pembelian — Produksi / Purchasing / Keuangan
 

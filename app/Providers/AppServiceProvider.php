@@ -17,6 +17,9 @@ use App\Models\FixedAsset;
 use App\Models\GoodsReceipt;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
+use App\Models\MarketplaceOrder;
+use App\Models\MarketplaceSettlement;
+use App\Models\MarketplaceStore;
 use App\Models\Material;
 use App\Models\Payment;
 use App\Models\Payroll;
@@ -93,6 +96,9 @@ class AppServiceProvider extends ServiceProvider
             'stock_transfer' => StockTransfer::class,
             'stock_opname' => StockOpname::class,
             'warehouse' => Warehouse::class,
+            'marketplace_store' => MarketplaceStore::class,
+            'marketplace_order' => MarketplaceOrder::class,
+            'marketplace_settlement' => MarketplaceSettlement::class,
         ]);
 
         // Hak akses berbasis peran (lihat App\Enums\Role)

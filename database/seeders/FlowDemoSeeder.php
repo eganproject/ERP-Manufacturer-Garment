@@ -4,25 +4,30 @@ namespace Database\Seeders;
 
 use App\Enums\CashTransactionType;
 use App\Enums\DefectHandlingType;
+use App\Enums\MarketplacePlatform;
 use App\Enums\PaymentType;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\SalesOrderStatus;
 use App\Enums\StageStatus;
+use App\Enums\StockMovementType;
 use App\Models\Account;
 use App\Models\ActivityLog;
 use App\Models\AssetCategory;
 use App\Models\Bom;
 use App\Models\Customer;
 use App\Models\Employee;
+use App\Models\MarketplaceStore;
 use App\Models\Material;
 use App\Models\Product;
 use App\Models\ProductionOrder;
+use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
 use App\Models\SalesOrder;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\Accounting\AutoJournal;
 use App\Services\BillService;
 use App\Services\CashBankService;
 use App\Services\DefectService;
@@ -30,6 +35,9 @@ use App\Services\DepreciationService;
 use App\Services\DocumentNumber;
 use App\Services\FixedAssetService;
 use App\Services\InvoiceService;
+use App\Services\Marketplace\MarketplaceImporter;
+use App\Services\Marketplace\MarketplaceOrderService;
+use App\Services\Marketplace\MarketplaceSettlementService;
 use App\Services\PaymentService;
 use App\Services\PayrollService;
 use App\Services\PieceworkService;
@@ -38,6 +46,7 @@ use App\Services\PurchaseService;
 use App\Services\QuotationService;
 use App\Services\ReturnService;
 use App\Services\SalesService;
+use App\Services\StockService;
 use App\Services\SubcontractService;
 use App\Services\VatService;
 use App\Services\WarehouseStockService;
@@ -395,6 +404,55 @@ class FlowDemoSeeder extends Seeder
             ->mapWithKeys(fn ($i) => [$i->id => $i->stockable->code === 'KNC-12MM' ? (float) $i->system_quantity - 24 : (float) $i->system_quantity]);
         $warehouses->saveCounts($opname, $counts->all(), $counts->keys()->mapWithKeys(fn ($id) => [$id => null])->all());
         $warehouses->postOpname($opname->fresh());
+
+        // Marketplace: Gudang Online dengan saldo awal stok (varian yang belum pernah bermutasi), toko Shopee & TikTok Shop,
+        // pesanan (perlu kirim, dikirim, selesai, retur) & pencairan dana
+        $onlineWarehouse = Warehouse::firstOrCreate(['code' => 'OL'], ['name' => 'Gudang Online (Marketplace)', 'address' => 'Ruang packing online', 'is_active' => true]);
+        $online = ProductVariant::with('product')->whereDoesntHave('stockMovements')->orderBy('id')->take(2)->get();
+        foreach ($online as $variant) {
+            $movement = app(StockService::class)->move($variant, 20, StockMovementType::Adjustment, notes: 'Saldo awal stok toko online', date: Carbon::parse($this->d(30)),
+                unitCost: 45000, warehouse: $onlineWarehouse);
+            app(AutoJournal::class)->stockAdjustment($movement);
+        }
+        $as('sales');
+        $shopee = MarketplaceStore::create(['platform' => MarketplacePlatform::Shopee, 'name' => 'Garmen Official Shopee', 'shop_id' => '812345678', 'warehouse_id' => $onlineWarehouse->id, 'is_active' => true]);
+        $tiktok = MarketplaceStore::create(['platform' => MarketplacePlatform::TikTok, 'name' => 'Garmen Official TikTok', 'shop_id' => '7495123456', 'warehouse_id' => $onlineWarehouse->id, 'is_active' => true]);
+        if ($online->isNotEmpty()) {
+            $mpOrder = fn ($number, $status, $variant, $qty, $price, $buyer, $extra = []) => $extra + [
+                'order_number' => $number, 'status' => $status, 'order_date' => Carbon::parse($this->d(33))->setTime(20, 15), 'paid_at' => Carbon::parse($this->d(33))->setTime(20, 16),
+                'shipped_at' => in_array($status, ['Perlu Dikirim', 'Akan Dikirim'], true) ? null : Carbon::parse($this->d(34)),
+                'buyer' => $buyer, 'city' => 'Bandung', 'courier' => 'J&T Express',
+                'items' => [['sku' => $variant->sku, 'name' => $variant->product->name, 'variation' => $variant->size, 'quantity' => $qty, 'unit_price' => $price, 'subtotal' => $qty * $price]],
+            ];
+            $first = $online[0];
+            $last = $online->last();
+            $importer = app(MarketplaceImporter::class);
+            $importer->importOrders($shopee, [
+                $mpOrder('261020DEMO001', 'Selesai', $first, 1, 99000, 'rina.shop', ['completed_at' => Carbon::parse($this->d(34))]),
+                $mpOrder('261020DEMO002', 'Sedang Dikirim', $last, 1, 99000, 'andi_k'),
+                $mpOrder('261020DEMO003', 'Perlu Dikirim', $first, 1, 99000, 'sitiw'),
+                $mpOrder('261020DEMO004', 'Pengembalian Barang', $last, 1, 99000, 'dodi88'),
+            ], 'import');
+            $importer->importOrders($tiktok, [
+                $mpOrder('577000000000001', 'Selesai', $last, 1, 105000, 'tt_user_1', ['completed_at' => Carbon::parse($this->d(34))]),
+                $mpOrder('577000000000002', 'Akan Dikirim', $first, 1, 105000, 'tt_user_2'),
+            ], 'import');
+
+            $as('gudang');
+            $returnOrder = $shopee->orders()->where('order_number', '261020DEMO004')->first();
+            // Paket retur dibuka: isinya kaos merek lain (bukan barang kita) → kerugian retur + banding ke Shopee
+            $mpService = app(MarketplaceOrderService::class);
+            $mpService->receiveReturn($returnOrder, $returnOrder->items->mapWithKeys(fn ($i) => [$i->id => ['returned' => $i->quantity, 'restocked' => 0, 'defect' => 0]])->all(),
+                $this->d(34), 'Pembeli klaim ukuran kekecilan', 'wrong_item');
+            $mpService->openClaim($returnOrder->fresh(), 'Isi paket retur kaos merek lain. Video unboxing & foto label resi dilampirkan di tiket banding.');
+
+            $as('keuangan');
+            $settlements = app(MarketplaceSettlementService::class);
+            $settlement = $settlements->createDraft($shopee, Carbon::parse($this->d(34)), [
+                ['order_number' => '261020DEMO001', 'order_amount' => 99000, 'voucher' => 5000, 'commission' => 6435, 'service_fee' => 3960, 'transaction_fee' => 1000, 'shipping_fee' => 0, 'other_fee' => 0, 'adjustment' => 0, 'net_amount' => 82605],
+            ], 'Data demo');
+            $settlements->post($settlement);
+        }
 
         // Penyusutan aset tetap s.d. bulan lalu
         $as('keuangan');

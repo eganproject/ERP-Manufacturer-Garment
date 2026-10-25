@@ -9,6 +9,8 @@ use App\Enums\ReturnStatus;
 use App\Models\Bill;
 use App\Models\FixedAsset;
 use App\Models\Invoice;
+use App\Models\MarketplaceOrder;
+use App\Models\MarketplaceStore;
 use App\Models\PurchaseReturn;
 use App\Models\SalesReturn;
 use App\Models\VatPeriod;
@@ -20,7 +22,8 @@ use Illuminate\Support\Collection;
 /**
  * Laporan PPN per masa pajak (bulan kalender).
  *
- * - PPN keluaran: invoice ber-PPN (tidak dibatalkan) dikurangi nota kredit retur penjualan ber-PPN.
+ * - PPN keluaran: invoice ber-PPN (tidak dibatalkan) dikurangi nota kredit retur penjualan ber-PPN, ditambah
+ *                 penjualan marketplace ber-PPN (digunggung per toko per masa, bersih retur).
  * - PPN masukan : tagihan supplier ber-PPN + aset tetap tunai ber-PPN dikurangi nota debit retur pembelian.
  * Kurang (+) / lebih (−) bayar = keluaran − masukan − kompensasi lebih bayar masa sebelumnya.
  */
@@ -108,7 +111,37 @@ class VatReport
                 'tax' => -(float) $r->tax_amount,
             ]);
 
-        return $this->sort($invoices->concat($returns));
+        return $this->sort($invoices->concat($returns)->concat($this->marketplace($from, $to)));
+    }
+
+    /**
+     * Penjualan TikTok Shop / Shopee ber-PPN: dijumlah per toko (pembeli eceran → faktur digunggung),
+     * PPN dikirim pada masa kirim dikurangi PPN retur yang diterima pada masa tsb.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function marketplace(string $from, string $to): Collection
+    {
+        $shipped = MarketplaceOrder::whereBetween('shipped_at', [$from, $to])->where('tax_amount', '!=', 0)
+            ->selectRaw('marketplace_store_id, SUM(dpp) as dpp, SUM(tax_amount) as tax, COUNT(*) as orders')->groupBy('marketplace_store_id')->get()->keyBy('marketplace_store_id');
+        $returned = MarketplaceOrder::whereBetween('returned_at', [$from, $to])->where('returned_tax', '!=', 0)
+            ->selectRaw('marketplace_store_id, SUM(returned_dpp) as dpp, SUM(returned_tax) as tax')->groupBy('marketplace_store_id')->get()->keyBy('marketplace_store_id');
+
+        return MarketplaceStore::whereIn('id', $shipped->keys()->merge($returned->keys())->unique())->get()
+            ->map(fn ($store) => [
+                'kind' => 'marketplace',
+                'type' => 'Penjualan marketplace ('.(int) ($shipped[$store->id]->orders ?? 0).' pesanan, bersih retur)',
+                'id' => $store->id,
+                'url' => route('marketplace-orders.index', ['store_id' => $store->id]),
+                'date' => Carbon::parse($to)->startOfDay(),
+                'number' => $store->display_name,
+                'tax_invoice_number' => null,
+                'tax_invoice_date' => null,
+                'party' => 'Pembeli eceran '.$store->platform->label(),
+                'npwp' => null,
+                'dpp' => round((float) ($shipped[$store->id]->dpp ?? 0) - (float) ($returned[$store->id]->dpp ?? 0), 2),
+                'tax' => round((float) ($shipped[$store->id]->tax ?? 0) - (float) ($returned[$store->id]->tax ?? 0), 2),
+            ]);
     }
 
     /** @return Collection<int, array<string, mixed>> */

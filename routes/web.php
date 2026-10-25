@@ -18,6 +18,11 @@ use App\Http\Controllers\CostingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DefectController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\Marketplace\MarketplaceMappingController;
+use App\Http\Controllers\Marketplace\MarketplaceOrderController;
+use App\Http\Controllers\Marketplace\MarketplaceSettlementController;
+use App\Http\Controllers\Marketplace\MarketplaceStockController;
+use App\Http\Controllers\Marketplace\MarketplaceStoreController;
 use App\Http\Controllers\Master\CategoryController;
 use App\Http\Controllers\Master\CustomerController;
 use App\Http\Controllers\Master\MaterialController;
@@ -178,6 +183,46 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('planning/mrp/purchase-orders', [MrpController::class, 'store'])->name('mrp.purchase-orders');
     Route::get('reports/production-costing', CostingController::class)->name('reports.costing')->middleware('can:costing.view');
 
+    // Marketplace TikTok Shop & Shopee: toko, mapping SKU, pesanan & retur, alokasi stok, pencairan dana
+    Route::prefix('marketplace')->group(function () {
+        Route::resource('stores', MarketplaceStoreController::class)->except('show')->names('marketplace-stores')->parameters(['stores' => 'marketplaceStore']);
+        Route::post('stores/{marketplaceStore}/sync', [MarketplaceStoreController::class, 'sync'])->name('marketplace-stores.sync');
+
+        Route::controller(MarketplaceMappingController::class)->prefix('mappings')->name('marketplace-mappings.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            Route::post('auto', 'auto')->name('auto');
+            Route::delete('{mapping}', 'destroy')->name('destroy');
+        });
+
+        Route::controller(MarketplaceOrderController::class)->prefix('orders')->name('marketplace-orders.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('import', 'importForm')->name('import');
+            Route::post('import', 'import')->name('import.store');
+            Route::get('template', 'template')->name('template');
+            Route::post('ship', 'shipMany')->name('ship-many');
+            Route::get('{marketplaceOrder}', 'show')->name('show');
+            Route::post('{marketplaceOrder}/ship', 'ship')->name('ship');
+            Route::post('{marketplaceOrder}/complete', 'complete')->name('complete');
+            Route::post('{marketplaceOrder}/cancel', 'cancel')->name('cancel');
+            Route::post('{marketplaceOrder}/request-return', 'requestReturn')->name('request-return');
+            Route::post('{marketplaceOrder}/reject-return', 'rejectReturn')->name('reject-return');
+            Route::post('{marketplaceOrder}/return', 'receiveReturn')->name('return');
+            Route::post('{marketplaceOrder}/claim', 'openClaim')->name('claim');
+            Route::post('{marketplaceOrder}/claim/resolve', 'resolveClaim')->name('claim.resolve');
+        });
+
+        Route::get('stock', [MarketplaceStockController::class, 'index'])->name('marketplace-stock.index')->middleware('can:marketplace.view');
+
+        Route::get('settlements/template', [MarketplaceSettlementController::class, 'template'])->name('marketplace-settlements.template');
+        Route::resource('settlements', MarketplaceSettlementController::class)->except(['edit', 'update'])->names('marketplace-settlements')->parameters(['settlements' => 'marketplaceSettlement']);
+        Route::controller(MarketplaceSettlementController::class)->prefix('settlements/{marketplaceSettlement}')->name('marketplace-settlements.')->group(function () {
+            Route::post('post', 'post')->name('post');
+            Route::post('rematch', 'rematch')->name('rematch');
+            Route::post('cancel', 'cancel')->name('cancel');
+        });
+    });
+
     // Keuangan: piutang (invoice & penerimaan) dan hutang (tagihan & pembayaran supplier)
     Route::resource('invoices', InvoiceController::class)->only(['index', 'create', 'store', 'show']);
     Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
@@ -231,6 +276,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('stock-valuation', 'stockValuation')->name('stock-valuation')->middleware('can:costing.view');
         Route::get('subcontract', 'subcontract')->name('subcontract')->middleware('can:production.view');
         Route::get('labor', 'labor')->name('labor')->middleware('can:payroll.view');
+        Route::get('marketplace', 'marketplace')->name('marketplace')->middleware('can:marketplace.view');
     });
 
     // Akuntansi: bagan akun, jurnal, tutup buku, laporan keuangan
