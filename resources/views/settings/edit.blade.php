@@ -24,6 +24,14 @@
                     @endif
                 </div>
             </div>
+
+            <h3 class="mt-8 mb-3 border-t border-gray-200 pt-5 text-sm font-semibold text-gray-800">Invoice & Pembayaran</h3>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <x-form.input name="invoice_tax_rate" type="number" step="0.01" min="0" max="100" label="PPN Default (%)" :value="$invoice['tax_rate']" help="Isi 0 jika perusahaan belum PKP. Bisa diubah per invoice." />
+                <div></div>
+                <x-form.textarea name="invoice_bank_info" label="Rekening Pembayaran" :value="$invoice['bank_info']" rows="3" placeholder="BCA 123-456-7890 a.n. CV Garmen Contoh" class="sm:col-span-2" />
+                <x-form.textarea name="invoice_notes" label="Catatan Kaki Invoice" :value="$invoice['invoice_notes']" rows="2" placeholder="Barang yang sudah dibeli tidak dapat dikembalikan." class="sm:col-span-2" />
+            </div>
             <x-form.actions />
         </form>
     </x-card>

@@ -41,6 +41,18 @@ class SalesOrder extends Model
         return $this->hasMany(Delivery::class);
     }
 
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    /** Masih ada barang terkirim yang belum dibuatkan invoice. */
+    public function canInvoice(): bool
+    {
+        return $this->status !== SalesOrderStatus::Cancelled
+            && $this->items->contains(fn ($item) => $item->uninvoicedQuantity() > 0);
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

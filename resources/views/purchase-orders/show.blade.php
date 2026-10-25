@@ -15,6 +15,9 @@
         @if ($order->canReceive() && auth()->user()->can('purchase.receive'))
             <a href="{{ route('purchase-orders.receive', $order) }}" class="btn-success">Terima Barang</a>
         @endif
+        @if ($order->canBill() && auth()->user()->can('payables.manage'))
+            <a href="{{ route('bills.create', ['purchase_order_id' => $order->id]) }}" class="btn-primary">Catat Tagihan</a>
+        @endif
     </x-slot:actions>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -32,19 +35,20 @@
         <x-card title="Item" :padding="false" class="lg:col-span-2">
             <div class="overflow-x-auto">
                 <table class="table-base">
-                    <thead><tr><th>Bahan</th><th class="text-right">Qty</th><th class="text-right">Diterima</th><th class="text-right">Harga</th><th class="text-right">Subtotal</th></tr></thead>
+                    <thead><tr><th>Bahan</th><th class="text-right">Qty</th><th class="text-right">Diterima</th><th class="text-right">Ditagih</th><th class="text-right">Harga</th><th class="text-right">Subtotal</th></tr></thead>
                     <tbody class="divide-y divide-gray-100">
                         @foreach ($order->items as $item)
                             <tr>
                                 <td>{{ $item->material->display_name }}</td>
                                 <td class="text-right">{{ qty($item->quantity) }} {{ $item->material->unit->code }}</td>
                                 <td @class(['text-right', 'text-emerald-600 font-medium' => $item->outstandingQuantity() <= 0])>{{ qty($item->received_quantity) }}</td>
+                                <td @class(['text-right', 'text-amber-600' => $item->unbilledQuantity() > 0])>{{ qty($item->billed_quantity) }}</td>
                                 <td class="text-right whitespace-nowrap">{{ rupiah($item->price) }}</td>
                                 <td class="text-right whitespace-nowrap">{{ rupiah($item->subtotal) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
-                    <tfoot><tr class="bg-gray-50 font-semibold"><td colspan="4" class="px-4 py-3 text-right">Total</td><td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($order->total) }}</td></tr></tfoot>
+                    <tfoot><tr class="bg-gray-50 font-semibold"><td colspan="5" class="px-4 py-3 text-right">Total</td><td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($order->total) }}</td></tr></tfoot>
                 </table>
             </div>
         </x-card>
@@ -67,6 +71,31 @@
                 </tbody>
             </table>
         </x-card>
+
+        @can('payables.view')
+        <x-card title="Tagihan Supplier" :padding="false" class="lg:col-span-3">
+            <div class="overflow-x-auto">
+                <table class="table-base">
+                    <thead><tr><th>No. Tagihan</th><th>Faktur Supplier</th><th>Tanggal</th><th>Jatuh Tempo</th><th class="text-right">Total</th><th class="text-right">Sisa</th><th>Status</th></tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse ($order->bills as $bill)
+                            <tr>
+                                <td><a href="{{ route('bills.show', $bill) }}" class="font-medium text-indigo-600 hover:underline">{{ $bill->number }}</a></td>
+                                <td>{{ $bill->supplier_invoice_number ?: '-' }}</td>
+                                <td>{{ tanggal($bill->bill_date) }}</td>
+                                <td>{{ tanggal($bill->due_date) }}</td>
+                                <td class="text-right whitespace-nowrap">{{ rupiah($bill->total) }}</td>
+                                <td class="text-right whitespace-nowrap">{{ rupiah($bill->outstanding()) }}</td>
+                                <td><x-payable-status :doc="$bill" /></td>
+                            </tr>
+                        @empty
+                            <x-empty-row colspan="7" message="Belum ada tagihan supplier untuk PO ini." />
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </x-card>
+        @endcan
 
         <x-activity-log :activities="$order->activities" class="lg:col-span-3" />
     </div>

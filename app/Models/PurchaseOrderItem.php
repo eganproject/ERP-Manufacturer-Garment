@@ -11,6 +11,7 @@ class PurchaseOrderItem extends Model
     protected $casts = [
         'quantity' => 'decimal:2',
         'received_quantity' => 'decimal:2',
+        'billed_quantity' => 'decimal:2',
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
     ];
@@ -28,5 +29,11 @@ class PurchaseOrderItem extends Model
     public function outstandingQuantity(): float
     {
         return max(0, (float) $this->quantity - (float) $this->received_quantity);
+    }
+
+    /** Jumlah yang sudah diterima tetapi belum ditagih supplier. */
+    public function unbilledQuantity(): float
+    {
+        return max(0, (float) $this->received_quantity - (float) $this->billed_quantity);
     }
 }

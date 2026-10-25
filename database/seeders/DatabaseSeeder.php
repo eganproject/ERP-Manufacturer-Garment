@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             'gudang@erp.test' => ['Staf Gudang', Role::Gudang],
             'produksi@erp.test' => ['Staf Produksi (PPIC)', Role::Produksi],
             'sales@erp.test' => ['Staf Sales', Role::Sales],
+            'keuangan@erp.test' => ['Staf Keuangan', Role::Keuangan],
         ];
 
         foreach ($users as $email => [$name, $role]) {

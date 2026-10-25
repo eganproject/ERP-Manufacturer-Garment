@@ -3,9 +3,12 @@
 namespace App\Providers;
 
 use App\Enums\Role;
+use App\Models\Bill;
 use App\Models\Delivery;
 use App\Models\GoodsReceipt;
+use App\Models\Invoice;
 use App\Models\Material;
+use App\Models\Payment;
 use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
@@ -36,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
             'production_order' => ProductionOrder::class,
             'sales_order' => SalesOrder::class,
             'delivery' => Delivery::class,
+            'invoice' => Invoice::class,
+            'bill' => Bill::class,
+            'payment' => Payment::class,
             'user' => User::class,
         ]);
 

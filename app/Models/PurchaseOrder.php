@@ -34,6 +34,18 @@ class PurchaseOrder extends Model
         return $this->hasMany(GoodsReceipt::class);
     }
 
+    public function bills()
+    {
+        return $this->hasMany(Bill::class);
+    }
+
+    /** Masih ada barang diterima yang belum ditagih supplier. */
+    public function canBill(): bool
+    {
+        return $this->status !== PurchaseOrderStatus::Cancelled
+            && $this->items->contains(fn ($item) => $item->unbilledQuantity() > 0);
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

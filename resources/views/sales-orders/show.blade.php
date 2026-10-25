@@ -20,6 +20,11 @@
                 <a href="{{ route('sales-orders.deliver', $order) }}" class="btn-success">Kirim Barang</a>
             @endcan
         @endif
+        @if ($order->canInvoice())
+            @can('receivables.manage')
+                <a href="{{ route('invoices.create', ['sales_order_id' => $order->id]) }}" class="btn-primary">Buat Invoice</a>
+            @endcan
+        @endif
     </x-slot:actions>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -37,13 +42,14 @@
         <x-card title="Item" :padding="false" class="lg:col-span-2">
             <div class="overflow-x-auto">
                 <table class="table-base">
-                    <thead><tr><th>Produk</th><th class="text-right">Qty</th><th class="text-right">Terkirim</th><th class="text-right">Stok</th><th class="text-right">Harga</th><th class="text-right">Subtotal</th></tr></thead>
+                    <thead><tr><th>Produk</th><th class="text-right">Qty</th><th class="text-right">Terkirim</th><th class="text-right">Ditagih</th><th class="text-right">Stok</th><th class="text-right">Harga</th><th class="text-right">Subtotal</th></tr></thead>
                     <tbody class="divide-y divide-gray-100">
                         @foreach ($order->items as $item)
                             <tr>
                                 <td>{{ $item->variant->display_name }}<div class="text-xs text-gray-500">{{ $item->variant->sku }}</div></td>
                                 <td class="text-right">{{ qty($item->quantity) }}</td>
                                 <td @class(['text-right', 'text-emerald-600 font-medium' => $item->outstandingQuantity() <= 0])>{{ qty($item->delivered_quantity) }}</td>
+                                <td @class(['text-right', 'text-amber-600' => $item->uninvoicedQuantity() > 0])>{{ qty($item->invoiced_quantity) }}</td>
                                 <td @class(['text-right', 'text-red-600 font-medium' => $order->canDeliver() && $item->variant->stock < $item->outstandingQuantity()])>{{ qty($item->variant->stock) }}</td>
                                 <td class="text-right whitespace-nowrap">{{ rupiah($item->price) }}</td>
                                 <td class="text-right whitespace-nowrap">{{ rupiah($item->subtotal) }}</td>
@@ -51,9 +57,9 @@
                         @endforeach
                     </tbody>
                     <tfoot class="bg-gray-50">
-                        <tr><td colspan="5" class="px-4 py-2 text-right">Subtotal</td><td class="px-4 py-2 text-right">{{ rupiah($order->subtotal) }}</td></tr>
-                        <tr><td colspan="5" class="px-4 py-2 text-right">Diskon</td><td class="px-4 py-2 text-right">- {{ rupiah($order->discount) }}</td></tr>
-                        <tr class="font-semibold"><td colspan="5" class="px-4 py-3 text-right">Total</td><td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($order->total) }}</td></tr>
+                        <tr><td colspan="6" class="px-4 py-2 text-right">Subtotal</td><td class="px-4 py-2 text-right">{{ rupiah($order->subtotal) }}</td></tr>
+                        <tr><td colspan="6" class="px-4 py-2 text-right">Diskon</td><td class="px-4 py-2 text-right">- {{ rupiah($order->discount) }}</td></tr>
+                        <tr class="font-semibold"><td colspan="6" class="px-4 py-3 text-right">Total</td><td class="px-4 py-3 text-right whitespace-nowrap">{{ rupiah($order->total) }}</td></tr>
                     </tfoot>
                 </table>
             </div>
@@ -79,6 +85,30 @@
                 </table>
             </div>
         </x-card>
+
+        @can('receivables.view')
+        <x-card title="Invoice" :padding="false" class="lg:col-span-3">
+            <div class="overflow-x-auto">
+                <table class="table-base">
+                    <thead><tr><th>No. Invoice</th><th>Tanggal</th><th>Jatuh Tempo</th><th class="text-right">Total</th><th class="text-right">Sisa</th><th>Status</th></tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse ($order->invoices as $invoice)
+                            <tr>
+                                <td><a href="{{ route('invoices.show', $invoice) }}" class="font-medium text-indigo-600 hover:underline">{{ $invoice->number }}</a></td>
+                                <td>{{ tanggal($invoice->invoice_date) }}</td>
+                                <td>{{ tanggal($invoice->due_date) }}</td>
+                                <td class="text-right whitespace-nowrap">{{ rupiah($invoice->total) }}</td>
+                                <td class="text-right whitespace-nowrap">{{ rupiah($invoice->outstanding()) }}</td>
+                                <td><x-payable-status :doc="$invoice" /></td>
+                            </tr>
+                        @empty
+                            <x-empty-row colspan="6" message="Belum ada invoice untuk SO ini." />
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </x-card>
+        @endcan
 
         <x-card title="SPK Produksi Terkait" :padding="false" class="lg:col-span-2">
             <table class="table-base">

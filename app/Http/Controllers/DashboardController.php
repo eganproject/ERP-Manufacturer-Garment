@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\SalesOrderStatus;
+use App\Models\Bill;
+use App\Models\Invoice;
 use App\Models\Material;
 use App\Models\ProductionOrder;
 use App\Models\PurchaseOrder;
@@ -21,7 +23,12 @@ class DashboardController extends Controller
             'sales_this_month' => SalesOrder::whereIn('status', [SalesOrderStatus::Confirmed, SalesOrderStatus::Partial, SalesOrderStatus::Delivered])
                 ->whereBetween('order_date', [now()->startOfMonth(), now()->endOfMonth()])
                 ->sum('total'),
+            'receivable_overdue' => (float) Invoice::overdue()->selectRaw('COALESCE(SUM(total - paid_amount), 0) as v')->value('v'),
+            'payable_due' => (float) Bill::open()->whereDate('due_date', '<=', today()->addDays(7))->selectRaw('COALESCE(SUM(total - paid_amount), 0) as v')->value('v'),
         ];
+
+        $overdueInvoices = Invoice::with('customer')->overdue()->orderBy('due_date')->limit(6)->get();
+        $upcomingBills = Bill::with('supplier')->open()->whereDate('due_date', '<=', today()->addDays(7))->orderBy('due_date')->limit(6)->get();
 
         $lowStockMaterials = Material::with('unit')
             ->where('is_active', true)
@@ -38,6 +45,6 @@ class DashboardController extends Controller
 
         $recentSales = SalesOrder::with('customer')->latest()->limit(5)->get();
 
-        return view('dashboard', compact('stats', 'lowStockMaterials', 'activeProduction', 'recentSales'));
+        return view('dashboard', compact('stats', 'lowStockMaterials', 'activeProduction', 'recentSales', 'overdueInvoices', 'upcomingBills'));
     }
 }

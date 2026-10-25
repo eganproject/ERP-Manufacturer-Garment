@@ -1,15 +1,19 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AgingController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\BillController;
 use App\Http\Controllers\BomController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\Master\CategoryController;
 use App\Http\Controllers\Master\CustomerController;
 use App\Http\Controllers\Master\MaterialController;
 use App\Http\Controllers\Master\ProductController;
 use App\Http\Controllers\Master\SupplierController;
 use App\Http\Controllers\Master\UnitController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
@@ -78,6 +82,28 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('cancel', 'cancel')->name('cancel');
         Route::get('pdf', 'pdf')->name('pdf');
     });
+
+    // Keuangan: piutang (invoice & penerimaan) dan hutang (tagihan & pembayaran supplier)
+    Route::resource('invoices', InvoiceController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+    Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+
+    Route::resource('bills', BillController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('bills/{bill}/cancel', [BillController::class, 'cancel'])->name('bills.cancel');
+
+    Route::controller(PaymentController::class)->group(function () {
+        Route::get('receipts', 'index')->name('receipts.index')->defaults('type', 'receipt');
+        Route::get('receipts/create', 'create')->name('receipts.create')->defaults('type', 'receipt');
+        Route::get('disbursements', 'index')->name('disbursements.index')->defaults('type', 'disbursement');
+        Route::get('disbursements/create', 'create')->name('disbursements.create')->defaults('type', 'disbursement');
+        Route::post('payments', 'store')->name('payments.store');
+        Route::get('payments/{payment}', 'show')->name('payments.show');
+        Route::post('payments/{payment}/cancel', 'cancel')->name('payments.cancel');
+        Route::get('payments/{payment}/pdf', 'pdf')->name('payments.pdf');
+    });
+
+    Route::get('reports/receivables-aging', [AgingController::class, 'receivables'])->name('reports.receivables-aging')->middleware('can:receivables.view');
+    Route::get('reports/payables-aging', [AgingController::class, 'payables'])->name('reports.payables-aging')->middleware('can:payables.view');
 
     // Persediaan
     Route::controller(StockController::class)->prefix('stock')->name('stock.')->middleware('can:stock.view')->group(function () {
