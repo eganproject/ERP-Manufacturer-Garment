@@ -14,6 +14,8 @@
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <x-form.select name="product_id" label="Produk" :options="$products->mapWithKeys(fn ($p) => [$p->id => $p->code.' - '.$p->name])" :value="$bom->product_id" required data-select />
                 <x-form.input name="name" label="Nama BOM" :value="$bom->name" required placeholder="mis. BOM Standar v1" />
+                <x-form.input name="labor_cost" label="Upah Jahit / CMT per pcs (Rp)" :value="$bom->labor_cost" data-money inputmode="numeric" help="Dibebankan otomatis ke SPK saat produksi dimulai." />
+                <x-form.input name="overhead_cost" label="Overhead per pcs (Rp)" :value="$bom->overhead_cost" data-money inputmode="numeric" help="mis. listrik, penyusutan mesin, sewa per pcs." />
                 <x-form.textarea name="notes" label="Catatan" :value="$bom->notes" class="sm:col-span-2" rows="2" />
                 <x-form.checkbox name="is_active" label="Jadikan BOM aktif (BOM lain untuk produk ini akan dinonaktifkan)" :checked="$bom->is_active" class="sm:col-span-2" />
             </div>

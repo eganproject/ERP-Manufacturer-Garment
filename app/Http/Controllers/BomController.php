@@ -108,6 +108,8 @@ class BomController extends Controller
             'product_id' => ['required', 'exists:products,id'],
             'name' => ['required', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
+            'labor_cost' => ['nullable', 'numeric', 'min:0'],
+            'overhead_cost' => ['nullable', 'numeric', 'min:0'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.material_id' => ['required', 'exists:materials,id'],
             'items.*.quantity' => ['required', 'numeric', 'gt:0'],
@@ -126,6 +128,10 @@ class BomController extends Controller
 
         unset($data['items']);
 
-        return [$data + ['is_active' => $request->boolean('is_active')], $items];
+        return [array_merge($data, [
+            'labor_cost' => $data['labor_cost'] ?? 0,
+            'overhead_cost' => $data['overhead_cost'] ?? 0,
+            'is_active' => $request->boolean('is_active'),
+        ]), $items];
     }
 }

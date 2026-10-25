@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Material;
+use App\Models\Supplier;
 use App\Models\Unit;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -72,6 +73,7 @@ class MaterialController extends Controller
             'material' => $material,
             'categories' => Category::ofType('material')->orderBy('name')->get(),
             'units' => Unit::orderBy('name')->get(),
+            'suppliers' => Supplier::where('is_active', true)->orWhere('id', $material->default_supplier_id)->orderBy('name')->pluck('name', 'id'),
         ];
     }
 
@@ -82,6 +84,7 @@ class MaterialController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'category_id' => ['nullable', Rule::exists('categories', 'id')->where('type', 'material')],
             'unit_id' => ['required', 'exists:units,id'],
+            'default_supplier_id' => ['nullable', 'exists:suppliers,id'],
             'color' => ['nullable', 'string', 'max:50'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'min_stock' => ['nullable', 'numeric', 'min:0'],

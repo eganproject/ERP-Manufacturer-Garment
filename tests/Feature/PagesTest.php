@@ -41,6 +41,7 @@ class PagesTest extends TestCase
             route('production-orders.index'), route('production-orders.create'),
             route('stock.materials'), route('stock.products'), route('stock.adjustment'),
             route('stock.materials.card', $material), route('stock.products.card', $product->variants->first()),
+            route('mrp.index'), route('reports.costing'),
         ];
 
         foreach ($urls as $url) {

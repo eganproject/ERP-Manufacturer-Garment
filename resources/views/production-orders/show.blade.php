@@ -126,6 +126,74 @@
             </table>
         </x-card>
 
+        @can('costing.view')
+            @php
+                $cost = $order->costSummary();
+                $canCost = $order->canRecordCosts() && auth()->user()->can('production.manage');
+                $isCompleted = $order->status === ProductionOrderStatus::Completed;
+            @endphp
+            <x-card title="Biaya Produksi (HPP)" :padding="false" class="lg:col-span-3">
+                <x-slot:header>
+                    <span class="text-xs text-gray-500">{{ $isCompleted ? 'HPP aktual dibebankan ke '.qty($cost['basis_quantity']).' pcs barang jadi' : 'Proyeksi untuk '.qty($cost['basis_quantity']).' pcs rencana' }}</span>
+                </x-slot:header>
+                <div class="grid grid-cols-2 gap-4 border-b border-gray-200 p-5 md:grid-cols-4">
+                    <div>
+                        <p class="text-xs text-gray-500">Biaya bahan {{ $order->materials_issued_at ? '(aktual)' : '(estimasi)' }}</p>
+                        <p class="text-lg font-semibold">{{ rupiah($cost['material']) }}</p>
+                        <p class="text-xs text-gray-500">Standar {{ rupiah($cost['standard_material']) }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Upah / CMT / overhead</p>
+                        <p class="text-lg font-semibold">{{ rupiah($cost['conversion']) }}</p>
+                        <p class="text-xs text-gray-500">Standar {{ rupiah($cost['standard_conversion']) }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Total biaya</p>
+                        <p class="text-lg font-semibold">{{ rupiah($cost['total']) }}</p>
+                        <p class="text-xs text-gray-500">Standar {{ rupiah($cost['standard_total']) }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">HPP per pcs</p>
+                        <p class="text-lg font-semibold text-indigo-700">{{ rupiah($cost['unit']) }}</p>
+                        @php $variance = $cost['unit'] - $cost['standard_unit']; @endphp
+                        <p @class(['text-xs', 'text-red-600' => $variance > 0.5, 'text-emerald-600' => $variance < -0.5, 'text-gray-500' => abs($variance) <= 0.5])>
+                            Standar {{ rupiah($cost['standard_unit']) }}@if (abs($variance) > 0.5) ({{ $variance > 0 ? '+' : '−' }}{{ rupiah(abs($variance), false) }})@endif
+                        </p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="table-base">
+                        <thead><tr><th>Tanggal</th><th>Jenis</th><th>Keterangan</th><th class="text-right">Jumlah</th>@if ($canCost)<th class="w-16"></th>@endif</tr></thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse ($order->costs as $line)
+                                <tr>
+                                    <td class="whitespace-nowrap">{{ tanggal($line->date) }}</td>
+                                    <td><x-badge :color="$line->type->color()">{{ $line->type->label() }}</x-badge></td>
+                                    <td>{{ $line->description }}</td>
+                                    <td class="text-right whitespace-nowrap">{{ rupiah($line->amount) }}</td>
+                                    @if ($canCost)
+                                        <td class="text-right"><x-delete-button :action="route('production-orders.costs.destroy', [$order, $line])" confirm="Biaya ini akan dihapus dari SPK." /></td>
+                                    @endif
+                                </tr>
+                            @empty
+                                <x-empty-row :colspan="$canCost ? 5 : 4" :message="$order->isEditable() ? 'Upah & overhead standar BOM dibebankan otomatis saat produksi dimulai. Biaya CMT/maklon dapat dicatat di sini.' : 'Belum ada biaya konversi.'" />
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @if ($canCost)
+                    <form method="POST" action="{{ route('production-orders.costs.store', $order) }}" class="grid grid-cols-1 gap-3 border-t border-gray-200 p-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
+                        @csrf
+                        <x-form.input name="date" label="Tanggal" :value="now()->toDateString()" required data-date class="lg:col-span-1" />
+                        <x-form.select name="type" label="Jenis Biaya" :options="$costTypes" :value="old('type', 'cmt')" :placeholder="false" required class="lg:col-span-1" />
+                        <x-form.input name="description" label="Keterangan" required placeholder="mis. Ongkos jahit CMT Bu Ani" class="lg:col-span-2" />
+                        <x-form.input name="amount" label="Jumlah (Rp)" required data-money inputmode="numeric" class="lg:col-span-1" />
+                        <button type="submit" class="btn-primary lg:col-span-1">+ Catat Biaya</button>
+                    </form>
+                @endif
+            </x-card>
+        @endcan
+
         <x-activity-log :activities="$order->activities" class="lg:col-span-3" />
     </div>
 </x-layouts.app>

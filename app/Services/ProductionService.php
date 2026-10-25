@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\ProductionCostType;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\ProductionStage;
 use App\Enums\StageStatus;
 use App\Enums\StockMovementType;
 use App\Models\ActivityLog;
 use App\Models\Bom;
+use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\ProductionStage as Stage;
 use Illuminate\Support\Facades\DB;
@@ -71,12 +73,14 @@ class ProductionService
 
         DB::transaction(function () use ($order) {
             foreach ($order->materials()->with('material')->get() as $line) {
-                $this->stock->move(
+                $movement = $this->stock->move(
                     $line->material, -1 * (float) $line->required_quantity, StockMovementType::ProductionIssue,
                     $order, $order->number, 'Pengeluaran bahan produksi',
                 );
-                $line->update(['issued_quantity' => $line->required_quantity]);
+                $line->update(['issued_quantity' => $line->required_quantity, 'unit_cost' => $movement->unit_cost]);
             }
+
+            $this->addStandardCosts($order);
 
             $order->update([
                 'status' => ProductionOrderStatus::InProgress,
@@ -149,23 +153,105 @@ class ProductionService
 
                 $item->update(['finished_quantity' => $qty]);
                 $total += $qty;
-
-                if ($qty > 0) {
-                    $this->stock->move(
-                        $item->variant, $qty, StockMovementType::ProductionOutput,
-                        $order, $order->number, 'Hasil produksi',
-                    );
-                }
             }
+
+            if ($total <= 0) {
+                throw ValidationException::withMessages(['finished' => 'Isi jumlah barang jadi minimal untuk satu ukuran.']);
+            }
+
+            // HPP aktual: bahan yang dikeluarkan + biaya konversi, dibebankan ke barang jadi (bukan reject)
+            $materialCost = round($order->materials()->get()->sum(fn ($line) => (float) $line->issued_quantity * (float) $line->unit_cost), 2);
+            $conversionCost = round((float) $order->costs()->sum('amount'), 2);
+            $totalCost = $materialCost + $conversionCost;
+            $unitCost = round($totalCost / $total, 2);
 
             $order->update([
                 'status' => ProductionOrderStatus::Completed,
                 'finished_quantity' => $total,
                 'reject_quantity' => $reject,
+                'material_cost' => $materialCost,
+                'conversion_cost' => $conversionCost,
+                'total_cost' => $totalCost,
+                'unit_cost' => $unitCost,
                 'completed_at' => now(),
             ]);
 
-            ActivityLog::record('completed', 'Menyelesaikan produksi, hasil '.qty($total).' pcs masuk stok', $order);
+            foreach ($order->items()->with('variant.product')->get() as $item) {
+                if ((float) $item->finished_quantity > 0) {
+                    $this->stock->move(
+                        $item->variant, (float) $item->finished_quantity, StockMovementType::ProductionOutput,
+                        $order, $order->number, 'Hasil produksi', unitCost: $unitCost,
+                    );
+                }
+            }
+
+            ActivityLog::record('completed', 'Menyelesaikan produksi, hasil '.qty($total).' pcs masuk stok, HPP '.rupiah($unitCost).'/pcs', $order);
         });
+    }
+
+    /**
+     * Catat biaya konversi (upah, CMT, overhead) pada SPK.
+     *
+     * @param  array{type: string, description: string, amount: float|string, date: string}  $data
+     */
+    public function addCost(ProductionOrder $order, array $data): ProductionCost
+    {
+        if (! $order->canRecordCosts()) {
+            throw ValidationException::withMessages(['status' => 'Biaya hanya dapat dicatat sebelum SPK selesai.']);
+        }
+
+        return DB::transaction(function () use ($order, $data) {
+            $cost = $order->costs()->create([
+                'type' => ProductionCostType::from($data['type']),
+                'description' => $data['description'],
+                'amount' => $data['amount'],
+                'date' => $data['date'],
+                'created_by' => auth()->id(),
+            ]);
+
+            ActivityLog::record('cost', "Mencatat biaya {$cost->type->label()}: {$cost->description} ".rupiah($cost->amount), $order);
+
+            return $cost;
+        });
+    }
+
+    public function removeCost(ProductionCost $cost): void
+    {
+        $order = $cost->productionOrder;
+
+        if (! $order->canRecordCosts()) {
+            throw ValidationException::withMessages(['status' => 'Biaya SPK yang sudah selesai tidak dapat dihapus.']);
+        }
+
+        DB::transaction(function () use ($cost, $order) {
+            $cost->delete();
+            ActivityLog::record('cost', "Menghapus biaya {$cost->type->label()}: {$cost->description} ".rupiah($cost->amount), $order);
+        });
+    }
+
+    /**
+     * Saat produksi dimulai, bebankan upah & overhead standar BOM (dapat dikoreksi sebelum SPK ditutup).
+     */
+    private function addStandardCosts(ProductionOrder $order): void
+    {
+        $bom = $order->bom;
+        $qty = (float) $order->quantity;
+
+        $standards = [
+            [ProductionCostType::Labor, 'Upah jahit standar BOM', (float) $bom->labor_cost],
+            [ProductionCostType::Overhead, 'Overhead standar BOM', (float) $bom->overhead_cost],
+        ];
+
+        foreach ($standards as [$type, $label, $rate]) {
+            if ($rate > 0) {
+                $order->costs()->create([
+                    'type' => $type,
+                    'description' => $label.' ('.qty($qty).' pcs × '.rupiah($rate).')',
+                    'amount' => round($rate * $qty, 2),
+                    'date' => now()->toDateString(),
+                    'created_by' => auth()->id(),
+                ]);
+            }
+        }
     }
 }

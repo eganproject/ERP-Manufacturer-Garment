@@ -35,7 +35,9 @@ enum Role: string
             'sales.manage' => 'Buat/ubah/konfirmasi SO',
             'sales.deliver' => 'Kirim barang (surat jalan)',
             'production.view' => 'Lihat SPK produksi',
-            'production.manage' => 'Buat & jalankan SPK produksi',
+            'production.manage' => 'Buat & jalankan SPK produksi, catat biaya produksi',
+            'mrp.view' => 'Lihat perencanaan kebutuhan bahan (MRP)',
+            'costing.view' => 'Lihat HPP produksi & margin produk',
             'receivables.view' => 'Lihat invoice & piutang pelanggan',
             'receivables.manage' => 'Buat invoice & catat penerimaan pelanggan',
             'payables.view' => 'Lihat tagihan & hutang supplier',
@@ -76,11 +78,11 @@ enum Role: string
     {
         return match ($this) {
             self::Admin => 'Akses penuh, termasuk pengguna dan pengaturan.',
-            self::Purchasing => 'Membuat PO ke supplier dan mengelola data supplier & bahan.',
+            self::Purchasing => 'Membuat PO ke supplier (termasuk dari MRP) dan mengelola data supplier & bahan.',
             self::Gudang => 'Menerima barang, mengirim barang (surat jalan), dan stock opname.',
-            self::Produksi => 'Mengelola BOM dan SPK produksi dari potong sampai packing.',
+            self::Produksi => 'Mengelola BOM, SPK produksi dari potong sampai packing, MRP, dan biaya produksi (HPP).',
             self::Sales => 'Mengelola pelanggan dan sales order, memantau piutang.',
-            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, serta umur piutang/hutang.',
+            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, serta umur piutang/hutang dan laporan HPP & margin.',
         };
     }
 
@@ -94,6 +96,7 @@ enum Role: string
             self::Purchasing => [
                 'master.basic', 'suppliers.manage', 'materials.manage',
                 'purchase.view', 'purchase.manage', 'purchase.receive',
+                'mrp.view',
                 'payables.view',
                 'stock.view',
             ],
@@ -107,6 +110,7 @@ enum Role: string
                 'master.basic', 'materials.manage', 'products.manage', 'boms.manage',
                 'sales.view',
                 'production.view', 'production.manage',
+                'mrp.view', 'costing.view',
                 'stock.view',
             ],
             self::Sales => [
@@ -121,6 +125,7 @@ enum Role: string
                 'sales.view', 'purchase.view',
                 'receivables.view', 'receivables.manage',
                 'payables.view', 'payables.manage',
+                'costing.view',
             ],
         };
     }

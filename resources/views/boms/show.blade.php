@@ -8,6 +8,15 @@
             <dl class="space-y-3 text-sm">
                 <div><dt class="text-gray-500">Produk</dt><dd class="font-medium"><a href="{{ route('products.show', $bom->product) }}" class="text-indigo-600 hover:underline">{{ $bom->product->code }} - {{ $bom->product->name }}</a></dd></div>
                 <div><dt class="text-gray-500">Status</dt><dd><x-badge :color="$bom->is_active ? 'green' : 'gray'">{{ $bom->is_active ? 'Aktif' : 'Nonaktif' }}</x-badge></dd></div>
+                @php
+                    $hpp = $bom->standardUnitCost();
+                    $price = (float) $bom->product->price;
+                @endphp
+                <div><dt class="text-gray-500">HPP standar / pcs</dt><dd class="font-semibold">{{ rupiah($hpp) }}</dd>
+                    <dd class="text-xs text-gray-500">Bahan {{ rupiah($bom->standardMaterialCost()) }} + upah {{ rupiah($bom->labor_cost) }} + overhead {{ rupiah($bom->overhead_cost) }}</dd></div>
+                <div><dt class="text-gray-500">Harga jual / margin</dt><dd>{{ rupiah($price) }}
+                    @if ($price > 0)<span @class(['font-medium', 'text-emerald-600' => $price >= $hpp, 'text-red-600' => $price < $hpp])> · {{ rupiah($price - $hpp) }} ({{ number_format(($price - $hpp) / $price * 100, 1, ',', '.') }}%)</span>@endif
+                </dd></div>
                 @if ($bom->notes)<div><dt class="text-gray-500">Catatan</dt><dd>{{ $bom->notes }}</dd></div>@endif
             </dl>
         </x-card>
@@ -28,14 +37,26 @@
                             <td class="text-right">{{ qty($item->quantity, 4) }} {{ $item->material->unit->code }}</td>
                             <td class="text-right">{{ qty($item->waste_percent) }}%</td>
                             <td class="text-right font-medium" x-text="ERP.formatNumber({{ $factor }} * qty, 2) + ' {{ $item->material->unit->code }}'"></td>
-                            <td class="text-right" x-text="'Rp ' + ERP.formatNumber({{ $factor * (float) $item->material->price }} * qty)"></td>
+                            <td class="text-right" x-text="'Rp ' + ERP.formatNumber({{ $factor * $item->material->costPrice() }} * qty)"></td>
                         </tr>
                     @endforeach
                 </tbody>
                 <tfoot>
                     <tr class="bg-gray-50 font-semibold">
-                        <td colspan="4" class="px-4 py-3 text-right">Estimasi biaya bahan</td>
-                        <td class="px-4 py-3 text-right" x-text="'Rp ' + ERP.formatNumber({{ $bom->items->sum(fn ($i) => (float) $i->quantity * (1 + (float) $i->waste_percent / 100) * (float) $i->material->price) }} * qty)"></td>
+                        <td colspan="4" class="px-4 py-2 text-right">Estimasi biaya bahan</td>
+                        <td class="px-4 py-2 text-right" x-text="'Rp ' + ERP.formatNumber({{ $bom->standardMaterialCost() }} * qty)"></td>
+                    </tr>
+                    <tr class="bg-gray-50">
+                        <td colspan="4" class="px-4 py-2 text-right">Upah jahit / CMT ({{ rupiah($bom->labor_cost) }}/pcs)</td>
+                        <td class="px-4 py-2 text-right" x-text="'Rp ' + ERP.formatNumber({{ (float) $bom->labor_cost }} * qty)"></td>
+                    </tr>
+                    <tr class="bg-gray-50">
+                        <td colspan="4" class="px-4 py-2 text-right">Overhead ({{ rupiah($bom->overhead_cost) }}/pcs)</td>
+                        <td class="px-4 py-2 text-right" x-text="'Rp ' + ERP.formatNumber({{ (float) $bom->overhead_cost }} * qty)"></td>
+                    </tr>
+                    <tr class="bg-gray-100 font-semibold">
+                        <td colspan="4" class="px-4 py-3 text-right">Total HPP standar</td>
+                        <td class="px-4 py-3 text-right" x-text="'Rp ' + ERP.formatNumber({{ $bom->standardUnitCost() }} * qty)"></td>
                     </tr>
                 </tfoot>
             </table>

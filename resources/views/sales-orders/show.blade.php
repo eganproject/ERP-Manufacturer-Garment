@@ -13,6 +13,9 @@
             @endif
         @endcan
         @if ($order->canDeliver())
+            @can('mrp.view')
+                <a href="{{ route('mrp.index', ['sales_order_ids' => [$order->id]]) }}" class="btn-secondary">Cek Kebutuhan Bahan</a>
+            @endcan
             @can('production.manage')
                 <a href="{{ route('production-orders.create', ['sales_order_id' => $order->id]) }}" class="btn-secondary">Buat SPK</a>
             @endcan
