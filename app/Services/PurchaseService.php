@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\GoodsReceipt;
 use App\Models\PurchaseOrder;
 use App\Models\User;
+use App\Models\Warehouse;
 use App\Services\Accounting\AutoJournal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -117,6 +118,7 @@ class PurchaseService
                 'number' => DocumentNumber::generate(GoodsReceipt::class, 'GR', $date),
                 'receipt_date' => $date,
                 'delivery_note' => $data['delivery_note'] ?? null,
+                'warehouse_id' => Warehouse::resolveId($data['warehouse_id'] ?? null),
                 'notes' => $data['notes'] ?? null,
                 'created_by' => auth()->id(),
             ]);
@@ -147,7 +149,7 @@ class PurchaseService
                 $this->stock->move(
                     $item->material, $qty, StockMovementType::PurchaseReceipt,
                     $receipt, $receipt->number, 'Penerimaan '.$po->number, $date,
-                    unitCost: (float) $item->price,
+                    unitCost: (float) $item->price, warehouse: $receipt->warehouse_id,
                 );
             }
 

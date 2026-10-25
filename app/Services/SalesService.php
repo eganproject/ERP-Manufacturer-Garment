@@ -6,6 +6,7 @@ use App\Enums\StockMovementType;
 use App\Models\ActivityLog;
 use App\Models\Delivery;
 use App\Models\SalesOrder;
+use App\Models\Warehouse;
 use App\Services\Accounting\AutoJournal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,7 @@ class SalesService
                 'vehicle_number' => $data['vehicle_number'] ?? null,
                 'driver_name' => $data['driver_name'] ?? null,
                 'shipping_address' => $data['shipping_address'] ?? $order->customer->address,
+                'warehouse_id' => Warehouse::resolveId($data['warehouse_id'] ?? null),
                 'notes' => $data['notes'] ?? null,
                 'created_by' => auth()->id(),
             ]);
@@ -65,7 +67,7 @@ class SalesService
                 // Barang keluar dinilai dengan harga pokok rata-rata varian saat itu (HPP penjualan)
                 $movement = $this->stock->move(
                     $item->variant, -1 * $qty, StockMovementType::SalesDelivery,
-                    $delivery, $delivery->number, 'Pengiriman '.$order->number.' ke '.$order->customer->name, $date,
+                    $delivery, $delivery->number, 'Pengiriman '.$order->number.' ke '.$order->customer->name, $date, warehouse: $delivery->warehouse_id,
                 );
                 $unitCost = round((float) $movement->unit_cost, 2);
 

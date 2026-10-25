@@ -29,12 +29,15 @@ use App\Models\Quotation;
 use App\Models\SalesOrder;
 use App\Models\SalesReturn;
 use App\Models\StockMovement;
+use App\Models\StockOpname;
+use App\Models\StockTransfer;
 use App\Models\SubcontractOrder;
 use App\Models\SubcontractReceipt;
 use App\Models\SubcontractTransfer;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\VatPeriod;
+use App\Models\Warehouse;
 use App\Support\LedgerAccounts;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
@@ -87,6 +90,9 @@ class AppServiceProvider extends ServiceProvider
             'defect_handling' => DefectHandling::class,
             'vat_period' => VatPeriod::class,
             'quotation' => Quotation::class,
+            'stock_transfer' => StockTransfer::class,
+            'stock_opname' => StockOpname::class,
+            'warehouse' => Warehouse::class,
         ]);
 
         // Hak akses berbasis peran (lihat App\Enums\Role)

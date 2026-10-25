@@ -29,6 +29,9 @@
             ['label' => 'Stok Bahan Baku', 'can' => 'stock.view', 'route' => 'stock.materials', 'active' => 'stock.materials*', 'icon' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'],
             ['label' => 'Stok Barang Jadi', 'can' => 'stock.view', 'route' => 'stock.products', 'active' => 'stock.products*', 'icon' => 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'],
             ['label' => 'Barang Cacat', 'can' => 'stock.view', 'route' => 'defects.index', 'active' => 'defects.*', 'icon' => 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'],
+            ['label' => 'Transfer Antar Gudang', 'can' => 'stock.view', 'route' => 'stock-transfers.index', 'active' => 'stock-transfers.*', 'icon' => 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4'],
+            ['label' => 'Stock Opname', 'can' => 'stock.view', 'route' => 'stock-opnames.index', 'active' => 'stock-opnames.*', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'],
+            ['label' => 'Gudang', 'can' => 'stock.view', 'route' => 'warehouses.index', 'active' => 'warehouses.*', 'icon' => 'M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6'],
             ['label' => 'Penyesuaian Stok', 'can' => 'stock.adjust', 'route' => 'stock.adjustment', 'active' => 'stock.adjustment*', 'icon' => 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4'],
         ]],
         ['heading' => 'Keuangan', 'items' => [

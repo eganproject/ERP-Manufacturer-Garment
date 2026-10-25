@@ -113,7 +113,7 @@
                             <tr>
                                 <td class="font-medium">{{ $transfer->number }}</td>
                                 <td><x-badge :color="$transfer->type->color()">{{ $transfer->type->label() }}</x-badge></td>
-                                <td>{{ tanggal($transfer->date) }}</td>
+                                <td>{{ tanggal($transfer->date) }}<x-warehouse-tag :warehouse="$transfer->warehouse" /></td>
                                 <td class="text-right">{{ $transfer->items->count() }}</td>
                                 @if ($withCost)<td class="text-right whitespace-nowrap">{{ rupiah($transfer->totalValue()) }}</td>@endif
                                 <td>{{ $transfer->vehicle_number ?: '-' }}{{ $transfer->driver_name ? ' · '.$transfer->driver_name : '' }}</td>

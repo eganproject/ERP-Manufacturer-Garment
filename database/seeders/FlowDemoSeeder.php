@@ -22,6 +22,7 @@ use App\Models\PurchaseOrder;
 use App\Models\SalesOrder;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Models\Warehouse;
 use App\Services\BillService;
 use App\Services\CashBankService;
 use App\Services\DefectService;
@@ -39,6 +40,7 @@ use App\Services\ReturnService;
 use App\Services\SalesService;
 use App\Services\SubcontractService;
 use App\Services\VatService;
+use App\Services\WarehouseStockService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -376,6 +378,23 @@ class FlowDemoSeeder extends Seeder
         $as('purchasing');
         $po4 = $this->purchaseOrder($supplier('SUP-001'), 34, 38, [[$material('KN-CMB30-PTH'), 100, 118000]], 'Stok kain putih untuk pesanan kaos putih');
         $purchase->submit($po4);
+
+        // Gudang kedua: barang jadi siap kirim dipindah ke Gudang Barang Jadi, lalu stock opname bahan di gudang utama
+        $as('gudang');
+        $warehouses = app(WarehouseStockService::class);
+        $main = Warehouse::default();
+        $finishedGoods = Warehouse::firstOrCreate(['code' => 'GJ'], ['name' => 'Gudang Barang Jadi', 'address' => 'Blok B, area packing', 'is_active' => true]);
+        $ready = collect([$kaos, $kemeja])->flatMap->variants
+            ->map(fn ($v) => [$v, $v->fresh()->stockIn($main)])->filter(fn ($row) => $row[1] >= 2)->take(3);
+        if ($ready->isNotEmpty()) {
+            $warehouses->transfer(['date' => $this->d(34), 'from_warehouse_id' => $main->id, 'to_warehouse_id' => $finishedGoods->id, 'notes' => 'Barang jadi siap kirim'],
+                $ready->map(fn ($row) => ['item' => 'variant:'.$row[0]->id, 'quantity' => floor($row[1] / 2)])->values()->all());
+        }
+        $opname = $warehouses->createOpname(['warehouse_id' => $main->id, 'date' => $this->d(34), 'scope' => 'materials', 'only_in_stock' => true, 'notes' => 'Opname aksesoris akhir bulan']);
+        $counts = $opname->items()->with('stockable')->get()->filter(fn ($i) => in_array($i->stockable->code, ['KNC-12MM', 'LBL-WOVEN', 'BNG-POL-HTM'], true))
+            ->mapWithKeys(fn ($i) => [$i->id => $i->stockable->code === 'KNC-12MM' ? (float) $i->system_quantity - 24 : (float) $i->system_quantity]);
+        $warehouses->saveCounts($opname, $counts->all(), $counts->keys()->mapWithKeys(fn ($id) => [$id => null])->all());
+        $warehouses->postOpname($opname->fresh());
 
         // Penyusutan aset tetap s.d. bulan lalu
         $as('keuangan');

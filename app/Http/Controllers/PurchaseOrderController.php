@@ -8,6 +8,7 @@ use App\Models\GoodsReceipt;
 use App\Models\Material;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
+use App\Models\Warehouse;
 use App\Services\DocumentNumber;
 use App\Services\PurchaseService;
 use App\Support\DocumentPdf;
@@ -72,7 +73,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
 
     public function show(PurchaseOrder $purchaseOrder)
     {
-        $purchaseOrder->load(['supplier', 'items.material.unit', 'receipts.items.material', 'bills', 'returns.items.material', 'creator', 'approver', 'activities.user']);
+        $purchaseOrder->load(['supplier', 'items.material.unit', 'receipts.items.material', 'receipts.warehouse', 'bills', 'returns.items.material', 'creator', 'approver', 'activities.user']);
 
         return view('purchase-orders.show', ['order' => $purchaseOrder]);
     }
@@ -169,6 +170,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
     {
         $data = $request->validate([
             'receipt_date' => ['required', 'date'],
+            'warehouse_id' => ['nullable', Warehouse::rule()],
             'delivery_note' => ['nullable', 'string', 'max:50'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array'],

@@ -62,7 +62,9 @@ enum Role: string
             'budget.view' => 'Lihat anggaran & laporan anggaran vs realisasi',
             'budget.manage' => 'Susun & ubah anggaran',
             'stock.view' => 'Lihat stok & kartu stok',
-            'stock.adjust' => 'Penyesuaian stok (stock opname)',
+            'stock.adjust' => 'Penyesuaian stok & stock opname per gudang',
+            'stock.transfer' => 'Transfer stok antar gudang',
+            'warehouses.manage' => 'Kelola data gudang / lokasi',
             'defects.manage' => 'Proses barang cacat (pindah ke stok cacat, perbaiki, musnahkan, kembalikan ke stok jual)',
             'assets.view' => 'Lihat daftar aset tetap, jadwal & laporan penyusutan',
             'assets.manage' => 'Catat, ubah, lepas aset tetap, kelola kategori & posting penyusutan bulanan',
@@ -101,7 +103,7 @@ enum Role: string
         return match ($this) {
             self::Admin => 'Akses penuh, termasuk pengguna dan pengaturan.',
             self::Purchasing => 'Membuat PO ke supplier (termasuk dari MRP), retur pembelian, dan mengelola data supplier & bahan.',
-            self::Gudang => 'Menerima barang, mengirim barang (surat jalan), retur penjualan & pembelian, kirim/retur bahan maklon, stock opname, serta memproses barang cacat.',
+            self::Gudang => 'Menerima barang, mengirim barang (surat jalan), retur penjualan & pembelian, kirim/retur bahan maklon, gudang & transfer antar gudang, stock opname per gudang, serta memproses barang cacat.',
             self::Produksi => 'Mengelola BOM, SPK produksi dari potong sampai packing, order maklon ke vendor, karyawan & tarif borongan, input hasil kerja harian, menyusun penggajian borongan, MRP, biaya produksi (HPP), dan perbaikan barang cacat.',
             self::Sales => 'Mengelola pelanggan, sales order, dan retur penjualan, memantau piutang.',
             self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, nota kredit/debit retur, faktur pajak & laporan PPN, menyetujui PO bernilai besar, menyetujui & membayar upah borongan serta kasbon, kas & bank (kas masuk/keluar, transfer antar rekening), aset tetap & penyusutan, jurnal & tutup buku, anggaran, serta laporan keuangan (buku besar, neraca saldo, laba rugi, neraca, arus kas, anggaran vs realisasi), umur piutang/hutang dan HPP.',
@@ -126,7 +128,7 @@ enum Role: string
                 'purchase.view', 'purchase.receive', 'purchase-returns.manage',
                 'sales.view', 'sales.deliver', 'sales-returns.manage',
                 'production.view', 'subcontract.transfer',
-                'stock.view', 'stock.adjust', 'defects.manage',
+                'stock.view', 'stock.adjust', 'stock.transfer', 'warehouses.manage', 'defects.manage',
             ],
             self::Produksi => [
                 'master.basic', 'materials.manage', 'products.manage', 'boms.manage',

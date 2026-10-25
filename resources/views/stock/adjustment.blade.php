@@ -17,6 +17,7 @@
             </x-form.select>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <x-form.input name="date" label="Tanggal" :value="now()" required data-date />
+                <x-form.warehouse />
                 <x-form.select name="mode" label="Jenis" :options="['in' => 'Tambah (+)', 'out' => 'Kurangi (−)', 'set' => 'Set stok fisik (opname)']" value="set" required :placeholder="false" />
                 <x-form.input name="quantity" type="number" step="0.01" min="0" label="Jumlah" required />
             </div>

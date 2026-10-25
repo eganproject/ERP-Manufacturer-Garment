@@ -25,6 +25,7 @@
                 <div><dt class="text-gray-500">Sales Order</dt><dd>
                     @if ($order->salesOrder)<a href="{{ route('sales-orders.show', $order->salesOrder) }}" class="text-indigo-600 hover:underline">{{ $order->salesOrder->number }}</a> · {{ $order->salesOrder->customer->name }}@else - @endif
                 </dd></div>
+                <x-warehouse-tag :warehouse="$order->warehouse" block />
                 <div class="grid grid-cols-2 gap-2">
                     <div><dt class="text-gray-500">Mulai</dt><dd>{{ tanggal($order->start_date) }}</dd></div>
                     <div><dt class="text-gray-500">Target</dt><dd>{{ tanggal($order->due_date) }}</dd></div>

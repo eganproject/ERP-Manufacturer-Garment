@@ -9,6 +9,7 @@
                     <p class="py-2 text-sm font-medium">{{ $order->supplier->name }}</p>
                 </div>
                 <x-form.input name="receipt_date" label="Tanggal Terima" :value="now()" required data-date />
+                <x-form.warehouse label="Masuk ke Gudang" />
                 <x-form.input name="delivery_note" label="No. Surat Jalan Supplier" />
                 <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-3" />
             </div>

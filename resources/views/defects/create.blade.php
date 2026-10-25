@@ -19,6 +19,7 @@
             <p class="mb-4 text-sm text-gray-500">{{ $type->hint() }}</p>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <x-form.input name="date" label="Tanggal" :value="today()" required data-date />
+                <x-form.warehouse />
                 <x-form.input name="notes" label="Catatan" class="md:col-span-2"
                               :placeholder="match ($type) { DefectHandlingType::Rework => 'Mis. jahit ulang kerah, ganti kancing', DefectHandlingType::Scrap => 'Mis. noda permanen, sobek', DefectHandlingType::Quarantine => 'Mis. temuan QC gudang', default => 'Mis. hasil cek ulang layak jual' }" />
                 @if ($type === DefectHandlingType::Rework)

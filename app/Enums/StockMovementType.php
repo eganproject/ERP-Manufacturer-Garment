@@ -17,6 +17,7 @@ enum StockMovementType: string
     case DefectRework = 'defect_rework';
     case DefectRestock = 'defect_restock';
     case DefectScrap = 'defect_scrap';
+    case Transfer = 'transfer';
 
     public function label(): string
     {
@@ -34,6 +35,7 @@ enum StockMovementType: string
             self::DefectRework => 'Perbaikan Barang Cacat',
             self::DefectRestock => 'Barang Cacat Layak Jual',
             self::DefectScrap => 'Pemusnahan Barang Cacat',
+            self::Transfer => 'Transfer Antar Gudang',
         };
     }
 }

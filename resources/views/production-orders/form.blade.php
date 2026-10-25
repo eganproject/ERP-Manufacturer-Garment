@@ -32,6 +32,7 @@
                 <x-form.select name="sales_order_id" label="Untuk Sales Order (opsional)" :options="$salesOrders->mapWithKeys(fn ($so) => [$so->id => $so->number.' - '.$so->customer->name])" :value="$order->sales_order_id" data-select
                                placeholder="-- Stok / tanpa SO --" x-on:change="soId = $event.target.value; fillFromSo()" />
                 <x-form.input name="start_date" label="Tanggal Mulai" :value="$order->start_date" required data-date />
+                <x-form.warehouse label="Gudang Bahan & Hasil" :value="$order->warehouse_id" help="Bahan diambil dari & barang jadi masuk ke gudang ini." />
                 <x-form.input name="due_date" label="Target Selesai" :value="$order->due_date" data-date />
                 <x-form.textarea name="notes" label="Catatan" :value="$order->notes" rows="2" class="md:col-span-2" />
             </div>

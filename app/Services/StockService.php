@@ -7,6 +7,8 @@ use App\Enums\StockMovementType;
 use App\Models\Material;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
+use App\Models\Warehouse;
+use App\Models\WarehouseStock;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 
@@ -21,6 +23,9 @@ class StockService
      *
      * $location Defect = stok barang cacat (karantina) varian produk, dengan saldo & harga pokok
      * rata-rata sendiri (defect_stock / defect_cost); tidak bisa dikirim ke pelanggan.
+     *
+     * $warehouse = gudang tempat mutasi (kosong = gudang default). Saldo per gudang ada di warehouse_stocks
+     * dan dicek tidak boleh minus per gudang; saldo total & harga pokok rata-rata tetap per barang.
      */
     public function move(
         Material|ProductVariant $item,
@@ -33,6 +38,7 @@ class StockService
         bool $allowNegative = false,
         ?float $unitCost = null,
         StockLocation $location = StockLocation::Main,
+        Warehouse|int|null $warehouse = null,
     ): StockMovement {
         $defect = $location === StockLocation::Defect;
 
@@ -46,13 +52,27 @@ class StockService
         $locked = $item->newQuery()->lockForUpdate()->findOrFail($item->getKey());
         $newBalance = round((float) $locked->{$stockColumn} + $quantity, 2);
 
-        if ($newBalance < 0 && ! $allowNegative) {
+        $warehouse = $warehouse instanceof Warehouse ? $warehouse : ($warehouse ? Warehouse::findOrFail($warehouse) : Warehouse::default());
+        $whColumn = $defect ? 'defect_quantity' : 'quantity';
+        $whStock = WarehouseStock::firstOrCreate([
+            'warehouse_id' => $warehouse->id,
+            'stockable_type' => $locked->getMorphClass(),
+            'stockable_id' => $locked->getKey(),
+        ]);
+        $whStock = WarehouseStock::lockForUpdate()->find($whStock->id);
+        $whBalance = round((float) $whStock->{$whColumn} + $quantity, 2);
+
+        if (($newBalance < 0 || $whBalance < 0) && ! $allowNegative) {
             $name = $locked instanceof Material ? $locked->name : $locked->display_name;
+            $multi = Warehouse::count() > 1;
+            $available = $multi ? (float) $whStock->{$whColumn} : (float) $locked->{$stockColumn};
 
             throw ValidationException::withMessages([
-                'stock' => ($defect ? 'Stok cacat ' : 'Stok ')."{$name} tidak mencukupi (tersedia ".qty($locked->{$stockColumn}).', dibutuhkan '.qty(abs($quantity)).').',
+                'stock' => ($defect ? 'Stok cacat ' : 'Stok ')."{$name}".($multi ? " di {$warehouse->name}" : '').' tidak mencukupi (tersedia '.qty($available).', dibutuhkan '.qty(abs($quantity)).').',
             ]);
         }
+
+        $whStock->update([$whColumn => $whBalance]);
 
         $currentCost = $locked instanceof Material ? $locked->costPrice() : (float) $locked->{$costColumn};
         $attributes = [$stockColumn => $newBalance];
@@ -73,6 +93,8 @@ class StockService
 
         return $locked->stockMovements()->create([
             'date' => ($date ?? now())->format('Y-m-d'),
+            'warehouse_id' => $warehouse->id,
+            'warehouse_balance' => $whBalance,
             'type' => $type,
             'location' => $location,
             'quantity' => $quantity,

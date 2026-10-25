@@ -16,6 +16,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseReturn;
 use App\Models\SalesOrder;
 use App\Models\SalesReturn;
+use App\Models\Warehouse;
 use App\Services\Accounting\AutoJournal;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -60,6 +61,7 @@ class ReturnService
                 'number' => DocumentNumber::generate(SalesReturn::class, 'RJ', $date),
                 'customer_id' => $order->customer_id,
                 'sales_order_id' => $order->id,
+                'warehouse_id' => Warehouse::resolveId($data['warehouse_id'] ?? null),
                 'return_date' => $date,
                 'status' => ReturnStatus::Posted,
                 'reason' => $data['reason'],
@@ -100,12 +102,12 @@ class ReturnService
                 // Barang layak jual kembali ke stok jual, barang cacat ke stok cacat (karantina)
                 if ($qty - $defectQty > 0.0001) {
                     $this->stock->move($item->variant, round($qty - $defectQty, 2), StockMovementType::SalesReturn,
-                        $return, $return->number, $note, $date, unitCost: $unitCost > 0 ? $unitCost : null);
+                        $return, $return->number, $note, $date, unitCost: $unitCost > 0 ? $unitCost : null, warehouse: $return->warehouse_id);
                 }
                 if ($defectQty > 0) {
                     $this->stock->move($item->variant, $defectQty, StockMovementType::SalesReturn,
                         $return, $return->number, $note.' (cacat)', $date, unitCost: $unitCost > 0 ? $unitCost : null,
-                        location: StockLocation::Defect);
+                        location: StockLocation::Defect, warehouse: $return->warehouse_id);
                 }
 
                 $return->items()->create([
@@ -157,6 +159,7 @@ class ReturnService
                 'number' => DocumentNumber::generate(PurchaseReturn::class, 'RB', $date),
                 'supplier_id' => $po->supplier_id,
                 'purchase_order_id' => $po->id,
+                'warehouse_id' => Warehouse::resolveId($data['warehouse_id'] ?? null),
                 'return_date' => $date,
                 'status' => ReturnStatus::Posted,
                 'reason' => $data['reason'],
@@ -194,7 +197,7 @@ class ReturnService
 
                 $movement = $this->stock->move(
                     $item->material, -1 * $qty, StockMovementType::PurchaseReturn,
-                    $return, $return->number, 'Retur '.$po->number.' ke '.$po->supplier->name, $date,
+                    $return, $return->number, 'Retur '.$po->number.' ke '.$po->supplier->name, $date, warehouse: $return->warehouse_id,
                 );
                 $unitCost = (float) $movement->unit_cost;
 
@@ -311,16 +314,16 @@ class ReturnService
                     $good = round((float) $line->quantity - (float) $line->defect_quantity, 2);
                     if ($good > 0) {
                         $this->stock->move($orderItem->variant, -1 * $good, StockMovementType::SalesReturn,
-                            $return, $return->number, 'Pembatalan retur '.$return->number, $date);
+                            $return, $return->number, 'Pembatalan retur '.$return->number, $date, warehouse: $return->warehouse_id);
                     }
                     if ((float) $line->defect_quantity > 0) {
                         $this->stock->move($orderItem->variant, -1 * (float) $line->defect_quantity, StockMovementType::SalesReturn,
-                            $return, $return->number, 'Pembatalan retur '.$return->number.' (cacat)', $date, location: StockLocation::Defect);
+                            $return, $return->number, 'Pembatalan retur '.$return->number.' (cacat)', $date, location: StockLocation::Defect, warehouse: $return->warehouse_id);
                     }
                 } else {
                     $this->stock->move($orderItem->material, (float) $line->quantity, StockMovementType::PurchaseReturn,
                         $return, $return->number, 'Pembatalan retur '.$return->number, $date,
-                        unitCost: (float) $line->unit_cost > 0 ? (float) $line->unit_cost : null);
+                        unitCost: (float) $line->unit_cost > 0 ? (float) $line->unit_cost : null, warehouse: $return->warehouse_id);
                 }
             }
 

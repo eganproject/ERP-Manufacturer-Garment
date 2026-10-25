@@ -6,6 +6,7 @@ use App\Enums\DefectHandlingType;
 use App\Models\Account;
 use App\Models\DefectHandling;
 use App\Models\ProductVariant;
+use App\Models\Warehouse;
 use App\Services\DefectService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -67,6 +68,7 @@ class DefectController extends Controller implements HasMiddleware
         $data = $request->validate([
             'type' => ['required', Rule::enum(DefectHandlingType::class)],
             'date' => ['required', 'date'],
+            'warehouse_id' => ['nullable', Warehouse::rule()],
             'notes' => ['nullable', 'string', 'max:255'],
             'extra_cost' => ['nullable', 'numeric', 'min:0'],
             'cash_account_id' => ['nullable', Account::cashRule()],

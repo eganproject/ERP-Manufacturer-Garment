@@ -127,18 +127,20 @@ window.ERP = { initPlugins, setMoney, formatNumber, toast };
 document.addEventListener('submit', async (event) => {
     const form = event.target;
 
-    // Konfirmasi aksi: <form data-confirm="Yakin?">
-    if (form.dataset.confirm && !form.dataset.confirmed) {
+    // Konfirmasi aksi: <form data-confirm="Yakin?"> atau <button type="submit" data-confirm="...">
+    const ask = event.submitter?.dataset.confirm ? event.submitter.dataset : form.dataset;
+
+    if (ask.confirm && !form.dataset.confirmed) {
         event.preventDefault();
 
         const result = await Swal.fire({
-            title: form.dataset.confirmTitle || 'Konfirmasi',
-            text: form.dataset.confirm,
-            icon: form.dataset.confirmIcon || 'warning',
+            title: ask.confirmTitle || 'Konfirmasi',
+            text: ask.confirm,
+            icon: ask.confirmIcon || 'warning',
             showCancelButton: true,
-            confirmButtonText: form.dataset.confirmButton || 'Ya, lanjutkan',
+            confirmButtonText: ask.confirmButton || 'Ya, lanjutkan',
             cancelButtonText: 'Batal',
-            confirmButtonColor: form.dataset.confirmIcon === 'question' ? '#4f46e5' : '#dc2626',
+            confirmButtonColor: ask.confirmIcon === 'question' ? '#4f46e5' : '#dc2626',
             reverseButtons: true,
         });
 

@@ -41,9 +41,12 @@ use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\SalesReturnController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\StockOpnameController;
+use App\Http\Controllers\StockTransferController;
 use App\Http\Controllers\SubcontractOrderController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -269,6 +272,15 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('adjustment', 'adjustmentForm')->name('adjustment')->middleware('can:stock.adjust');
         Route::post('adjustment', 'adjust')->name('adjustment.store')->middleware('can:stock.adjust');
     });
+
+    // Multi-gudang: master gudang, transfer antar gudang, stock opname per gudang
+    Route::resource('warehouses', WarehouseController::class);
+    Route::resource('stock-transfers', StockTransferController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('stock-transfers/{stock_transfer}/cancel', [StockTransferController::class, 'cancel'])->name('stock-transfers.cancel');
+    Route::get('stock-transfers/{stock_transfer}/pdf', [StockTransferController::class, 'pdf'])->name('stock-transfers.pdf');
+    Route::resource('stock-opnames', StockOpnameController::class)->only(['index', 'create', 'store', 'show', 'update']);
+    Route::post('stock-opnames/{stock_opname}/cancel', [StockOpnameController::class, 'cancel'])->name('stock-opnames.cancel');
+    Route::get('stock-opnames/{stock_opname}/pdf', [StockOpnameController::class, 'pdf'])->name('stock-opnames.pdf');
 
     // Barang cacat (karantina) dari retur penjualan / temuan gudang
     Route::resource('defects', DefectController::class)->only(['index', 'create', 'store', 'show']);

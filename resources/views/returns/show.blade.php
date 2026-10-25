@@ -35,6 +35,7 @@
                         @endcan
                     </dd>
                 </div>
+                <x-warehouse-tag :warehouse="$return->warehouse" block />
                 <div><dt class="text-gray-500">Tanggal Retur</dt><dd>{{ tanggal($return->return_date) }}</dd></div>
                 <div><dt class="text-gray-500">Alasan</dt><dd>{{ $return->reason }}</dd></div>
                 <div><dt class="text-gray-500">Dicatat oleh</dt><dd>{{ $return->creator?->name ?? '-' }}</dd></div>

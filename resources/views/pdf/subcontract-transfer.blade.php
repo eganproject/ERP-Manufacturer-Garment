@@ -26,6 +26,7 @@
                     <tr><td class="k">Order Maklon</td><td>: {{ $order->number }}</td></tr>
                     <tr><td class="k">No. SPK</td><td>: {{ $order->productionOrder->number }} ({{ $order->productionOrder->product->name }})</td></tr>
                     <tr><td class="k">Pekerjaan</td><td>: {{ $order->stagesLabel() }}, {{ qty($order->quantity) }} pcs</td></tr>
+                    @if (\App\Models\Warehouse::isMulti())<tr><td class="k">Gudang</td><td>: {{ $transfer->warehouse?->name }}</td></tr>@endif
                     <tr><td class="k">No. Kendaraan</td><td>: {{ $transfer->vehicle_number ?: '-' }}</td></tr>
                     <tr><td class="k">Sopir / Pengantar</td><td>: {{ $transfer->driver_name ?: '-' }}</td></tr>
                 </table>

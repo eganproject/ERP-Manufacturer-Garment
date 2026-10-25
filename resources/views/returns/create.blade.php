@@ -25,6 +25,7 @@
                         <p class="py-2 text-sm font-medium">{{ $order->{$kind->partyRelation}->name }}</p>
                     </div>
                     <x-form.input name="return_date" label="Tanggal Retur" :value="now()" required data-date />
+                    <x-form.warehouse :label="$kind->isSales ? 'Masuk ke Gudang' : 'Keluar dari Gudang'" />
                     <x-form.input name="reason" label="Alasan Retur" required class="md:col-span-2"
                         :placeholder="$kind->isSales ? 'Mis. jahitan lepas, salah ukuran, warna tidak sesuai' : 'Mis. kain cacat, warna tidak sesuai, kelebihan kirim'" />
                     <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-4" />

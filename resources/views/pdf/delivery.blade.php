@@ -21,6 +21,7 @@
                 <table class="kv">
                     <tr><td class="k">Tanggal Kirim</td><td>: {{ tanggal($delivery->delivery_date) }}</td></tr>
                     <tr><td class="k">No. SO</td><td>: {{ $so->number }}</td></tr>
+                    @if (\App\Models\Warehouse::isMulti())<tr><td class="k">Gudang</td><td>: {{ $delivery->warehouse?->name }}</td></tr>@endif
                     <tr><td class="k">No. Kendaraan</td><td>: {{ $delivery->vehicle_number ?: '-' }}</td></tr>
                     <tr><td class="k">Sopir / Ekspedisi</td><td>: {{ $delivery->driver_name ?: '-' }}</td></tr>
                 </table>

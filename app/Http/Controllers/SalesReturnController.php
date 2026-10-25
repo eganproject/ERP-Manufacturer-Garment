@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\SalesOrder;
 use App\Models\SalesReturn;
+use App\Models\Warehouse;
 use App\Services\ReturnService;
 use App\Support\DocumentPdf;
 use App\Support\ReturnKind;
@@ -149,6 +150,7 @@ class SalesReturnController extends Controller implements HasMiddleware
         return $request->validate([
             'order_id' => ['required', "exists:{$orderTable},id"],
             'return_date' => ['required', 'date'],
+            'warehouse_id' => ['nullable', Warehouse::rule()],
             'reason' => ['required', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array'],
