@@ -33,6 +33,13 @@
                 <x-form.textarea name="invoice_notes" label="Catatan Kaki Invoice" :value="$invoice['invoice_notes']" rows="2" placeholder="Barang yang sudah dibeli tidak dapat dikembalikan." class="sm:col-span-2" />
             </div>
 
+            <h3 class="mt-8 mb-3 border-t border-gray-200 pt-5 text-sm font-semibold text-gray-800">Penawaran Harga</h3>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <x-form.input name="quotation_validity_days" type="number" min="1" max="365" label="Masa Berlaku Default (hari)" :value="$quotation['validity_days']" />
+                <div></div>
+                <x-form.textarea name="quotation_terms" label="Syarat & Ketentuan Default" :value="$quotation['terms']" rows="3" placeholder="DP 50% saat PO, pelunasan sebelum barang dikirim." class="sm:col-span-2" />
+            </div>
+
             <h3 class="mt-8 mb-3 border-t border-gray-200 pt-5 text-sm font-semibold text-gray-800">Persetujuan Pembelian</h3>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <x-form.input name="po_approval_threshold" label="Batas Persetujuan PO (Rp)" :value="$poApprovalThreshold" data-money inputmode="numeric"

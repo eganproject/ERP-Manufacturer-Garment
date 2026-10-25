@@ -10,10 +10,10 @@ Masuk dengan `<peran>@erp.test` / `password` untuk melihat sudut pandang tiap pe
 ## Gambaran alur
 
 ```
-Sales Order ──► SPK Produksi ──► (Order Maklon) ──► Hasil kerja borongan ──► SPK selesai ──► Surat Jalan ──► Invoice ──► Penerimaan
-     │               │                                      │
-     └──► MRP ──► Purchase Order ──► Persetujuan ──► Penerimaan Barang ──► Tagihan Supplier ──► Pembayaran
-                                                            └──► Penggajian borongan ──► Bayar upah
+Penawaran ──► Sales Order ──► SPK Produksi ──► (Order Maklon) ──► Hasil kerja borongan ──► SPK selesai ──► Surat Jalan ──► Invoice ──► Penerimaan
+                   │               │                                      │
+                   └──► MRP ──► Purchase Order ──► Persetujuan ──► Penerimaan Barang ──► Tagihan Supplier ──► Pembayaran
+                                                                          └──► Penggajian borongan ──► Bayar upah
 Retur penjualan cacat ──► Stok Cacat ──► Perbaiki / Musnahkan / Kembalikan ke stok jual
 Aset tetap (tunai / kredit / saldo awal) ──► Penyusutan bulanan ──► Pelepasan (jual / hapus)
 Semua transaksi bernilai otomatis membuat jurnal → Buku Besar, Laba Rugi, Neraca, Arus Kas.
@@ -21,6 +21,9 @@ Semua transaksi bernilai otomatis membuat jurnal → Buku Besar, Laba Rugi, Nera
 
 ## 1. Pesanan pelanggan — Sales
 
+0. (Opsional) **Penjualan → Penawaran Harga** → *+ Buat Penawaran*: pelanggan, perihal, produk + keterangan (sablon/bordir), harga, diskon, PPN, estimasi selesai, syarat & ketentuan; masa berlaku default dari Pengaturan (14 hari).
+   **Cetak Penawaran** (PDF) lalu **Tandai Terkirim**. Bila pelanggan nego: **Buat Revisi** (nomor `-R1`, `-R2`, penawaran lama jadi *Direvisi*). Bila setuju: **Jadikan Sales Order** (SO draft dengan item, harga & diskon yang sama, target kirim = tanggal order + estimasi). Bila tidak: **Ditolak Pelanggan** (alasan wajib).
+   Penawaran yang lewat masa berlaku tampil *Kedaluwarsa* dan harus direvisi dulu. Daftar penawaran menampilkan nilai ditawarkan, diterima, dan tingkat keberhasilan.
 1. **Penjualan → Sales Order (SO)** → *+ Buat SO*: pilih pelanggan, produk per ukuran, qty & harga (harga terisi dari master produk).
 2. Periksa lalu klik **Konfirmasi**. SO terkunci dan siap diproduksi / dikirim.
 3. Bila pelanggan membatalkan sebelum ada pengiriman: **Batalkan**. Bila sebagian sudah terkirim dan sisanya tidak jadi: **Tutup Sisa SO** (wajib isi alasan). SO yang ditutup keluar dari daftar pesanan terbuka dan MRP.

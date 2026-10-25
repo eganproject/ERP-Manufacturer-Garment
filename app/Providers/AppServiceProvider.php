@@ -25,6 +25,7 @@ use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseReturn;
+use App\Models\Quotation;
 use App\Models\SalesOrder;
 use App\Models\SalesReturn;
 use App\Models\StockMovement;
@@ -85,6 +86,7 @@ class AppServiceProvider extends ServiceProvider
             'depreciation_run' => DepreciationRun::class,
             'defect_handling' => DefectHandling::class,
             'vat_period' => VatPeriod::class,
+            'quotation' => Quotation::class,
         ]);
 
         // Hak akses berbasis peran (lihat App\Enums\Role)

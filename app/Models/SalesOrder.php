@@ -31,6 +31,11 @@ class SalesOrder extends Model
         return $this->hasMany(SalesOrderItem::class);
     }
 
+    public function quotation()
+    {
+        return $this->belongsTo(Quotation::class);
+    }
+
     public function productionOrders()
     {
         return $this->hasMany(ProductionOrder::class);
