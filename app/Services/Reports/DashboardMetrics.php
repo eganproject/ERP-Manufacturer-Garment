@@ -4,9 +4,12 @@ namespace App\Services\Reports;
 
 use App\Enums\InvoiceStatus;
 use App\Enums\ProductionOrderStatus;
+use App\Enums\ReturnStatus;
 use App\Models\Bill;
 use App\Models\Invoice;
 use App\Models\ProductionOrder;
+use App\Models\PurchaseReturn;
+use App\Models\SalesReturn;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -16,7 +19,7 @@ use Illuminate\Support\Collection;
 class DashboardMetrics
 {
     /**
-     * Penjualan (invoice) dan pembelian (tagihan) per bulan, nilai DPP.
+     * Penjualan (invoice) dan pembelian (tagihan) per bulan, nilai DPP setelah dikurangi nota retur.
      *
      * @return Collection<int, array{month: string, label: string, sales: float, purchases: float}>
      */
@@ -24,8 +27,8 @@ class DashboardMetrics
     {
         $start = today()->startOfMonth()->subMonthsNoOverflow($months - 1);
 
-        $sales = $this->monthlySums(Invoice::class, 'invoice_date', $start);
-        $purchases = $this->monthlySums(Bill::class, 'bill_date', $start);
+        $sales = $this->monthlySums(Invoice::class, 'invoice_date', $start, SalesReturn::class);
+        $purchases = $this->monthlySums(Bill::class, 'bill_date', $start, PurchaseReturn::class);
 
         return collect(range(0, $months - 1))->map(function (int $i) use ($start, $sales, $purchases) {
             $month = $start->copy()->addMonthsNoOverflow($i);
@@ -43,16 +46,27 @@ class DashboardMetrics
     /**
      * @return array<string, float>
      */
-    private function monthlySums(string $model, string $dateColumn, Carbon $start): array
+    private function monthlySums(string $model, string $dateColumn, Carbon $start, string $returnModel): array
     {
         // Dikelompokkan di PHP agar sama di SQLite maupun MySQL
-        return $model::query()
+        $sums = $model::query()
             ->where('status', '!=', InvoiceStatus::Cancelled)
             ->whereDate($dateColumn, '>=', $start)
             ->get([$dateColumn, 'subtotal', 'discount'])
             ->groupBy(fn ($doc) => $doc->{$dateColumn}->format('Y-m'))
             ->map(fn ($docs) => round($docs->sum(fn ($d) => (float) $d->subtotal - (float) $d->discount), 2))
             ->all();
+
+        $returnModel::query()
+            ->where('status', ReturnStatus::Posted)
+            ->whereDate('return_date', '>=', $start)
+            ->get(['return_date', 'amount'])
+            ->groupBy(fn ($r) => $r->return_date->format('Y-m'))
+            ->each(function ($returns, $month) use (&$sums) {
+                $sums[$month] = round(($sums[$month] ?? 0) - $returns->sum(fn ($r) => (float) $r->amount), 2);
+            });
+
+        return $sums;
     }
 
     /**
@@ -63,7 +77,7 @@ class DashboardMetrics
      */
     public function openBalance(string $model): array
     {
-        $open = $model::open()->get(['id', 'total', 'paid_amount', 'due_date', 'status']);
+        $open = $model::open()->get(['id', 'total', 'paid_amount', 'credited_amount', 'due_date', 'status']);
 
         return [
             'outstanding' => round($open->sum(fn ($d) => $d->outstanding()), 2),

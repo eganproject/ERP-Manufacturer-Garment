@@ -46,6 +46,18 @@ class SalesOrder extends Model
         return $this->hasMany(Invoice::class);
     }
 
+    public function returns()
+    {
+        return $this->hasMany(SalesReturn::class);
+    }
+
+    /** Masih ada barang terkirim yang dapat diretur pelanggan. */
+    public function canReturn(): bool
+    {
+        return $this->status !== SalesOrderStatus::Cancelled
+            && $this->items->contains(fn ($item) => $item->returnableQuantity() > 0);
+    }
+
     /** Masih ada barang terkirim yang belum dibuatkan invoice. */
     public function canInvoice(): bool
     {

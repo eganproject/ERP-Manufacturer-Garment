@@ -34,7 +34,7 @@ class AgingReport
 
         $asOf = $asOf->copy()->startOfDay();
 
-        // Saldo per tanggal laporan: total dikurangi pembayaran yang terjadi sampai tanggal itu
+        // Saldo per tanggal laporan: total dikurangi pembayaran & nota retur yang terjadi sampai tanggal itu
         $documents = $model::query()
             ->with($partyRelation)
             ->where('status', '!=', InvoiceStatus::Cancelled)
@@ -43,10 +43,11 @@ class AgingReport
             ->withSum(['allocations as paid_as_of' => fn ($q) => $q->whereHas('payment', fn ($p) => $p
                 ->where('status', PaymentStatus::Posted)
                 ->whereDate('payment_date', '<=', $asOf))], 'amount')
+            ->withSum(['creditApplications as credited_as_of' => fn ($q) => $q->whereDate('applied_date', '<=', $asOf)], 'amount')
             ->orderBy('due_date')
             ->get()
             ->map(function ($doc) use ($asOf) {
-                $doc->balance = round((float) $doc->total - (float) $doc->paid_as_of, 2);
+                $doc->balance = round((float) $doc->total - (float) $doc->paid_as_of - (float) $doc->credited_as_of, 2);
                 $doc->age = $doc->daysOverdue($asOf);
                 $doc->bucket = self::bucketFor($doc->age);
 
