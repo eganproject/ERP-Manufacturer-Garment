@@ -37,6 +37,9 @@ enum Role: string
             'sales.manage' => 'Buat/ubah/konfirmasi SO',
             'sales.deliver' => 'Kirim barang (surat jalan)',
             'sales-returns.manage' => 'Catat & batalkan retur penjualan',
+            'marketplace.view' => 'Lihat toko, pesanan & stok marketplace (TikTok Shop / Shopee)',
+            'marketplace.manage' => 'Kelola toko & mapping SKU, impor pesanan, kirim & terima retur marketplace',
+            'marketplace.settle' => 'Impor & posting pencairan dana marketplace',
             'production.view' => 'Lihat SPK produksi',
             'production.manage' => 'Buat & jalankan SPK produksi, catat biaya produksi',
             'subcontract.manage' => 'Buat order maklon, terima hasil & tutup order maklon',
@@ -103,10 +106,10 @@ enum Role: string
         return match ($this) {
             self::Admin => 'Akses penuh, termasuk pengguna dan pengaturan.',
             self::Purchasing => 'Membuat PO ke supplier (termasuk dari MRP), retur pembelian, dan mengelola data supplier & bahan.',
-            self::Gudang => 'Menerima barang, mengirim barang (surat jalan), retur penjualan & pembelian, kirim/retur bahan maklon, gudang & transfer antar gudang, stock opname per gudang, serta memproses barang cacat.',
+            self::Gudang => 'Menerima barang, mengirim barang (surat jalan) & pesanan marketplace serta menerima retur marketplace, retur penjualan & pembelian, kirim/retur bahan maklon, gudang & transfer antar gudang, stock opname per gudang, serta memproses barang cacat.',
             self::Produksi => 'Mengelola BOM, SPK produksi dari potong sampai packing, order maklon ke vendor, karyawan & tarif borongan, input hasil kerja harian, menyusun penggajian borongan, MRP, biaya produksi (HPP), dan perbaikan barang cacat.',
-            self::Sales => 'Mengelola pelanggan, sales order, dan retur penjualan, memantau piutang.',
-            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, nota kredit/debit retur, faktur pajak & laporan PPN, menyetujui PO bernilai besar, menyetujui & membayar upah borongan serta kasbon, kas & bank (kas masuk/keluar, transfer antar rekening), aset tetap & penyusutan, jurnal & tutup buku, anggaran, serta laporan keuangan (buku besar, neraca saldo, laba rugi, neraca, arus kas, anggaran vs realisasi), umur piutang/hutang dan HPP.',
+            self::Sales => 'Mengelola pelanggan, sales order, retur penjualan, toko & pesanan marketplace (TikTok Shop / Shopee), memantau piutang.',
+            self::Keuangan => 'Membuat invoice, memposting pencairan dana marketplace, mencatat tagihan supplier, penerimaan & pembayaran, nota kredit/debit retur, faktur pajak & laporan PPN, menyetujui PO bernilai besar, menyetujui & membayar upah borongan serta kasbon, kas & bank (kas masuk/keluar, transfer antar rekening), aset tetap & penyusutan, jurnal & tutup buku, anggaran, serta laporan keuangan (buku besar, neraca saldo, laba rugi, neraca, arus kas, anggaran vs realisasi), umur piutang/hutang dan HPP.',
         };
     }
 
@@ -127,6 +130,7 @@ enum Role: string
             self::Gudang => [
                 'purchase.view', 'purchase.receive', 'purchase-returns.manage',
                 'sales.view', 'sales.deliver', 'sales-returns.manage',
+                'marketplace.view', 'marketplace.manage',
                 'production.view', 'subcontract.transfer',
                 'stock.view', 'stock.adjust', 'stock.transfer', 'warehouses.manage', 'defects.manage',
             ],
@@ -142,6 +146,7 @@ enum Role: string
             self::Sales => [
                 'customers.manage', 'products.manage',
                 'sales.view', 'sales.manage', 'sales-returns.manage',
+                'marketplace.view', 'marketplace.manage',
                 'receivables.view',
                 'production.view',
                 'stock.view',
@@ -150,6 +155,7 @@ enum Role: string
                 'customers.manage', 'suppliers.manage',
                 'sales.view', 'purchase.view', 'purchase.approve', 'sales-returns.manage', 'purchase-returns.manage',
                 'receivables.view', 'receivables.manage',
+                'marketplace.view', 'marketplace.settle',
                 'payables.view', 'payables.manage',
                 'costing.view', 'stock.view',
                 'payroll.view', 'payroll.manage', 'payroll.pay',

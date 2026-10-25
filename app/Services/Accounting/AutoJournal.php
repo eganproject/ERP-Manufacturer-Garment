@@ -22,6 +22,8 @@ use App\Models\GoodsReceipt;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
+use App\Models\MarketplaceOrder;
+use App\Models\MarketplaceSettlement;
 use App\Models\Material;
 use App\Models\Payment;
 use App\Models\Payroll;
@@ -63,6 +65,11 @@ use Illuminate\Support\Carbon;
  * - Penyesuaian stok   : Persediaan ↔ Selisih persediaan (penyesuaian pertama = saldo awal → Ekuitas saldo awal)
  * - Kas masuk / keluar : Dr Kas/Bank / Cr akun lawan (pendapatan, pinjaman, modal, ...) dan sebaliknya
  * - Transfer rekening  : Dr rekening tujuan / Cr rekening asal
+ * - Marketplace kirim  : Dr Piutang marketplace (per toko) / Cr Penjualan marketplace + PPN keluaran; Dr HPP / Cr Persediaan barang jadi
+ * - Marketplace retur  : Dr Retur penjualan + PPN keluaran / Cr Piutang marketplace; Dr Persediaan barang jadi / cacat / Cr HPP;
+ *                        barang tidak kembali / bukan barang kita: Dr Kerugian retur marketplace / Cr HPP
+ * - Banding diterima   : Dr Piutang marketplace / Cr Kerugian retur marketplace (kompensasi platform)
+ * - Pencairan dana     : Dr Saldo penjual + Voucher penjual + Biaya marketplace + Ongkir ditanggung penjual ± selisih / Cr Piutang marketplace
  * - Tutup masa PPN     : Dr PPN keluaran / Cr PPN masukan + PPN lebih bayar (kompensasi); selisih Cr Hutang PPN / Dr PPN lebih bayar
  */
 class AutoJournal
@@ -458,6 +465,70 @@ class AutoJournal
             ['account' => 'vat_in', 'amount' => -(float) $vat->input_tax],
             ['account' => 'vat_overpaid', 'amount' => -(float) $vat->compensation],
             ['account' => $net >= 0 ? 'vat_payable' : 'vat_overpaid', 'amount' => -$net],
+        ]);
+    }
+
+    /** Pesanan marketplace dikirim: penjualan diakui (piutang ke platform) dan HPP barang keluar. */
+    public function marketplaceShipment(MarketplaceOrder $order): ?JournalEntry
+    {
+        $order->loadMissing('store');
+        $store = $order->store;
+
+        return $this->post($order, $order->shipped_at, "Penjualan {$store->platform->label()} {$order->order_number} – {$store->name}", [
+            ['account' => 'marketplace_receivable', 'amount' => (float) $order->total, 'reference' => $store],
+            ['account' => 'marketplace_sales', 'amount' => -(float) $order->dpp],
+            ['account' => 'vat_out', 'amount' => -(float) $order->tax_amount],
+            ['account' => 'cogs', 'amount' => (float) $order->cost],
+            ['account' => 'finished_goods', 'amount' => -(float) $order->cost],
+        ], 'ship', $order->order_number);
+    }
+
+    /** Retur pesanan marketplace diterima: penjualan dibalik, barang yang kembali masuk persediaan (cacat → karantina). */
+    public function marketplaceReturn(MarketplaceOrder $order): ?JournalEntry
+    {
+        $order->loadMissing('store', 'items');
+        $store = $order->store;
+        $cost = (float) $order->returned_cost;
+        $defectCost = round($order->items->sum(fn ($i) => (float) $i->defect_quantity * (float) $i->units_per_item * (float) $i->unit_cost), 2);
+
+        return $this->post($order, $order->returned_at, "Retur {$store->platform->label()} {$order->order_number} – {$store->name}".($order->return_reason ? " ({$order->return_reason})" : ''), [
+            ['account' => 'sales_returns', 'amount' => (float) $order->returned_dpp],
+            ['account' => 'vat_out', 'amount' => (float) $order->returned_tax],
+            ['account' => 'marketplace_receivable', 'amount' => -(float) $order->returned_total, 'reference' => $store],
+            ['account' => 'finished_goods', 'amount' => $cost - $defectCost],
+            ['account' => 'defect_inventory', 'amount' => $defectCost],
+            ['account' => 'cogs', 'amount' => -$cost],
+            // Barang direfund yang tidak kembali / bukan barang kita: HPP-nya dipindah ke kerugian retur
+            ['account' => 'marketplace_loss', 'amount' => (float) $order->returned_lost_cost],
+            ['account' => 'cogs', 'amount' => -(float) $order->returned_lost_cost],
+        ], 'return', $order->order_number);
+    }
+
+    /** Banding retur diterima platform: kompensasi menjadi piutang marketplace, mengurangi kerugian retur. */
+    public function marketplaceClaim(MarketplaceOrder $order): ?JournalEntry
+    {
+        $order->loadMissing('store');
+        $store = $order->store;
+
+        return $this->post($order, $order->claim_resolved_at, "Kompensasi banding {$store->platform->label()} {$order->order_number} – {$store->name}", [
+            ['account' => 'marketplace_receivable', 'amount' => (float) $order->claim_amount, 'reference' => $store],
+            ['account' => 'marketplace_loss', 'amount' => -(float) $order->claim_amount],
+        ], 'claim', $order->order_number);
+    }
+
+    /** Pencairan dana marketplace: piutang pesanan ditutup oleh dana bersih + potongan platform. */
+    public function marketplaceSettlement(MarketplaceSettlement $settlement): ?JournalEntry
+    {
+        $settlement->loadMissing('store');
+        $store = $settlement->store;
+
+        return $this->post($settlement, $settlement->date, "Pencairan dana {$store->platform->label()} {$settlement->number} – {$store->name}", [
+            ['account' => $store->balanceAccountRole(), 'amount' => (float) $settlement->net_amount],
+            ['account' => 'marketplace_voucher', 'amount' => (float) $settlement->voucher],
+            ['account' => 'marketplace_fee', 'amount' => (float) $settlement->fees],
+            ['account' => 'marketplace_shipping', 'amount' => (float) $settlement->shipping_fee],
+            ['account' => 'marketplace_adjustment', 'amount' => $settlement->difference()],
+            ['account' => 'marketplace_receivable', 'amount' => -(float) $settlement->receivable, 'reference' => $store],
         ]);
     }
 

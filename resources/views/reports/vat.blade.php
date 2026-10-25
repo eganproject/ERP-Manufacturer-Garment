@@ -53,11 +53,14 @@
                     <thead><tr><th>Tanggal</th><th>Dokumen</th><th>No. Faktur Pajak</th><th>{{ $section === 'output' ? 'Pembeli' : 'Penjual' }}</th><th>NPWP</th><th class="text-right">DPP</th><th class="text-right">PPN</th></tr></thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($$section as $row)
-                            @php [$route, $ability] = $routes[$row['kind']]; @endphp
+                            @php
+                                [$route, $ability] = $routes[$row['kind']] ?? [null, 'marketplace.view'];
+                                $url = $row['url'] ?? ($route ? route($route, $row['id']) : null);
+                            @endphp
                             <tr>
                                 <td class="whitespace-nowrap">{{ tanggal($row['date']) }}</td>
                                 <td>
-                                    @can($ability)<a href="{{ route($route, $row['id']) }}" class="font-medium text-indigo-600 hover:underline">{{ $row['number'] }}</a>@else<span class="font-medium">{{ $row['number'] }}</span>@endcan
+                                    @can($ability)<a href="{{ $url }}" class="font-medium text-indigo-600 hover:underline">{{ $row['number'] }}</a>@else<span class="font-medium">{{ $row['number'] }}</span>@endcan
                                     <div class="text-xs text-gray-500">{{ $row['type'] }}</div>
                                 </td>
                                 <td class="whitespace-nowrap">
@@ -65,6 +68,8 @@
                                         {{ $row['tax_invoice_number'] }}<div class="text-xs text-gray-500">{{ tanggal($row['tax_invoice_date']) }}</div>
                                     @elseif (in_array($row['kind'], ['invoice', 'bill', 'asset'], true))
                                         <span class="text-amber-600">Belum diisi</span>
+                                    @elseif ($row['kind'] === 'marketplace')
+                                        <span class="text-gray-400">Digunggung (pembeli eceran)</span>
                                     @else
                                         <span class="text-gray-400">Nota retur</span>
                                     @endif

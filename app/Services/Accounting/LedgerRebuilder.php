@@ -5,6 +5,7 @@ namespace App\Services\Accounting;
 use App\Enums\FixedAssetStatus;
 use App\Enums\InvoiceStatus;
 use App\Enums\JournalType;
+use App\Enums\MarketplaceSettlementStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PayrollStatus;
 use App\Enums\ProductionOrderStatus;
@@ -22,6 +23,8 @@ use App\Models\FixedAsset;
 use App\Models\GoodsReceipt;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
+use App\Models\MarketplaceOrder;
+use App\Models\MarketplaceSettlement;
 use App\Models\Payment;
 use App\Models\Payroll;
 use App\Models\ProductionCost;
@@ -104,6 +107,12 @@ class LedgerRebuilder
                 FixedAsset::where('status', FixedAssetStatus::Disposed)->orderBy('disposal_date')->orderBy('id')->each(fn ($a) => $this->auto->fixedAssetDisposal($a));
 
                 VatPeriod::where('status', ReturnStatus::Posted)->orderBy('period')->orderBy('id')->each(fn ($v) => $this->auto->vatPeriod($v));
+
+                // Marketplace: penjualan saat dikirim → retur diterima → pencairan dana
+                MarketplaceOrder::whereNotNull('shipped_at')->orderBy('shipped_at')->orderBy('id')->each(fn ($o) => $this->auto->marketplaceShipment($o));
+                MarketplaceOrder::whereNotNull('returned_at')->orderBy('returned_at')->orderBy('id')->each(fn ($o) => $this->auto->marketplaceReturn($o));
+                MarketplaceOrder::where('claim_status', 'won')->orderBy('claim_resolved_at')->orderBy('id')->each(fn ($o) => $this->auto->marketplaceClaim($o));
+                MarketplaceSettlement::where('status', MarketplaceSettlementStatus::Posted)->orderBy('date')->orderBy('id')->each(fn ($s) => $this->auto->marketplaceSettlement($s));
 
                 StockMovement::where('type', StockMovementType::Adjustment)->orderBy('date')->orderBy('id')->each(fn ($m) => $this->auto->stockAdjustment($m));
 

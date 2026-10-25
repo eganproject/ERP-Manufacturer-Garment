@@ -3,6 +3,8 @@
 namespace App\Services\Reports;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\MarketplaceOrderStatus;
+use App\Enums\MarketplaceSettlementStatus;
 use App\Enums\PayrollStatus;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\PurchaseOrderStatus;
@@ -11,6 +13,8 @@ use App\Enums\SalesOrderStatus;
 use App\Enums\SubcontractStatus;
 use App\Models\Bill;
 use App\Models\Invoice;
+use App\Models\MarketplaceOrder;
+use App\Models\MarketplaceSettlement;
 use App\Models\Material;
 use App\Models\Payroll;
 use App\Models\ProductionOrder;
@@ -63,6 +67,25 @@ class WorkQueue
             route('reports.vat'), 'Isi nomor faktur pajak di halaman invoice', 'gray');
         $add('tax.manage', 'Masa PPN belum ditutup', fn () => $this->vatPeriodPending(),
             route('reports.vat'), 'Tutup masa PPN bulan lalu & setor kurang bayar', 'gray');
+
+        // Marketplace (TikTok Shop & Shopee)
+        $add('marketplace.manage', 'Pesanan marketplace perlu dikirim', fn () => MarketplaceOrder::where('status', MarketplaceOrderStatus::ToShip)->count(),
+            route('marketplace-orders.index', ['status' => MarketplaceOrderStatus::ToShip->value]), 'Kemas & kirim, lalu impor ulang file pesanan / tandai dikirim', 'blue');
+        $add('marketplace.manage', 'SKU marketplace belum dipetakan', fn () => MarketplaceOrder::whereNull('shipped_at')->where('status', '!=', MarketplaceOrderStatus::Cancelled)
+            ->whereHas('items', fn ($q) => $q->whereNull('product_variant_id'))->count(),
+            route('marketplace-mappings.index'), 'Petakan SKU toko ke varian ERP agar stok bisa dikirim', 'red');
+        $add('marketplace.manage', 'Retur marketplace menunggu barang', fn () => MarketplaceOrder::where('status', MarketplaceOrderStatus::ReturnRequested)->count(),
+            route('marketplace-orders.index', ['status' => MarketplaceOrderStatus::ReturnRequested->value]), 'Catat barang retur yang diterima gudang');
+        $add('marketplace.manage', 'Retur marketplace bermasalah belum dibanding', fn () => MarketplaceOrder::whereNotNull('returned_at')->whereNull('claim_status')
+            ->where(fn ($q) => $q->where('returned_lost_cost', '>', 0)->orWhereIn('return_condition', ['wrong_item', 'empty', 'not_received']))->count(),
+            route('marketplace-orders.index', ['status' => 'claimable']), 'Ajukan banding ke platform (batas waktu banding biasanya beberapa hari)', 'red');
+        $add('marketplace.manage', 'Banding marketplace menunggu keputusan', fn () => MarketplaceOrder::where('claim_status', 'open')->count(),
+            route('marketplace-orders.index', ['status' => 'claim_open']), 'Pantau di Seller Center & catat hasilnya', 'gray');
+        $add('marketplace.settle', 'Pencairan marketplace belum diposting', fn () => MarketplaceSettlement::where('status', MarketplaceSettlementStatus::Draft)->count(),
+            route('marketplace-settlements.index', ['status' => MarketplaceSettlementStatus::Draft->value]), 'Periksa & posting agar piutang dan biaya platform tercatat');
+        $add('marketplace.settle', 'Pesanan marketplace selesai > 14 hari belum cair', fn () => MarketplaceOrder::whereIn('status', [MarketplaceOrderStatus::Completed, MarketplaceOrderStatus::Returned])
+            ->where('completed_at', '<', today()->subDays(14))->whereRaw('ROUND(total - returned_total + (CASE WHEN claim_status = \'won\' THEN claim_amount ELSE 0 END) - settled_receivable, 2) > 0')->count(),
+            route('marketplace-orders.index', ['status' => 'unsettled']), 'Impor laporan penghasilan / cek dana tertahan di Seller Center', 'gray');
 
         // Pembelian
         $add('purchase.approve', 'PO menunggu persetujuan', fn () => PurchaseOrder::where('status', PurchaseOrderStatus::PendingApproval)->count(),

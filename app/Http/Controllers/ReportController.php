@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MarketplacePlatform;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Employee;
+use App\Models\MarketplaceStore;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Services\Reports\LaborReport;
+use App\Services\Reports\MarketplaceReport;
 use App\Services\Reports\ProductionReport;
 use App\Services\Reports\StockValuationReport;
 use App\Services\Reports\SubcontractReport;
@@ -142,6 +145,33 @@ class ReportController extends Controller
         }
 
         return view('reports.labor', $data + compact('view', 'from', 'to', 'employeeId', 'employees'));
+    }
+
+    /** Penjualan & margin TikTok Shop / Shopee per platform & toko, per produk, atau per pesanan. */
+    public function marketplace(Request $request, MarketplaceReport $report)
+    {
+        $request->validate($this->periodRules() + [
+            'view' => ['nullable', Rule::in(array_keys(MarketplaceReport::VIEWS))],
+            'platform' => ['nullable', Rule::enum(MarketplacePlatform::class)],
+            'store_id' => ['nullable', 'integer'],
+        ]);
+
+        [$from, $to] = $this->period($request);
+        $view = $request->input('view', 'stores');
+        $platform = $request->input('platform');
+        $storeId = $request->integer('store_id') ?: null;
+        $withCost = $request->user()->can('costing.view');
+
+        $data = $report->build($from, $to, $view, $platform, $storeId);
+
+        if ($withCost && ($response = ReportExport::respond($report->table($data, $view, $from, $to), $request->query('export')))) {
+            return $response;
+        }
+
+        return view('reports.marketplace', $data + [
+            'from' => $from, 'to' => $to, 'view' => $view, 'platform' => $platform, 'storeId' => $storeId, 'withCost' => $withCost,
+            'stores' => MarketplaceStore::options(false), 'platforms' => MarketplacePlatform::options(),
+        ]);
     }
 
     private function periodRules(): array

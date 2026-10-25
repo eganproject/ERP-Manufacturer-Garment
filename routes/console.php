@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\MarketplaceStore;
 use App\Services\Accounting\LedgerRebuilder;
 use App\Services\DepreciationService;
+use App\Services\Marketplace\MarketplaceSyncService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
@@ -40,3 +42,20 @@ Artisan::command('assets:depreciate {period? : Bulan YYYY-MM, default bulan lalu
 
 // Penyusutan bulan lalu diposting otomatis tiap awal bulan (butuh cron `php artisan schedule:run`)
 Schedule::command('assets:depreciate')->monthlyOn(1, '01:00');
+
+Artisan::command('marketplace:sync {store? : ID toko, kosong = semua toko ber-API aktif}', function (MarketplaceSyncService $service) {
+    $stores = MarketplaceStore::active()->where('api_enabled', true)
+        ->when($this->argument('store'), fn ($q, $id) => $q->whereKey($id))->get();
+
+    foreach ($stores as $store) {
+        try {
+            $s = $service->sync($store);
+            $this->info("{$store->display_name}: {$s['created']} baru, {$s['updated']} diperbarui, ".count($s['errors']).' gagal.');
+        } catch (ValidationException $e) {
+            $this->warn("{$store->display_name}: ".collect($e->errors())->flatten()->implode(' '));
+        }
+    }
+})->purpose('Tarik pesanan TikTok Shop / Shopee lewat API resmi (opsional, bila kredensial toko diisi)');
+
+// Sinkron pesanan marketplace ber-API tiap 30 menit (toko tanpa API tetap lewat impor file)
+Schedule::command('marketplace:sync')->everyThirtyMinutes()->withoutOverlapping();
