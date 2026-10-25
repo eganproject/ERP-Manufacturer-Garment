@@ -1,5 +1,9 @@
 <x-layouts.app title="Stok Barang Jadi">
-    <x-slot:actions><a href="{{ route('stock.adjustment') }}" class="btn-secondary">Penyesuaian Stok</a></x-slot:actions>
+    <x-slot:actions>
+        @can('stock.adjust')
+            <a href="{{ route('stock.adjustment') }}" class="btn-secondary">Penyesuaian Stok</a>
+        @endcan
+    </x-slot:actions>
 
     <x-card :padding="false">
         <div class="border-b border-gray-200 p-4"><x-search-filter placeholder="Cari SKU / nama produk..." /></div>

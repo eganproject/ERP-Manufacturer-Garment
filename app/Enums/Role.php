@@ -144,7 +144,7 @@ enum Role: string
                 'sales.view', 'purchase.view', 'purchase.approve', 'sales-returns.manage', 'purchase-returns.manage',
                 'receivables.view', 'receivables.manage',
                 'payables.view', 'payables.manage',
-                'costing.view',
+                'costing.view', 'stock.view',
                 'payroll.view', 'payroll.manage', 'payroll.pay',
                 'cashbank.view', 'cashbank.manage',
                 'accounting.view', 'accounting.manage', 'accounting.close',

@@ -14,10 +14,11 @@ use App\Models\SalesOrder;
 use App\Services\Reports\DashboardMetrics;
 use App\Services\Reports\StockValuationReport;
 use App\Services\Reports\TradeReport;
+use App\Services\Reports\WorkQueue;
 
 class DashboardController extends Controller
 {
-    public function __invoke(DashboardMetrics $metrics, StockValuationReport $valuation, TradeReport $trade)
+    public function __invoke(DashboardMetrics $metrics, StockValuationReport $valuation, TradeReport $trade, WorkQueue $queue)
     {
         $user = auth()->user();
 
@@ -25,7 +26,7 @@ class DashboardController extends Controller
             'open_sales' => SalesOrder::whereIn('status', SalesOrderStatus::open())->count(),
             'open_purchases' => PurchaseOrder::whereIn('status', [PurchaseOrderStatus::Ordered, PurchaseOrderStatus::Partial])->count(),
             'active_production' => ProductionOrder::where('status', ProductionOrderStatus::InProgress)->count(),
-            'sales_this_month' => SalesOrder::whereIn('status', [SalesOrderStatus::Confirmed, SalesOrderStatus::Partial, SalesOrderStatus::Delivered])
+            'sales_this_month' => SalesOrder::whereIn('status', [SalesOrderStatus::Confirmed, SalesOrderStatus::Partial, SalesOrderStatus::Delivered, SalesOrderStatus::Closed])
                 ->whereBetween('order_date', [now()->startOfMonth(), now()->endOfMonth()])
                 ->sum('total'),
             'receivable_overdue' => (float) Invoice::overdue()->selectRaw('COALESCE(SUM(total - paid_amount - credited_amount), 0) as v')->value('v'),
@@ -82,7 +83,10 @@ class DashboardController extends Controller
         ];
         $invoiced['growth'] = DashboardMetrics::growth($invoiced['current'], $invoiced['previous']);
 
+        $tasks = $queue->for($user);
+
         return view('dashboard', compact(
+            'tasks',
             'stats', 'lowStockMaterials', 'activeProduction', 'recentSales', 'overdueInvoices', 'upcomingBills',
             'trend', 'receivables', 'payables', 'production', 'stockValue', 'topCustomers', 'invoiced',
             'withCost', 'grossProfit', 'topProducts', 'pendingApprovals',

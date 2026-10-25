@@ -94,7 +94,7 @@
                         @forelse ($return->applications as $application)
                             @php $doc = $application->payable; @endphp
                             <tr>
-                                <td><a href="{{ route($kind->documentRoute, $doc) }}" class="font-medium text-indigo-600 hover:underline">{{ $doc->number }}</a></td>
+                                <td>@can($kind->documentCan)<a href="{{ route($kind->documentRoute, $doc) }}" class="font-medium text-indigo-600 hover:underline">{{ $doc->number }}</a>@else<span class="font-medium">{{ $doc->number }}</span>@endcan</td>
                                 <td>{{ tanggal($application->applied_date) }}</td>
                                 <td class="text-right whitespace-nowrap">{{ rupiah($doc->total) }}</td>
                                 <td class="text-right whitespace-nowrap">{{ rupiah($application->amount) }}</td>

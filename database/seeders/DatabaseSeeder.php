@@ -8,6 +8,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\Accounting\LedgerRebuilder;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -42,8 +43,14 @@ class DatabaseSeeder extends Seeder
             Setting::put(['po_approval_threshold' => 10000000]);
         }
 
+        // Saldo awal stok dicatat sebelum periode data demo (± 5 minggu lalu) agar kartu stok & jurnal berurutan
+        Carbon::setTestNow(today()->subDays(35)->setTime(8, 0));
         $this->call(MasterDataSeeder::class);
         $this->call(PieceworkDemoSeeder::class);
+        Carbon::setTestNow();
+
+        // Satu siklus transaksi lengkap (SO → produksi → pembelian → keuangan) untuk mencoba alur
+        $this->call(FlowDemoSeeder::class);
 
         // Jurnal saldo awal persediaan dari stok contoh
         if (! AccountingPeriod::whereNotNull('closed_at')->exists()) {

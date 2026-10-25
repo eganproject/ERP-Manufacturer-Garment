@@ -150,7 +150,10 @@ class SubcontractOrderController extends Controller implements HasMiddleware
             return redirect()->route('subcontract-orders.show', $subcontractOrder)->with('error', 'Order maklon sudah tidak berjalan.');
         }
 
-        return view('subcontract-orders.receive', ['order' => $subcontractOrder]);
+        return view('subcontract-orders.receive', [
+            'order' => $subcontractOrder,
+            'pendingStages' => SubcontractService::pendingPriorStages($subcontractOrder),
+        ]);
     }
 
     public function receive(Request $request, SubcontractOrder $subcontractOrder)

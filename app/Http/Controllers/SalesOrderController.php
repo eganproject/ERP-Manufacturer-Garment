@@ -23,7 +23,7 @@ class SalesOrderController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('can:sales.view', only: ['index', 'show', 'pdf', 'deliveryPdf']),
-            new Middleware('can:sales.manage', only: ['create', 'store', 'edit', 'update', 'destroy', 'confirm', 'cancel']),
+            new Middleware('can:sales.manage', only: ['create', 'store', 'edit', 'update', 'destroy', 'confirm', 'cancel', 'close']),
             new Middleware('can:sales.deliver', only: ['deliverForm', 'deliver']),
         ];
     }
@@ -33,7 +33,7 @@ class SalesOrderController extends Controller implements HasMiddleware
         $orders = SalesOrder::with('customer')
             ->when($request->q, fn ($q, $s) => $q->where(fn ($w) => $w->where('number', 'like', "%{$s}%")
                 ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', "%{$s}%"))))
-            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->status, fn ($q, $s) => $s === 'open' ? $q->whereIn('status', SalesOrderStatus::open()) : $q->where('status', $s))
             ->latest('order_date')->latest('id')
             ->paginate(15)
             ->withQueryString();
@@ -146,6 +146,16 @@ class SalesOrderController extends Controller implements HasMiddleware
         ActivityLog::record('cancelled', 'Membatalkan SO', $salesOrder);
 
         return back()->with('success', 'SO dibatalkan.');
+    }
+
+    public function close(Request $request, SalesOrder $salesOrder)
+    {
+        abort_unless($salesOrder->canClose(), 403, 'Hanya SO terkirim sebagian yang dapat ditutup.');
+        $data = $request->validate(['reason' => ['required', 'string', 'max:255']]);
+        $salesOrder->update(['status' => SalesOrderStatus::Closed]);
+        ActivityLog::record('closed', "Menutup SO, sisa qty tidak dikirim: {$data['reason']}", $salesOrder);
+
+        return back()->with('success', 'SO ditutup, sisa qty tidak lagi dihitung sebagai pesanan terbuka.');
     }
 
     public function pdf(SalesOrder $salesOrder)

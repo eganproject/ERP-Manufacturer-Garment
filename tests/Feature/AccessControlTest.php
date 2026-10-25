@@ -69,8 +69,8 @@ class AccessControlTest extends TestCase
     public function test_menu_hides_modules_without_permission(): void
     {
         $this->as(Role::Sales)->get(route('dashboard'))
-            ->assertSee('Penjualan (SO)')
-            ->assertDontSee('Pembelian (PO)')
+            ->assertSee('Sales Order (SO)')
+            ->assertDontSee('Purchase Order (PO)')
             ->assertDontSee('Pengguna & Hak Akses')
             ->assertDontSee('Penyesuaian Stok');
     }

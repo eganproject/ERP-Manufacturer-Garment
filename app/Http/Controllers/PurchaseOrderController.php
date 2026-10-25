@@ -24,7 +24,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('can:purchase.view', only: ['index', 'show', 'pdf', 'receiptPdf']),
-            new Middleware('can:purchase.manage', only: ['create', 'store', 'edit', 'update', 'destroy', 'submit', 'cancel']),
+            new Middleware('can:purchase.manage', only: ['create', 'store', 'edit', 'update', 'destroy', 'submit', 'cancel', 'close']),
             new Middleware('can:purchase.receive', only: ['receiveForm', 'receive']),
             new Middleware('can:purchase.approve', only: ['approve', 'reject']),
         ];
@@ -35,7 +35,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
         $orders = PurchaseOrder::with('supplier')
             ->when($request->q, fn ($q, $s) => $q->where(fn ($w) => $w->where('number', 'like', "%{$s}%")
                 ->orWhereHas('supplier', fn ($sq) => $sq->where('name', 'like', "%{$s}%"))))
-            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->status, fn ($q, $s) => $s === 'open' ? $q->whereIn('status', [PurchaseOrderStatus::Ordered, PurchaseOrderStatus::Partial]) : $q->where('status', $s))
             ->latest('order_date')->latest('id')
             ->paginate(15)
             ->withQueryString();
@@ -145,6 +145,16 @@ class PurchaseOrderController extends Controller implements HasMiddleware
         ActivityLog::record('cancelled', 'Membatalkan PO', $purchaseOrder);
 
         return back()->with('success', 'PO dibatalkan.');
+    }
+
+    public function close(Request $request, PurchaseOrder $purchaseOrder)
+    {
+        abort_unless($purchaseOrder->canClose(), 403, 'Hanya PO diterima sebagian yang dapat ditutup.');
+        $data = $request->validate(['reason' => ['required', 'string', 'max:255']]);
+        $purchaseOrder->update(['status' => PurchaseOrderStatus::Closed]);
+        ActivityLog::record('closed', "Menutup PO, sisa qty tidak diterima: {$data['reason']}", $purchaseOrder);
+
+        return back()->with('success', 'PO ditutup, sisa qty tidak lagi ditunggu dari supplier.');
     }
 
     public function receiveForm(PurchaseOrder $purchaseOrder)

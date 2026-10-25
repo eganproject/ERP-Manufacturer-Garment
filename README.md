@@ -36,6 +36,10 @@ Matriks hak akses lengkap ada di `App\Enums\Role` dan ditampilkan di menu **Peng
 
 Seeder mengisi data contoh: satuan, kategori, 9 bahan baku dengan saldo awal, 2 supplier, 2 pelanggan, 2 produk (kaos & kemeja, ukuran S–XXL) lengkap dengan BOM.
 
+Seeder juga menjalankan **satu siklus transaksi lengkap** selama ± 5 minggu terakhir (`FlowDemoSeeder`): SO → SPK internal & maklon → PO dengan persetujuan → penerimaan & retur pembelian → upah borongan & penggajian → surat jalan → invoice → retur penjualan → penerimaan & pembayaran → kas & bank, dengan beberapa dokumen dibiarkan terbuka agar panel **Perlu Ditindaklanjuti** di dashboard terisi.
+
+**Panduan pengguna langkah demi langkah per peran: [docs/PANDUAN.md](docs/PANDUAN.md).**
+
 ## Modul
 
 | Modul | Isi |

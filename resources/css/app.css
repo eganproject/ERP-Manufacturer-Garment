@@ -79,7 +79,7 @@
 }
 
 .ts-dropdown {
-    @apply rounded-lg text-sm shadow-lg;
+    @apply z-50 rounded-lg text-sm shadow-lg;
 }
 
 .ts-dropdown .active {

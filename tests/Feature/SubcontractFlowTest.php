@@ -162,7 +162,11 @@ class SubcontractFlowTest extends TestCase
         $this->assertEquals(round($required - 0.3, 2), (float) $order->materials()->where('material_id', $fabric->id)->value('used_quantity'));
         $this->assertFalse($order->fresh('materials')->hasMaterialAtVendor());
 
+        // Jumlah jadi tidak boleh melebihi output tahap packing (19 bagus + 1 reject dari vendor)
+        $this->post(route('production-orders.complete', $spk), ['finished' => $finished, 'reject_quantity' => 1])->assertSessionHasErrors('finished');
+
         // Selesaikan SPK: HPP = bahan bersih + upah/overhead standar + jasa maklon
+        $finished[array_key_first($finished)] -= 1;
         $this->post(route('production-orders.complete', $spk), ['finished' => $finished, 'reject_quantity' => 1])->assertSessionHasNoErrors();
         $spk->refresh();
         $this->assertSame(ProductionOrderStatus::Completed, $spk->status);

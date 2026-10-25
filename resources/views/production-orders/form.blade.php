@@ -12,7 +12,8 @@
         ])->values() ?? [],
     ])->keyBy('id');
 
-    $soData = $salesOrders->mapWithKeys(fn ($so) => [$so->id => $so->items->pluck('quantity', 'product_variant_id')->map(fn ($q) => (float) $q)]);
+    // Saran qty dari SO = sisa yang belum dibuatkan SPK lain
+    $soData = $soRemaining->map(fn ($rows) => (object) array_filter($rows, fn ($q) => $q > 0));
     $initialQty = old('items', $existingItems->map(fn ($q) => (float) $q)->all());
 @endphp
 

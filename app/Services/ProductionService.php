@@ -182,6 +182,15 @@ class ProductionService
                 throw ValidationException::withMessages(['finished' => 'Isi jumlah barang jadi minimal untuk satu ukuran.']);
             }
 
+            // Barang jadi tidak boleh melebihi output tahap terakhir (packing)
+            $lastStage = $order->stages()->reorder('sequence', 'desc')->first();
+
+            if ($lastStage && (float) $lastStage->output_quantity > 0 && $total > (float) $lastStage->output_quantity + 0.0001) {
+                throw ValidationException::withMessages([
+                    'finished' => 'Total barang jadi ('.qty($total).' pcs) melebihi output tahap '.$lastStage->stage->label().' ('.qty($lastStage->output_quantity).' pcs). Sesuaikan jumlah jadi per ukuran.',
+                ]);
+            }
+
             // HPP aktual: bahan yang dikeluarkan + biaya konversi, dibebankan ke barang jadi (bukan reject)
             $materialCost = round($order->materials()->get()->sum(fn ($line) => (float) $line->issued_quantity * (float) $line->unit_cost), 2);
             $conversionCost = round((float) $order->costs()->sum('amount'), 2);

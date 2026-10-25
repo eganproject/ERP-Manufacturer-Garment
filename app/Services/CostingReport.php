@@ -32,7 +32,7 @@ class CostingReport
             ->join('sales_orders', 'sales_orders.id', '=', 'sales_order_items.sales_order_id')
             ->join('product_variants', 'product_variants.id', '=', 'sales_order_items.product_variant_id')
             ->whereNotIn('sales_orders.status', [SalesOrderStatus::Draft->value, SalesOrderStatus::Cancelled->value])
-            ->whereBetween('sales_orders.order_date', [$from->toDateString(), $to->toDateString()])
+            ->whereBetween('sales_orders.order_date', [$from->toDateString(), $to->toDateString().' 23:59:59'])
             ->selectRaw('product_variants.product_id, SUM(sales_order_items.quantity) as qty, SUM(sales_order_items.subtotal) as amount')
             ->groupBy('product_variants.product_id')
             ->get()

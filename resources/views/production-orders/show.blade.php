@@ -12,7 +12,7 @@
             <x-delete-button :action="route('production-orders.destroy', $order)" class="btn-secondary !text-red-600" />
             <x-action-form :action="route('production-orders.cancel', $order)" confirm="SPK akan dibatalkan." button="Ya, batalkan">Batalkan</x-action-form>
             <a href="{{ route('production-orders.edit', $order) }}" class="btn-secondary">Ubah</a>
-            <x-action-form :action="route('production-orders.start', $order)" :confirm="$order->subcontractOrders->where('status', \App\Enums\SubcontractStatus::Open)->isNotEmpty() ? 'Bahan untuk internal dikeluarkan dari gudang. Bahan yang direncanakan ke vendor maklon dikirim lewat order maklon.' : 'Bahan baku akan dikeluarkan dari gudang sesuai kebutuhan BOM.'" icon="question" button="Ya, mulai produksi" class="btn-primary">Mulai Produksi</x-action-form>
+            <x-action-form :action="route('production-orders.start', $order)" :confirm="$order->subcontractOrders->where('status', \App\Enums\SubcontractStatus::Open)->isNotEmpty() ? 'Bahan untuk internal dikeluarkan dari gudang. Bahan yang direncanakan ke vendor maklon dikirim lewat order maklon.' : 'Bahan baku akan dikeluarkan dari gudang sesuai kebutuhan BOM. Bila ada tahap yang dikerjakan vendor maklon dengan bahan dari gudang, buat order maklon dulu agar bahannya dikirim lewat order maklon.'" icon="question" button="Ya, mulai produksi" class="btn-primary">Mulai Produksi</x-action-form>
         @endif
     </x-slot:actions>
 
@@ -21,7 +21,7 @@
             <dl class="space-y-3 text-sm">
                 <div><dt class="text-gray-500">Status</dt><dd><x-status-badge :status="$order->status" /></dd></div>
                 <div><dt class="text-gray-500">Produk</dt><dd class="font-medium">{{ $order->product->code }} - {{ $order->product->name }}</dd></div>
-                <div><dt class="text-gray-500">BOM</dt><dd><a href="{{ route('boms.show', $order->bom) }}" class="text-indigo-600 hover:underline">{{ $order->bom->name }}</a></dd></div>
+                <div><dt class="text-gray-500">BOM</dt><dd>@can('boms.manage')<a href="{{ route('boms.show', $order->bom) }}" class="text-indigo-600 hover:underline">{{ $order->bom->name }}</a>@else{{ $order->bom->name }}@endcan</dd></div>
                 <div><dt class="text-gray-500">Sales Order</dt><dd>
                     @if ($order->salesOrder)<a href="{{ route('sales-orders.show', $order->salesOrder) }}" class="text-indigo-600 hover:underline">{{ $order->salesOrder->number }}</a> · {{ $order->salesOrder->customer->name }}@else - @endif
                 </dd></div>
@@ -38,6 +38,18 @@
             </dl>
         </x-card>
 
+        @php
+            // Saran jumlah jadi: rencana per ukuran, dikurangi kekurangan output tahap terakhir mulai dari ukuran terbanyak
+            $suggestFinished = $order->items->mapWithKeys(fn ($i) => [$i->id => (float) $i->quantity])->all();
+            $lastOutput = (float) ($order->stages->sortBy('sequence')->last()?->output_quantity ?? 0);
+            $shortfall = $lastOutput > 0 ? array_sum($suggestFinished) - $lastOutput : 0;
+            foreach ($order->items->sortByDesc('quantity') as $i) {
+                if ($shortfall <= 0) break;
+                $cut = min($shortfall, $suggestFinished[$i->id]);
+                $suggestFinished[$i->id] -= $cut;
+                $shortfall -= $cut;
+            }
+        @endphp
         <x-card title="Rincian per Ukuran" :padding="false" class="lg:col-span-2">
             <form method="POST" action="{{ route('production-orders.complete', $order) }}" data-confirm="Barang jadi akan dimasukkan ke stok dan SPK ditutup." data-confirm-icon="question" data-confirm-button="Ya, selesaikan">
                 @csrf
@@ -51,7 +63,7 @@
                                 <td class="text-right">{{ qty($item->quantity) }}</td>
                                 <td class="text-right">
                                     @if ($inProgress && $allStagesDone)
-                                        <input type="number" min="0" max="{{ (float) $item->quantity }}" step="1" name="finished[{{ $item->id }}]" value="{{ old('finished.'.$item->id, (float) $item->quantity) }}" class="form-control text-right">
+                                        <input type="number" min="0" max="{{ (float) $item->quantity }}" step="1" name="finished[{{ $item->id }}]" value="{{ old('finished.'.$item->id, $suggestFinished[$item->id]) }}" class="form-control text-right">
                                     @else
                                         {{ qty($item->finished_quantity) }}
                                     @endif
@@ -63,7 +75,11 @@
                 @if ($inProgress && $allStagesDone && $order->subcontractOrders->contains(fn ($s) => $s->isOpen()))
                     <p class="border-t border-gray-200 p-4 text-sm text-amber-700">Tutup order maklon yang masih berjalan (retur sisa bahan & rekonsiliasi) sebelum menyelesaikan produksi.</p>
                 @elseif ($inProgress && $allStagesDone)
+                    @php $lastStage = $order->stages->sortBy('sequence')->last(); @endphp
                     <div class="flex flex-wrap items-end justify-end gap-3 border-t border-gray-200 p-4">
+                        @if ($lastStage && (float) $lastStage->output_quantity > 0)
+                            <p class="mr-auto self-center text-sm text-gray-600">Output tahap {{ $lastStage->stage->label() }}: <span class="font-semibold">{{ qty($lastStage->output_quantity) }} pcs</span>. Total jadi per ukuran tidak boleh melebihi angka ini.</p>
+                        @endif
                         <div class="w-40"><x-form.input name="reject_quantity" type="number" min="0" step="1" label="Total Reject" :value="$order->stages->sum('reject_quantity')" /></div>
                         <button type="submit" class="btn-success">Selesaikan Produksi</button>
                     </div>

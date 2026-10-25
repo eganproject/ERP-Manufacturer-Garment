@@ -52,7 +52,7 @@ class TradeReport
         $documents = $model::query()
             ->with([$partyRelation, $itemRelation])
             ->where('status', '!=', InvoiceStatus::Cancelled)
-            ->whereBetween($dateColumn, [$from->toDateString(), $to->toDateString()])
+            ->whereBetween($dateColumn, [$from->toDateString(), $to->toDateString().' 23:59:59'])
             ->when($partyId, fn ($q, $id) => $q->where($partyColumn, $id))
             ->orderBy($dateColumn)
             ->orderBy('id')
@@ -95,7 +95,7 @@ class TradeReport
                 ->when($partyId, fn ($q, $id) => $q->where('supplier_id', $id));
 
         $summary = [
-            'orders' => (float) $orders->whereBetween('order_date', [$from->toDateString(), $to->toDateString()])->sum('total'),
+            'orders' => (float) $orders->whereBetween('order_date', [$from->toDateString(), $to->toDateString().' 23:59:59'])->sum('total'),
             'average' => $totals['count'] > 0 ? round(($totals['dpp'] + $totals['returns']) / $totals['count'], 2) : 0,
         ];
 
@@ -116,7 +116,7 @@ class TradeReport
             ->with($relations)
             ->where('status', ReturnStatus::Posted)
             ->where('total', '>', 0)
-            ->whereBetween('return_date', [$from->toDateString(), $to->toDateString()])
+            ->whereBetween('return_date', [$from->toDateString(), $to->toDateString().' 23:59:59'])
             ->when($partyId, fn ($q, $id) => $q->where($partyColumn, $id))
             ->orderBy('return_date')
             ->get()

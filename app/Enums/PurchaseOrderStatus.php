@@ -9,6 +9,7 @@ enum PurchaseOrderStatus: string
     case Ordered = 'ordered';
     case Partial = 'partial';
     case Received = 'received';
+    case Closed = 'closed';
     case Cancelled = 'cancelled';
 
     public function label(): string
@@ -19,6 +20,7 @@ enum PurchaseOrderStatus: string
             self::Ordered => 'Dipesan',
             self::Partial => 'Diterima Sebagian',
             self::Received => 'Diterima Lengkap',
+            self::Closed => 'Ditutup',
             self::Cancelled => 'Dibatalkan',
         };
     }
@@ -31,6 +33,7 @@ enum PurchaseOrderStatus: string
             self::Ordered => 'blue',
             self::Partial => 'amber',
             self::Received => 'green',
+            self::Closed => 'gray',
             self::Cancelled => 'red',
         };
     }
