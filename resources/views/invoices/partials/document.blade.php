@@ -27,6 +27,15 @@
                 </dd>
             </div>
             <div><dt class="text-gray-500">Dibuat oleh</dt><dd>{{ $doc->creator?->name ?? '-' }}</dd></div>
+            @if ($isInvoice && auth()->user()->can('costing.view'))
+                @php $profit = $doc->grossProfit(); @endphp
+                <div>
+                    <dt class="text-gray-500">HPP / Laba Kotor</dt>
+                    <dd>{{ rupiah($doc->costOfGoods()) }} / <span @class(['font-medium', 'text-emerald-700' => $profit >= 0, 'text-red-600' => $profit < 0])>{{ rupiah($profit) }}</span>
+                        @if ($doc->netSales() > 0)<span class="text-gray-500">({{ number_format($profit / $doc->netSales() * 100, 1, ',', '.') }}%)</span>@endif
+                    </dd>
+                </div>
+            @endif
             @if ($doc->notes)<div><dt class="text-gray-500">Catatan</dt><dd>{{ $doc->notes }}</dd></div>@endif
         </dl>
     </x-card>

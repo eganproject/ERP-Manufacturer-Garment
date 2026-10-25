@@ -11,7 +11,11 @@ class SettingController extends Controller
 {
     public function edit()
     {
-        return view('settings.edit', ['company' => Setting::company(), 'invoice' => Setting::invoice()]);
+        return view('settings.edit', [
+            'company' => Setting::company(),
+            'invoice' => Setting::invoice(),
+            'poApprovalThreshold' => Setting::poApprovalThreshold(),
+        ]);
     }
 
     public function update(Request $request)
@@ -28,7 +32,10 @@ class SettingController extends Controller
             'invoice_tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'invoice_bank_info' => ['nullable', 'string', 'max:500'],
             'invoice_notes' => ['nullable', 'string', 'max:500'],
-        ], [], ['invoice_tax_rate' => 'PPN default', 'invoice_bank_info' => 'rekening pembayaran']);
+            'po_approval_threshold' => ['nullable', 'numeric', 'min:0'],
+        ], [], ['invoice_tax_rate' => 'PPN default', 'invoice_bank_info' => 'rekening pembayaran', 'po_approval_threshold' => 'batas persetujuan PO']);
+
+        $data['po_approval_threshold'] = (float) ($data['po_approval_threshold'] ?? 0);
 
         $old = Setting::get('company_logo');
 

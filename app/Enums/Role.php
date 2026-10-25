@@ -30,6 +30,7 @@ enum Role: string
             'boms.manage' => 'Kelola Bill of Materials',
             'purchase.view' => 'Lihat PO & penerimaan barang',
             'purchase.manage' => 'Buat/ubah/pesan PO',
+            'purchase.approve' => 'Setujui / tolak PO di atas batas nilai',
             'purchase.receive' => 'Terima barang dari supplier',
             'sales.view' => 'Lihat SO & surat jalan',
             'sales.manage' => 'Buat/ubah/konfirmasi SO',
@@ -82,7 +83,7 @@ enum Role: string
             self::Gudang => 'Menerima barang, mengirim barang (surat jalan), dan stock opname.',
             self::Produksi => 'Mengelola BOM, SPK produksi dari potong sampai packing, MRP, dan biaya produksi (HPP).',
             self::Sales => 'Mengelola pelanggan dan sales order, memantau piutang.',
-            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, serta umur piutang/hutang dan laporan HPP & margin.',
+            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, menyetujui PO bernilai besar, serta umur piutang/hutang dan laporan HPP & laba kotor.',
         };
     }
 
@@ -122,7 +123,7 @@ enum Role: string
             ],
             self::Keuangan => [
                 'customers.manage', 'suppliers.manage',
-                'sales.view', 'purchase.view',
+                'sales.view', 'purchase.view', 'purchase.approve',
                 'receivables.view', 'receivables.manage',
                 'payables.view', 'payables.manage',
                 'costing.view',

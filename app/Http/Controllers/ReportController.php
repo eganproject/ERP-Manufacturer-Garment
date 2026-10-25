@@ -41,13 +41,15 @@ class ReportController extends Controller
         $partyId = $request->integer('party_id') ?: null;
         $parties = ($kind === 'sales' ? Customer::query() : Supplier::query())->orderBy('name')->pluck('name', 'id');
 
-        $data = $report->build($kind, $from, $to, $groupBy, $partyId);
+        // HPP & laba kotor hanya untuk pengguna yang boleh melihat harga pokok
+        $withCost = $kind === 'sales' && $request->user()->can('costing.view');
+        $data = $report->build($kind, $from, $to, $groupBy, $partyId, $withCost);
 
-        if ($response = ReportExport::respond($report->table($kind, $data, $groupBy, $from, $to, $parties[$partyId] ?? null), $request->query('export'))) {
+        if ($response = ReportExport::respond($report->table($kind, $data, $groupBy, $from, $to, $parties[$partyId] ?? null, $withCost), $request->query('export'))) {
             return $response;
         }
 
-        return view('reports.trade', $data + compact('kind', 'from', 'to', 'groupBy', 'partyId', 'parties'));
+        return view('reports.trade', $data + compact('kind', 'from', 'to', 'groupBy', 'partyId', 'parties', 'withCost'));
     }
 
     public function production(Request $request, ProductionReport $report)

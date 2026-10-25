@@ -48,6 +48,23 @@ class Invoice extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** Penjualan bersih (DPP): subtotal dikurangi diskon, sebelum PPN. */
+    public function netSales(): float
+    {
+        return round((float) $this->subtotal - (float) $this->discount, 2);
+    }
+
+    /** HPP barang yang ditagih pada invoice ini. */
+    public function costOfGoods(): float
+    {
+        return round((float) $this->items->sum('cost'), 2);
+    }
+
+    public function grossProfit(): float
+    {
+        return round($this->netSales() - $this->costOfGoods(), 2);
+    }
+
     public function party(): Customer
     {
         return $this->customer;

@@ -9,3 +9,5 @@
 - Gunakan class `form-control` (bukan `form-input`, bentrok dengan plugin @tailwindcss/forms) dan atribut `data-select`, `data-date`, `data-money` untuk plugin form.
 - Jalankan `php artisan test` dan `./vendor/bin/pint` sebelum commit.
 - Keuangan: invoice (AR) dibuat dari barang terkirim (`InvoiceService`), tagihan supplier (AP) dari barang diterima (`BillService`), pembayaran lewat `PaymentService` (alokasi ke banyak dokumen). Jangan ubah `paid_amount`/status invoice langsung; panggil `refreshPaymentStatus()` (trait `Payable`).
+- HPP penjualan: surat jalan menyimpan `delivery_items.unit_cost/cost` (harga pokok rata-rata saat kirim), invoice menyalin HPP rata-rata baris SO ke `invoice_items.cost`. Laba kotor = DPP invoice − HPP; tampil hanya untuk hak `costing.view`.
+- Persetujuan PO: `PurchaseService::submit/approve/reject`. PO ≥ `Setting::poApprovalThreshold()` (0 = nonaktif) berstatus `PendingApproval` sampai disetujui pengguna ber-hak `purchase.approve` yang bukan pembuatnya (kecuali admin).

@@ -51,12 +51,16 @@ class InvoiceService
                     ]);
                 }
 
+                $unitCost = $item->deliveredUnitCost();
+
                 $lines[] = [
                     'sales_order_item_id' => $item->id,
                     'product_variant_id' => $item->product_variant_id,
                     'quantity' => $qty,
                     'price' => $item->price,
                     'subtotal' => round($qty * (float) $item->price, 2),
+                    'unit_cost' => $unitCost,
+                    'cost' => round($qty * $unitCost, 2),
                 ];
 
                 $item->invoiced_quantity = (float) $item->invoiced_quantity + $qty;

@@ -59,18 +59,22 @@ class SalesService
                     ]);
                 }
 
+                $item->increment('delivered_quantity', $qty);
+
+                // Barang keluar dinilai dengan harga pokok rata-rata varian saat itu (HPP penjualan)
+                $movement = $this->stock->move(
+                    $item->variant, -1 * $qty, StockMovementType::SalesDelivery,
+                    $delivery, $delivery->number, 'Pengiriman '.$order->number.' ke '.$order->customer->name, $date,
+                );
+                $unitCost = round((float) $movement->unit_cost, 2);
+
                 $delivery->items()->create([
                     'sales_order_item_id' => $item->id,
                     'product_variant_id' => $item->product_variant_id,
                     'quantity' => $qty,
+                    'unit_cost' => $unitCost,
+                    'cost' => round($unitCost * $qty, 2),
                 ]);
-
-                $item->increment('delivered_quantity', $qty);
-
-                $this->stock->move(
-                    $item->variant, -1 * $qty, StockMovementType::SalesDelivery,
-                    $delivery, $delivery->number, 'Pengiriman '.$order->number.' ke '.$order->customer->name, $date,
-                );
             }
 
             $order->refreshDeliveryStatus();

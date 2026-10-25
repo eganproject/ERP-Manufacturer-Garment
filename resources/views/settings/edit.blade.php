@@ -32,6 +32,12 @@
                 <x-form.textarea name="invoice_bank_info" label="Rekening Pembayaran" :value="$invoice['bank_info']" rows="3" placeholder="BCA 123-456-7890 a.n. CV Garmen Contoh" class="sm:col-span-2" />
                 <x-form.textarea name="invoice_notes" label="Catatan Kaki Invoice" :value="$invoice['invoice_notes']" rows="2" placeholder="Barang yang sudah dibeli tidak dapat dikembalikan." class="sm:col-span-2" />
             </div>
+
+            <h3 class="mt-8 mb-3 border-t border-gray-200 pt-5 text-sm font-semibold text-gray-800">Persetujuan Pembelian</h3>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <x-form.input name="po_approval_threshold" label="Batas Persetujuan PO (Rp)" :value="$poApprovalThreshold" data-money inputmode="numeric"
+                    help="PO dengan total sebesar ini atau lebih harus disetujui pengguna berhak 'Setujui PO' (Admin/Keuangan) sebelum dipesan. Isi 0 untuk menonaktifkan." />
+            </div>
             <x-form.actions />
         </form>
     </x-card>

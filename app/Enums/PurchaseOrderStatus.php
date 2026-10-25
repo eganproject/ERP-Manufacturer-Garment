@@ -5,6 +5,7 @@ namespace App\Enums;
 enum PurchaseOrderStatus: string
 {
     case Draft = 'draft';
+    case PendingApproval = 'pending_approval';
     case Ordered = 'ordered';
     case Partial = 'partial';
     case Received = 'received';
@@ -14,6 +15,7 @@ enum PurchaseOrderStatus: string
     {
         return match ($this) {
             self::Draft => 'Draft',
+            self::PendingApproval => 'Menunggu Persetujuan',
             self::Ordered => 'Dipesan',
             self::Partial => 'Diterima Sebagian',
             self::Received => 'Diterima Lengkap',
@@ -25,6 +27,7 @@ enum PurchaseOrderStatus: string
     {
         return match ($this) {
             self::Draft => 'gray',
+            self::PendingApproval => 'indigo',
             self::Ordered => 'blue',
             self::Partial => 'amber',
             self::Received => 'green',

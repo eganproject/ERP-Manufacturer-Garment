@@ -35,6 +35,11 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // PO senilai Rp10 juta ke atas perlu disetujui (Admin / Keuangan)
+        if (Setting::get('po_approval_threshold') === null) {
+            Setting::put(['po_approval_threshold' => 10000000]);
+        }
+
         $this->call(MasterDataSeeder::class);
     }
 }

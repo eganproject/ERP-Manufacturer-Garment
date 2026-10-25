@@ -58,6 +58,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::resource('purchase-orders', PurchaseOrderController::class);
     Route::controller(PurchaseOrderController::class)->prefix('purchase-orders/{purchase_order}')->name('purchase-orders.')->group(function () {
         Route::post('submit', 'submit')->name('submit');
+        Route::post('approve', 'approve')->name('approve');
+        Route::post('reject', 'reject')->name('reject');
         Route::post('cancel', 'cancel')->name('cancel');
         Route::get('receive', 'receiveForm')->name('receive');
         Route::post('receive', 'receive')->name('receive.store');
