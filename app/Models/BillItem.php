@@ -24,6 +24,11 @@ class BillItem extends Model
         return $this->belongsTo(PurchaseOrderItem::class);
     }
 
+    public function subcontractReceipt()
+    {
+        return $this->belongsTo(SubcontractReceipt::class);
+    }
+
     public function material()
     {
         return $this->belongsTo(Material::class);

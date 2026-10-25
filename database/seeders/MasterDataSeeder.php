@@ -66,6 +66,10 @@ class MasterDataSeeder extends Seeder
             $textile = Supplier::firstOrCreate(['code' => 'SUP-001'], ['name' => 'PT Tekstil Nusantara', 'contact_person' => 'Budi', 'phone' => '0812-3456-7890', 'address' => 'Bandung, Jawa Barat']);
             $accessories = Supplier::firstOrCreate(['code' => 'SUP-002'], ['name' => 'CV Aksesoris Garmen Jaya', 'contact_person' => 'Sari', 'phone' => '0813-2222-3333', 'address' => 'Jakarta Pusat']);
 
+            // Vendor maklon (CMT) yang menerima titipan bahan
+            Supplier::firstOrCreate(['code' => 'MKL-001'], ['name' => 'CMT Bu Ani', 'contact_person' => 'Ani', 'phone' => '0815-7777-8888', 'address' => 'Majalaya, Kab. Bandung', 'is_subcontractor' => true, 'payment_terms' => 14]);
+            Supplier::firstOrCreate(['code' => 'MKL-002'], ['name' => 'Konveksi Maju Bersama', 'contact_person' => 'Dedi', 'phone' => '0819-3333-4444', 'address' => 'Cigondewah, Bandung', 'is_subcontractor' => true, 'payment_terms' => 7]);
+
             // Supplier utama untuk saran PO dari MRP
             foreach ($materials as $material) {
                 if (! $material->default_supplier_id) {

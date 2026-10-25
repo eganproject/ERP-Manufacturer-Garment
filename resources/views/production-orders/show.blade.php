@@ -12,7 +12,7 @@
             <x-delete-button :action="route('production-orders.destroy', $order)" class="btn-secondary !text-red-600" />
             <x-action-form :action="route('production-orders.cancel', $order)" confirm="SPK akan dibatalkan." button="Ya, batalkan">Batalkan</x-action-form>
             <a href="{{ route('production-orders.edit', $order) }}" class="btn-secondary">Ubah</a>
-            <x-action-form :action="route('production-orders.start', $order)" confirm="Bahan baku akan dikeluarkan dari gudang sesuai kebutuhan BOM." icon="question" button="Ya, mulai produksi" class="btn-primary">Mulai Produksi</x-action-form>
+            <x-action-form :action="route('production-orders.start', $order)" :confirm="$order->subcontractOrders->where('status', \App\Enums\SubcontractStatus::Open)->isNotEmpty() ? 'Bahan untuk internal dikeluarkan dari gudang. Bahan yang direncanakan ke vendor maklon dikirim lewat order maklon.' : 'Bahan baku akan dikeluarkan dari gudang sesuai kebutuhan BOM.'" icon="question" button="Ya, mulai produksi" class="btn-primary">Mulai Produksi</x-action-form>
         @endif
     </x-slot:actions>
 
@@ -60,7 +60,9 @@
                         @endforeach
                     </tbody>
                 </table>
-                @if ($inProgress && $allStagesDone)
+                @if ($inProgress && $allStagesDone && $order->subcontractOrders->contains(fn ($s) => $s->isOpen()))
+                    <p class="border-t border-gray-200 p-4 text-sm text-amber-700">Tutup order maklon yang masih berjalan (retur sisa bahan & rekonsiliasi) sebelum menyelesaikan produksi.</p>
+                @elseif ($inProgress && $allStagesDone)
                     <div class="flex flex-wrap items-end justify-end gap-3 border-t border-gray-200 p-4">
                         <div class="w-40"><x-form.input name="reject_quantity" type="number" min="0" step="1" label="Total Reject" :value="$order->stages->sum('reject_quantity')" /></div>
                         <button type="submit" class="btn-success">Selesaikan Produksi</button>
@@ -70,6 +72,37 @@
                 @endif
             </form>
         </x-card>
+
+        @php $canSubcontract = in_array($order->status, [ProductionOrderStatus::Draft, ProductionOrderStatus::InProgress], true) && auth()->user()->can('subcontract.manage'); @endphp
+        @if ($order->subcontractOrders->isNotEmpty() || $canSubcontract)
+            <x-card title="Maklon (Vendor Luar)" :padding="false" class="lg:col-span-3">
+                @if ($canSubcontract)
+                    <x-slot:header>
+                        <a href="{{ route('subcontract-orders.create', ['production_order_id' => $order->id]) }}" class="btn-secondary py-1.5">+ Order Maklon</a>
+                    </x-slot:header>
+                @endif
+                <div class="overflow-x-auto">
+                    <table class="table-base">
+                        <thead><tr><th>No. Order</th><th>Vendor</th><th>Tahap</th><th class="text-right">Qty</th><th class="text-right">Bagus / Reject</th><th class="text-right">Ongkos Jasa</th><th>Status</th></tr></thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse ($order->subcontractOrders as $sub)
+                                <tr>
+                                    <td><a href="{{ route('subcontract-orders.show', $sub) }}" class="font-medium text-indigo-600 hover:underline">{{ $sub->number }}</a></td>
+                                    <td>{{ $sub->supplier->name }}</td>
+                                    <td class="text-xs">{{ $sub->stagesLabel() }}</td>
+                                    <td class="text-right">{{ qty($sub->quantity) }}</td>
+                                    <td class="text-right whitespace-nowrap">{{ qty($sub->received_quantity) }} / {{ qty($sub->reject_quantity) }}</td>
+                                    <td class="text-right whitespace-nowrap">{{ rupiah($sub->service_cost) }}</td>
+                                    <td><x-status-badge :status="$sub->status" /></td>
+                                </tr>
+                            @empty
+                                <x-empty-row colspan="7" message="Semua tahap dikerjakan internal. Buat order maklon bila sebagian / seluruh tahap dikerjakan vendor luar dengan bahan dari gudang." />
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </x-card>
+        @endif
 
         <x-card title="Tahapan Produksi" class="lg:col-span-3">
             <ol class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -82,13 +115,16 @@
                             </div>
                             <x-badge :color="$stage->status->color()">{{ $stage->status->label() }}</x-badge>
                         </div>
+                        @if ($stage->subcontractOrder && $stage->subcontractOrder->status !== \App\Enums\SubcontractStatus::Cancelled)
+                            <a href="{{ route('subcontract-orders.show', $stage->subcontractOrder) }}" class="mt-2 inline-flex"><x-badge color="indigo">Maklon · {{ $stage->subcontractOrder->supplier->name }}</x-badge></a>
+                        @endif
                         <dl class="mt-3 space-y-1 text-xs text-gray-600">
                             <div class="flex justify-between"><dt>Output</dt><dd class="font-medium">{{ qty($stage->output_quantity) }}</dd></div>
                             <div class="flex justify-between"><dt>Reject</dt><dd class="font-medium">{{ qty($stage->reject_quantity) }}</dd></div>
                             <div class="flex justify-between"><dt>PIC</dt><dd>{{ $stage->pic ?: '-' }}</dd></div>
                             @if ($stage->finished_at)<div class="flex justify-between"><dt>Selesai</dt><dd>{{ tanggal($stage->finished_at, 'd M H:i') }}</dd></div>@endif
                         </dl>
-                        @if ($inProgress)
+                        @if ($inProgress && ! ($stage->subcontractOrder?->isOpen()))
                             <button type="button" class="mt-3 text-xs font-medium text-indigo-600 hover:underline" @click="edit = !edit" x-text="edit ? 'Tutup' : 'Perbarui'"></button>
                             <form x-cloak x-show="edit" method="POST" action="{{ route('production-orders.stages.update', [$order, $stage]) }}" class="mt-3 space-y-2">
                                 @csrf
@@ -172,7 +208,13 @@
                                     <td>{{ $line->description }}</td>
                                     <td class="text-right whitespace-nowrap">{{ rupiah($line->amount) }}</td>
                                     @if ($canCost)
-                                        <td class="text-right"><x-delete-button :action="route('production-orders.costs.destroy', [$order, $line])" confirm="Biaya ini akan dihapus dari SPK." /></td>
+                                        <td class="text-right">
+                                            @if ($line->subcontract_receipt_id)
+                                                <span class="text-xs text-gray-400" title="Otomatis dari penerimaan hasil maklon">Maklon</span>
+                                            @else
+                                                <x-delete-button :action="route('production-orders.costs.destroy', [$order, $line])" confirm="Biaya ini akan dihapus dari SPK." />
+                                            @endif
+                                        </td>
                                     @endif
                                 </tr>
                             @empty

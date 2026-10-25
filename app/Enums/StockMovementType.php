@@ -11,6 +11,8 @@ enum StockMovementType: string
     case SalesReturn = 'sales_return';
     case PurchaseReturn = 'purchase_return';
     case Adjustment = 'adjustment';
+    case SubcontractIssue = 'subcontract_issue';
+    case SubcontractReturn = 'subcontract_return';
 
     public function label(): string
     {
@@ -22,6 +24,8 @@ enum StockMovementType: string
             self::SalesReturn => 'Retur Penjualan',
             self::PurchaseReturn => 'Retur Pembelian',
             self::Adjustment => 'Penyesuaian Stok',
+            self::SubcontractIssue => 'Kirim ke Vendor Maklon',
+            self::SubcontractReturn => 'Retur dari Vendor Maklon',
         };
     }
 }

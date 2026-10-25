@@ -43,16 +43,19 @@
     <x-card title="Item" :padding="false" class="lg:col-span-2">
         <div class="overflow-x-auto">
             <table class="table-base">
-                <thead><tr><th>{{ $isInvoice ? 'Produk' : 'Bahan' }}</th><th class="text-right">Qty</th><th class="text-right">Harga</th><th class="text-right">Subtotal</th></tr></thead>
+                <thead><tr><th>{{ $isInvoice ? 'Produk' : 'Bahan / Jasa' }}</th><th class="text-right">Qty</th><th class="text-right">Harga</th><th class="text-right">Subtotal</th></tr></thead>
                 <tbody class="divide-y divide-gray-100">
                     @foreach ($doc->items as $item)
                         <tr>
                             @if ($isInvoice)
                                 <td>{{ $item->variant->display_name }}<div class="text-xs text-gray-500">{{ $item->variant->sku }}</div></td>
                                 <td class="text-right">{{ qty($item->quantity) }}</td>
-                            @else
+                            @elseif ($item->material)
                                 <td>{{ $item->material->display_name }}</td>
                                 <td class="text-right">{{ qty($item->quantity) }} {{ $item->material->unit->code }}</td>
+                            @else
+                                <td>{{ $item->description }}</td>
+                                <td class="text-right">{{ qty($item->quantity) }} pcs</td>
                             @endif
                             <td class="text-right whitespace-nowrap">{{ rupiah($item->price) }}</td>
                             <td class="text-right whitespace-nowrap">{{ rupiah($item->subtotal) }}</td>

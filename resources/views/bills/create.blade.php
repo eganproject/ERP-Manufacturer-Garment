@@ -10,6 +10,15 @@
         @if ($billableOrders->isEmpty())
             <p class="mt-3 text-sm text-gray-500">Belum ada PO dengan barang diterima yang belum ditagih.</p>
         @endif
+        @if ($billableSubcontracts->isNotEmpty())
+            <form method="GET" action="{{ route('bills.create') }}" class="mt-4 flex flex-wrap items-end gap-2 border-t border-gray-100 pt-4">
+                <div class="w-full sm:w-[28rem]">
+                    <x-form.select name="subcontract_order_id" label="Atau tagihan jasa maklon" placeholder="Pilih order maklon yang hasilnya belum ditagih..." data-select
+                        :options="$billableSubcontracts->mapWithKeys(fn ($o) => [$o->id => $o->number.' · '.$o->supplier->name])" />
+                </div>
+                <button type="submit" class="btn-secondary">Tampilkan</button>
+            </form>
+        @endif
     </x-card>
 
     @if ($order)

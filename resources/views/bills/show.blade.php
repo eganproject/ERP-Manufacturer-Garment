@@ -13,5 +13,9 @@
         @endcan
     </x-slot:actions>
 
-    @include('invoices.partials.document', ['doc' => $bill, 'party' => $bill->supplier, 'source' => $bill->purchaseOrder, 'sourceRoute' => 'purchase-orders.show', 'sourceLabel' => 'Purchase Order', 'sourceCan' => 'purchase.view'])
+    @if ($bill->subcontractOrder)
+        @include('invoices.partials.document', ['doc' => $bill, 'party' => $bill->supplier, 'source' => $bill->subcontractOrder, 'sourceRoute' => 'subcontract-orders.show', 'sourceLabel' => 'Order Maklon', 'sourceCan' => 'production.view'])
+    @else
+        @include('invoices.partials.document', ['doc' => $bill, 'party' => $bill->supplier, 'source' => $bill->purchaseOrder, 'sourceRoute' => 'purchase-orders.show', 'sourceLabel' => 'Purchase Order', 'sourceCan' => 'purchase.view'])
+    @endif
 </x-layouts.app>

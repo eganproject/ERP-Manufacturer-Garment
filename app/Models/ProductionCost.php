@@ -20,6 +20,11 @@ class ProductionCost extends Model
         return $this->belongsTo(ProductionOrder::class);
     }
 
+    public function subcontractReceipt()
+    {
+        return $this->belongsTo(SubcontractReceipt::class);
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

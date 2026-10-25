@@ -104,6 +104,11 @@ class ProductionOrder extends Model
         ];
     }
 
+    public function subcontractOrders()
+    {
+        return $this->hasMany(SubcontractOrder::class)->orderBy('id');
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

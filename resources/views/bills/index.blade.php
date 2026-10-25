@@ -14,14 +14,14 @@
 
     <x-card :padding="false">
         <div class="border-b border-gray-200 p-4">
-            <x-search-filter placeholder="Cari no. tagihan / faktur / PO / supplier...">
+            <x-search-filter placeholder="Cari no. tagihan / faktur / PO / maklon / supplier...">
                 <div class="w-56"><x-form.select name="supplier_id" :options="$suppliers" :value="request('supplier_id')" placeholder="Semua supplier" data-select /></div>
                 <div class="w-48"><x-form.select name="status" :options="['overdue' => 'Jatuh Tempo'] + \App\Enums\InvoiceStatus::options()" :value="request('status')" placeholder="Semua status" /></div>
             </x-search-filter>
         </div>
         <div class="overflow-x-auto">
             <table class="table-base">
-                <thead><tr><th>No. Tagihan</th><th>Supplier</th><th>PO</th><th>Tanggal</th><th>Jatuh Tempo</th><th class="text-right">Total</th><th class="text-right">Sisa</th><th>Status</th></tr></thead>
+                <thead><tr><th>No. Tagihan</th><th>Supplier</th><th>PO / Maklon</th><th>Tanggal</th><th>Jatuh Tempo</th><th class="text-right">Total</th><th class="text-right">Sisa</th><th>Status</th></tr></thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($bills as $bill)
                         <tr>
@@ -30,7 +30,7 @@
                                 @if ($bill->supplier_invoice_number)<div class="text-xs text-gray-500">Faktur {{ $bill->supplier_invoice_number }}</div>@endif
                             </td>
                             <td>{{ $bill->supplier->name }}</td>
-                            <td>{{ $bill->purchaseOrder->number }}</td>
+                            <td>{{ $bill->source()?->number ?? '-' }}</td>
                             <td>{{ tanggal($bill->bill_date) }}</td>
                             <td @class(['text-red-600 font-medium' => $bill->isOverdue()])>
                                 {{ tanggal($bill->due_date) }}
