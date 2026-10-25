@@ -1,19 +1,116 @@
 <x-layouts.app title="Dashboard">
+    @php
+        $pct = fn ($v) => number_format((float) $v, 1, ',', '.').'%';
+        $growth = $invoiced['growth'];
+        $cards = array_filter([
+            $receivables !== null ? [
+                'label' => 'Penjualan terfaktur bulan ini', 'value' => rupiah($invoiced['current']),
+                'hint' => $growth === null ? 'Bulan lalu '.rupiah($invoiced['previous']) : (($growth >= 0 ? '▲ ' : '▼ ').$pct(abs($growth)).' dibanding bulan lalu'),
+                'tone' => $growth === null ? null : ($growth >= 0 ? 'green' : 'red'),
+                'link' => route('reports.sales'),
+            ] : null,
+            auth()->user()->can('sales.view') ? [
+                'label' => 'Pesanan (SO) bulan ini', 'value' => rupiah($stats['sales_this_month']),
+                'hint' => $stats['open_sales'].' SO menunggu dikirim', 'link' => route('sales-orders.index'),
+            ] : null,
+            $receivables !== null ? [
+                'label' => 'Piutang pelanggan', 'value' => rupiah($receivables['outstanding']),
+                'hint' => $receivables['overdue'] > 0 ? 'Lewat jatuh tempo '.rupiah($receivables['overdue']) : $receivables['count'].' invoice belum lunas',
+                'tone' => $receivables['overdue'] > 0 ? 'red' : null, 'link' => route('reports.receivables-aging'),
+            ] : null,
+            $payables !== null ? [
+                'label' => 'Hutang supplier', 'value' => rupiah($payables['outstanding']),
+                'hint' => 'Jatuh tempo ≤ 7 hari '.rupiah($stats['payable_due']),
+                'tone' => $stats['payable_due'] > 0 ? 'amber' : null, 'link' => route('reports.payables-aging'),
+            ] : null,
+            $production !== null ? [
+                'label' => 'Produksi selesai bulan ini', 'value' => qty($production['finished']).' pcs',
+                'hint' => 'Reject '.$pct($production['reject_rate']).' · '.$stats['active_production'].' SPK berjalan',
+                'tone' => $production['reject_rate'] > 5 ? 'red' : null, 'link' => route('reports.production'),
+            ] : null,
+            $stockValue !== null ? [
+                'label' => 'Nilai persediaan', 'value' => rupiah($stockValue['materials'] + $stockValue['products']),
+                'hint' => 'Bahan '.rupiah($stockValue['materials']).' · Jadi '.rupiah($stockValue['products']),
+                'link' => route('reports.stock-valuation'),
+            ] : null,
+            auth()->user()->can('purchase.view') ? [
+                'label' => 'PO belum diterima', 'value' => $stats['open_purchases'],
+                'hint' => 'PO dipesan / diterima sebagian', 'link' => route('purchase-orders.index'),
+            ] : null,
+        ]);
+        $maxTrend = max(1, (float) $trend->max('sales'), (float) $trend->max('purchases'));
+        $showSales = auth()->user()->can('receivables.view');
+        $showPurchases = auth()->user()->can('payables.view');
+    @endphp
+
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        @foreach (array_filter([
-            ['label' => 'Penjualan bulan ini', 'value' => rupiah($stats['sales_this_month']), 'link' => route('sales-orders.index'), 'can' => 'sales.view'],
-            ['label' => 'SO menunggu dikirim', 'value' => $stats['open_sales'], 'link' => route('sales-orders.index', ['status' => 'confirmed']), 'can' => 'sales.view'],
-            ['label' => 'SPK dalam proses', 'value' => $stats['active_production'], 'link' => route('production-orders.index', ['status' => 'in_progress']), 'can' => 'production.view'],
-            ['label' => 'PO belum diterima', 'value' => $stats['open_purchases'], 'link' => route('purchase-orders.index'), 'can' => 'purchase.view'],
-            ['label' => 'Piutang jatuh tempo', 'value' => rupiah($stats['receivable_overdue']), 'link' => route('invoices.index', ['status' => 'overdue']), 'can' => 'receivables.view'],
-            ['label' => 'Hutang jatuh tempo ≤ 7 hari', 'value' => rupiah($stats['payable_due']), 'link' => route('reports.payables-aging'), 'can' => 'payables.view'],
-        ], fn ($card) => auth()->user()->can($card['can'])) as $card)
+        @foreach ($cards as $card)
             <a href="{{ $card['link'] }}" class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-indigo-300">
                 <p class="text-sm text-gray-500">{{ $card['label'] }}</p>
                 <p class="mt-2 text-2xl font-semibold text-gray-900">{{ $card['value'] }}</p>
+                <p @class([
+                    'mt-1 text-xs',
+                    'text-gray-500' => empty($card['tone']),
+                    'text-emerald-600' => ($card['tone'] ?? null) === 'green',
+                    'text-red-600' => ($card['tone'] ?? null) === 'red',
+                    'text-amber-600' => ($card['tone'] ?? null) === 'amber',
+                ])>{{ $card['hint'] }}</p>
             </a>
         @endforeach
     </div>
+
+    @if ($trend->isNotEmpty())
+        <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
+            <x-card title="Tren 6 bulan (DPP)" :class="$showSales ? 'xl:col-span-2' : 'xl:col-span-3'">
+                <x-slot:header>
+                    <div class="flex items-center gap-4 text-xs text-gray-600">
+                        @if ($showSales)<span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-indigo-500"></span>Penjualan</span>@endif
+                        @if ($showPurchases)<span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-amber-400"></span>Pembelian</span>@endif
+                    </div>
+                </x-slot:header>
+                <div class="flex items-end gap-3" role="img" aria-label="Grafik penjualan dan pembelian 6 bulan terakhir">
+                    @foreach ($trend as $point)
+                        <div class="flex-1">
+                            <div class="flex h-48 items-end justify-center gap-1">
+                                @if ($showSales)
+                                    <div class="w-1/3 max-w-8 rounded-t bg-indigo-500 transition hover:bg-indigo-600" style="height: {{ max(0.5, $point['sales'] / $maxTrend * 100) }}%" title="Penjualan {{ $point['label'] }}: {{ rupiah($point['sales']) }}"></div>
+                                @endif
+                                @if ($showPurchases)
+                                    <div class="w-1/3 max-w-8 rounded-t bg-amber-400 transition hover:bg-amber-500" style="height: {{ max(0.5, $point['purchases'] / $maxTrend * 100) }}%" title="Pembelian {{ $point['label'] }}: {{ rupiah($point['purchases']) }}"></div>
+                                @endif
+                            </div>
+                            <div class="mt-2 border-t border-gray-200 pt-1 text-center text-xs leading-5">
+                                <div class="text-gray-500">{{ $point['label'] }}</div>
+                                @if ($showSales)<div class="font-medium text-indigo-600">{{ number_format($point['sales'] / 1000000, 1, ',', '.') }} jt</div>@endif
+                                @if ($showPurchases)<div class="font-medium text-amber-600">{{ number_format($point['purchases'] / 1000000, 1, ',', '.') }} jt</div>@endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </x-card>
+
+            @if ($showSales)
+                <x-card title="Pelanggan teratas bulan ini" :padding="false">
+                    <x-slot:header><a href="{{ route('reports.sales') }}" class="text-xs text-indigo-600 hover:underline">Laporan penjualan</a></x-slot:header>
+                    <table class="table-base">
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse ($topCustomers as $row)
+                                <tr>
+                                    <td>
+                                        <div class="flex justify-between gap-2"><span class="font-medium">{{ $row['name'] }}</span><span class="whitespace-nowrap">{{ rupiah($row['dpp'], false) }}</span></div>
+                                        <div class="mt-1 h-1.5 rounded-full bg-gray-100"><div class="h-1.5 rounded-full bg-indigo-500" style="width: {{ $row['share'] }}%"></div></div>
+                                        <div class="mt-0.5 text-xs text-gray-500">{{ $row['count'] }} invoice · {{ $pct($row['share']) }}</div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <x-empty-row colspan="1" message="Belum ada invoice bulan ini." />
+                            @endforelse
+                        </tbody>
+                    </table>
+                </x-card>
+            @endif
+        </div>
+    @endif
 
     <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         @can('production.view')

@@ -19,6 +19,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockController;
@@ -113,6 +114,14 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::get('reports/receivables-aging', [AgingController::class, 'receivables'])->name('reports.receivables-aging')->middleware('can:receivables.view');
     Route::get('reports/payables-aging', [AgingController::class, 'payables'])->name('reports.payables-aging')->middleware('can:payables.view');
+
+    // Laporan
+    Route::controller(ReportController::class)->prefix('reports')->name('reports.')->group(function () {
+        Route::get('sales', 'sales')->name('sales')->middleware('can:receivables.view');
+        Route::get('purchases', 'purchases')->name('purchases')->middleware('can:payables.view');
+        Route::get('production', 'production')->name('production')->middleware('can:production.view');
+        Route::get('stock-valuation', 'stockValuation')->name('stock-valuation')->middleware('can:costing.view');
+    });
 
     // Persediaan
     Route::controller(StockController::class)->prefix('stock')->name('stock.')->middleware('can:stock.view')->group(function () {

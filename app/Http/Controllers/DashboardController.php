@@ -11,11 +11,16 @@ use App\Models\Material;
 use App\Models\ProductionOrder;
 use App\Models\PurchaseOrder;
 use App\Models\SalesOrder;
+use App\Services\Reports\DashboardMetrics;
+use App\Services\Reports\StockValuationReport;
+use App\Services\Reports\TradeReport;
 
 class DashboardController extends Controller
 {
-    public function __invoke()
+    public function __invoke(DashboardMetrics $metrics, StockValuationReport $valuation, TradeReport $trade)
     {
+        $user = auth()->user();
+
         $stats = [
             'open_sales' => SalesOrder::whereIn('status', SalesOrderStatus::open())->count(),
             'open_purchases' => PurchaseOrder::whereIn('status', [PurchaseOrderStatus::Ordered, PurchaseOrderStatus::Partial])->count(),
@@ -45,6 +50,25 @@ class DashboardController extends Controller
 
         $recentSales = SalesOrder::with('customer')->latest()->limit(5)->get();
 
-        return view('dashboard', compact('stats', 'lowStockMaterials', 'activeProduction', 'recentSales', 'overdueInvoices', 'upcomingBills'));
+        // Ringkasan tambahan, hanya dihitung bila pengguna boleh melihatnya
+        $trend = $user->can('receivables.view') || $user->can('payables.view') ? $metrics->monthlyTrend() : collect();
+        $receivables = $user->can('receivables.view') ? $metrics->openBalance(Invoice::class) : null;
+        $payables = $user->can('payables.view') ? $metrics->openBalance(Bill::class) : null;
+        $production = $user->can('production.view') ? $metrics->productionThisMonth() : null;
+        $stockValue = $user->can('costing.view') ? $valuation->grandTotal() : null;
+        $topCustomers = $user->can('receivables.view')
+            ? $trade->build('sales', today()->startOfMonth(), today())['rows']->take(5)
+            : collect();
+
+        $invoiced = [
+            'current' => (float) ($trend->last()['sales'] ?? 0),
+            'previous' => (float) ($trend->slice(-2, 1)->first()['sales'] ?? 0),
+        ];
+        $invoiced['growth'] = DashboardMetrics::growth($invoiced['current'], $invoiced['previous']);
+
+        return view('dashboard', compact(
+            'stats', 'lowStockMaterials', 'activeProduction', 'recentSales', 'overdueInvoices', 'upcomingBills',
+            'trend', 'receivables', 'payables', 'production', 'stockValue', 'topCustomers', 'invoiced',
+        ));
     }
 }
