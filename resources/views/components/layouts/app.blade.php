@@ -1,7 +1,7 @@
 @props(['title' => null])
 
 @php
-    // Menu dikelompokkan mengikuti alur kerja: jual → beli → produksi → stok → keuangan → akuntansi
+    // Menu dikelompokkan mengikuti alur kerja: jual → beli → produksi → stok → keuangan → aset tetap → akuntansi
     $menu = [
         ['label' => 'Dashboard', 'route' => 'dashboard', 'active' => 'dashboard', 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
         ['heading' => 'Penjualan', 'items' => [
@@ -27,6 +27,7 @@
         ['heading' => 'Persediaan', 'items' => [
             ['label' => 'Stok Bahan Baku', 'can' => 'stock.view', 'route' => 'stock.materials', 'active' => 'stock.materials*', 'icon' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'],
             ['label' => 'Stok Barang Jadi', 'can' => 'stock.view', 'route' => 'stock.products', 'active' => 'stock.products*', 'icon' => 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'],
+            ['label' => 'Barang Cacat', 'can' => 'stock.view', 'route' => 'defects.index', 'active' => 'defects.*', 'icon' => 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'],
             ['label' => 'Penyesuaian Stok', 'can' => 'stock.adjust', 'route' => 'stock.adjustment', 'active' => 'stock.adjustment*', 'icon' => 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4'],
         ]],
         ['heading' => 'Keuangan', 'items' => [
@@ -35,6 +36,11 @@
             ['label' => 'Tagihan Supplier', 'can' => 'payables.view', 'route' => 'bills.index', 'active' => 'bills.*', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
             ['label' => 'Pembayaran Supplier', 'can' => 'payables.view', 'route' => 'disbursements.index', 'active' => 'disbursements.*', 'icon' => 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
             ['label' => 'Kas & Bank', 'can' => 'cashbank.view', 'route' => 'cash-bank.index', 'active' => ['cash-bank.*', 'cash-transactions.*'], 'icon' => 'M3 6l9-3 9 3M4 10h16M6 10v8m4-8v8m4-8v8m4-8v8M3 21h18'],
+        ]],
+        ['heading' => 'Aset Tetap', 'items' => [
+            ['label' => 'Daftar Aset Tetap', 'can' => 'assets.view', 'route' => 'fixed-assets.index', 'active' => 'fixed-assets.*', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
+            ['label' => 'Penyusutan Bulanan', 'can' => 'assets.view', 'route' => 'depreciation-runs.index', 'active' => 'depreciation-runs.*', 'icon' => 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6'],
+            ['label' => 'Kategori Aset', 'can' => 'assets.view', 'route' => 'asset-categories.index', 'active' => 'asset-categories.*', 'icon' => 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z'],
         ]],
         ['heading' => 'Akuntansi', 'items' => [
             ['label' => 'Jurnal Umum', 'can' => 'accounting.view', 'route' => 'journals.index', 'active' => 'journals.*', 'icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'],

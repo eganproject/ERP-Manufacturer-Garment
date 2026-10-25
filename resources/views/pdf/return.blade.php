@@ -50,7 +50,7 @@
                     @if ($kind->isSales)
                         <td>{{ $item->variant->sku }}</td>
                         <td>{{ $item->variant->display_name }}</td>
-                        <td class="r">{{ qty($item->quantity) }}</td>
+                        <td class="r">{{ qty($item->quantity) }}@if ((float) $item->defect_quantity > 0)<br><small>({{ qty($item->defect_quantity) }} cacat)</small>@endif</td>
                         <td>{{ $item->variant->product->unit?->code }}</td>
                     @else
                         <td>{{ $item->material->code }}</td>

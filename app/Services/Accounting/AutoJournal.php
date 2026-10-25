@@ -2,7 +2,9 @@
 
 namespace App\Services\Accounting;
 
+use App\Enums\AssetAcquisitionType;
 use App\Enums\CashTransactionType;
+use App\Enums\DefectHandlingType;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
 use App\Enums\ProductionCostType;
@@ -11,8 +13,11 @@ use App\Enums\SubcontractTransferType;
 use App\Models\Bill;
 use App\Models\CashTransaction;
 use App\Models\CreditApplication;
+use App\Models\DefectHandling;
 use App\Models\Delivery;
+use App\Models\DepreciationRun;
 use App\Models\EmployeeAdvance;
+use App\Models\FixedAsset;
 use App\Models\GoodsReceipt;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
@@ -41,7 +46,10 @@ use Illuminate\Support\Carbon;
  * - Surat jalan        : Dr HPP                      / Cr Persediaan barang jadi (HPP rata-rata)
  * - Invoice            : Dr Piutang + potongan       / Cr Penjualan + PPN keluaran
  * - Penerimaan / bayar : Kas/Bank ↔ Piutang / Hutang usaha
- * - Retur penjualan    : Dr Persediaan barang jadi   / Cr HPP; Dr Retur penjualan + PPN / Cr Saldo nota kredit
+ * - Retur penjualan    : Dr Persediaan barang jadi (cacat → persediaan barang cacat) / Cr HPP; Dr Retur penjualan + PPN / Cr Saldo nota kredit
+ * - Barang cacat       : pindah Persediaan barang jadi ↔ barang cacat; perbaikan + biaya (Cr Kas/Bank); musnah Dr Beban barang cacat
+ * - Aset tetap         : perolehan Dr Aset / Cr Kas-Bank, Hutang belum ditagih (tagihan supplier) atau Ekuitas saldo awal;
+ *                        penyusutan Dr Beban penyusutan / Cr Akumulasi; pelepasan Dr Akumulasi + Kas ± laba/rugi / Cr Aset
  * - Retur pembelian    : Dr Hutang belum ditagih / Piutang nota debit ± selisih / Cr Persediaan bahan + PPN masukan
  * - SPK mulai          : Dr WIP                      / Cr Persediaan bahan
  * - Biaya produksi     : Dr WIP                      / Cr Hutang upah / Overhead dibebankan / Hutang belum ditagih (maklon)
@@ -129,9 +137,11 @@ class AutoJournal
     {
         $return->load('items', 'customer', 'salesOrder');
         $cost = round((float) $return->items->sum('cost'), 2);
+        $defectCost = round($return->items->sum(fn ($i) => $i->defectCost()), 2);
 
         return $this->post($return, $return->return_date, "Retur penjualan {$return->number} – {$return->salesOrder->number} ({$return->customer->name})", [
-            ['account' => 'finished_goods', 'amount' => $cost],
+            ['account' => 'finished_goods', 'amount' => $cost - $defectCost],
+            ['account' => 'defect_inventory', 'amount' => $defectCost],
             ['account' => 'cogs', 'amount' => -$cost],
             ['account' => 'sales_returns', 'amount' => (float) $return->amount],
             ['account' => 'vat_out', 'amount' => (float) $return->tax_amount],
@@ -344,6 +354,96 @@ class AutoJournal
         $party = $transaction->party_name ? ($sign > 0 ? " dari {$transaction->party_name}" : " ke {$transaction->party_name}") : '';
 
         return $this->post($transaction, $transaction->date, "{$transaction->type->label()}{$party}: {$transaction->description}", $lines);
+    }
+
+    /**
+     * Penanganan barang cacat: pindah antar persediaan barang jadi ↔ barang cacat, biaya perbaikan
+     * dari kas/bank menambah nilai barang jadi, barang dimusnahkan jadi beban.
+     */
+    public function defectHandling(DefectHandling $handling): ?JournalEntry
+    {
+        $cost = (float) $handling->total_cost;
+        $extra = (float) $handling->extra_cost;
+
+        $lines = match ($handling->type) {
+            DefectHandlingType::Quarantine => [
+                ['account' => 'defect_inventory', 'amount' => $cost],
+                ['account' => 'finished_goods', 'amount' => -$cost],
+            ],
+            DefectHandlingType::Rework, DefectHandlingType::Restock => [
+                ['account' => 'finished_goods', 'amount' => $cost + $extra],
+                ['account' => 'defect_inventory', 'amount' => -$cost],
+                ['account' => $extra > 0 ? $this->cashAccount(null, $handling->cash_account_id) : 'defect_inventory', 'amount' => -$extra],
+            ],
+            DefectHandlingType::Scrap => [
+                ['account' => 'defect_writeoff', 'amount' => $cost],
+                ['account' => 'defect_inventory', 'amount' => -$cost],
+            ],
+        };
+
+        return $this->post($handling, $handling->date, "{$handling->type->label()} {$handling->number}".($handling->notes ? " – {$handling->notes}" : ''), $lines);
+    }
+
+    /** Perolehan aset tetap: Dr Aset / Cr Kas-Bank, Hutang belum ditagih (kredit), atau Ekuitas saldo awal. */
+    public function fixedAssetAcquisition(FixedAsset $asset): ?JournalEntry
+    {
+        $asset->loadMissing('supplier');
+        $cost = (float) $asset->cost;
+        $lines = [['account' => $asset->asset_account_id, 'amount' => $cost, 'reference' => $asset]];
+
+        switch ($asset->acquisition_type) {
+            case AssetAcquisitionType::Cash:
+                $lines[] = ['account' => 'vat_in', 'amount' => (float) $asset->tax_amount];
+                $lines[] = ['account' => $asset->cash_account_id, 'amount' => -($cost + (float) $asset->tax_amount)];
+                break;
+            case AssetAcquisitionType::Credit:
+                $lines[] = ['account' => 'unbilled_payable', 'amount' => -$cost, 'reference' => $asset->supplier];
+                break;
+            case AssetAcquisitionType::Opening:
+                $opening = (float) $asset->opening_accumulated;
+                $lines[] = ['account' => 'opening_equity', 'amount' => -($cost - $opening)];
+                $lines[] = ['account' => (int) $asset->accumulated_account_id, 'amount' => -$opening, 'reference' => $asset];
+                break;
+        }
+
+        $label = $asset->acquisition_type === AssetAcquisitionType::Opening ? 'Saldo awal aset tetap' : 'Perolehan aset tetap';
+        $party = $asset->supplier ? " dari {$asset->supplier->name}" : '';
+
+        return $this->post($asset, $asset->acquisition_type === AssetAcquisitionType::Opening ? $asset->depreciation_start->copy()->subDay() : $asset->acquisition_date,
+            "{$label} {$asset->number} – {$asset->name}{$party}", $lines);
+    }
+
+    /** Penyusutan bulanan semua aset: Dr Beban penyusutan / Cr Akumulasi penyusutan (rincian per aset). */
+    public function depreciationRun(DepreciationRun $run): ?JournalEntry
+    {
+        $run->loadMissing('lines.asset');
+        $lines = [];
+
+        foreach ($run->lines as $line) {
+            $asset = $line->asset;
+            $lines[] = ['account' => (int) $asset->expense_account_id, 'amount' => (float) $line->amount];
+            $lines[] = ['account' => (int) $asset->accumulated_account_id, 'amount' => -(float) $line->amount, 'reference' => $asset];
+        }
+
+        return $this->post($run, $run->date, "Penyusutan aset tetap {$run->periodLabel()} ({$run->asset_count} aset)", $lines);
+    }
+
+    /** Pelepasan aset: Dr Akumulasi + Kas (hasil jual) ± laba/rugi pelepasan / Cr Aset. */
+    public function fixedAssetDisposal(FixedAsset $asset): ?JournalEntry
+    {
+        $cost = (float) $asset->cost;
+        $accumulated = (float) $asset->accumulated_depreciation;
+        $proceeds = (float) $asset->disposal_proceeds;
+        $gain = round($proceeds - ($cost - $accumulated), 2);
+
+        $lines = [
+            ['account' => (int) ($asset->accumulated_account_id ?: $asset->asset_account_id), 'amount' => $accumulated, 'reference' => $asset],
+            ['account' => $proceeds > 0 ? (int) $asset->disposal_account_id : $asset->asset_account_id, 'amount' => $proceeds],
+            ['account' => $gain >= 0 ? 'asset_gain' : 'asset_loss', 'amount' => -$gain],
+            ['account' => $asset->asset_account_id, 'amount' => -$cost, 'reference' => $asset],
+        ];
+
+        return $this->post($asset, $asset->disposal_date, "Pelepasan aset {$asset->number} – {$asset->name} ({$asset->disposal_type->label()})", $lines, 'dispose');
     }
 
     /** Batalkan semua jurnal dokumen (invoice/tagihan/pembayaran/retur dibatalkan). */

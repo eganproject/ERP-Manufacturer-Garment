@@ -2,6 +2,7 @@
 
 namespace App\Services\Accounting;
 
+use App\Enums\FixedAssetStatus;
 use App\Enums\InvoiceStatus;
 use App\Enums\JournalType;
 use App\Enums\PaymentStatus;
@@ -13,8 +14,11 @@ use App\Enums\SubcontractStatus;
 use App\Models\AccountingPeriod;
 use App\Models\Bill;
 use App\Models\CashTransaction;
+use App\Models\DefectHandling;
 use App\Models\Delivery;
+use App\Models\DepreciationRun;
 use App\Models\EmployeeAdvance;
+use App\Models\FixedAsset;
 use App\Models\GoodsReceipt;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
@@ -90,6 +94,13 @@ class LedgerRebuilder
                 Payroll::where('status', PayrollStatus::Paid)->orderBy('payment_date')->orderBy('id')->each(fn ($p) => $this->auto->payrollPayment($p));
 
                 CashTransaction::where('status', PaymentStatus::Posted)->orderBy('date')->orderBy('id')->each(fn ($t) => $this->auto->cashTransaction($t));
+
+                DefectHandling::where('status', ReturnStatus::Posted)->orderBy('date')->orderBy('id')->each(fn ($h) => $this->auto->defectHandling($h));
+
+                // Aset tetap: perolehan → penyusutan → pelepasan
+                FixedAsset::where('status', '!=', FixedAssetStatus::Cancelled)->orderBy('acquisition_date')->orderBy('id')->each(fn ($a) => $this->auto->fixedAssetAcquisition($a));
+                DepreciationRun::where('status', ReturnStatus::Posted)->orderBy('period')->orderBy('id')->each(fn ($r) => $this->auto->depreciationRun($r));
+                FixedAsset::where('status', FixedAssetStatus::Disposed)->orderBy('disposal_date')->orderBy('id')->each(fn ($a) => $this->auto->fixedAssetDisposal($a));
 
                 StockMovement::where('type', StockMovementType::Adjustment)->orderBy('date')->orderBy('id')->each(fn ($m) => $this->auto->stockAdjustment($m));
 

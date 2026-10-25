@@ -14,6 +14,8 @@ Sales Order ──► SPK Produksi ──► (Order Maklon) ──► Hasil kerj
      │               │                                      │
      └──► MRP ──► Purchase Order ──► Persetujuan ──► Penerimaan Barang ──► Tagihan Supplier ──► Pembayaran
                                                             └──► Penggajian borongan ──► Bayar upah
+Retur penjualan cacat ──► Stok Cacat ──► Perbaiki / Musnahkan / Kembalikan ke stok jual
+Aset tetap (tunai / kredit / saldo awal) ──► Penyusutan bulanan ──► Pelepasan (jual / hapus)
 Semua transaksi bernilai otomatis membuat jurnal → Buku Besar, Laba Rugi, Neraca, Arus Kas.
 ```
 
@@ -58,13 +60,37 @@ Semua transaksi bernilai otomatis membuat jurnal → Buku Besar, Laba Rugi, Nera
 2. **Keuangan**: SO → **Buat Invoice** (dari barang yang sudah dikirim, PPN opsional) → cetak invoice.
 3. Pembayaran pelanggan: invoice → **Catat Penerimaan** (satu penerimaan bisa melunasi beberapa invoice). Cetak kwitansi.
 4. Retur dari pelanggan (**Sales/Gudang**): SO → **Retur Barang**. Retur mengurangi qty yang belum ditagih lebih dulu; kelebihannya jadi nota kredit yang otomatis memotong invoice terbuka, atau bisa dikembalikan tunai.
+   Isi kolom **Di antaranya Cacat** untuk barang rusak: barang itu masuk ke **stok cacat** (karantina), bukan stok jual, sehingga tidak ikut terkirim.
+
+## 5a. Barang cacat — Gudang / Produksi
+
+Menu **Persediaan → Barang Cacat** menampilkan stok cacat per produk (qty & nilai HPP) dan riwayat penanganan (dokumen BC-):
+
+- **Perbaiki (Rework)**: barang dijahit ulang lalu masuk stok jual. Biaya perbaikan (opsional, dibayar dari kas/bank) menambah HPP barang.
+- **Kembalikan ke Stok Jual**: setelah dicek ternyata layak jual, pindah ke stok jual tanpa biaya.
+- **Musnahkan (Scrap)**: barang tidak bisa diperbaiki; nilainya dibebankan ke *Beban Barang Cacat Dimusnahkan*.
+- **Pindah ke Stok Cacat**: barang di gudang yang ternyata cacat dipisahkan dari stok jual.
+
+Kartu stok produk menandai mutasi stok cacat dengan label *Stok Cacat*. Nilai persediaan & neraca (akun *Persediaan Barang Cacat*) sudah termasuk stok cacat. Salah input bisa **Dibatalkan** (stok kembali, jurnal dibalik).
 
 ## 6. Hutang supplier — Keuangan
 
 1. **Keuangan → Tagihan Supplier → + Catat Tagihan**: pilih PO (dari barang yang sudah diterima) atau order maklon (dari hasil yang diterima).
 2. **Bayar Tagihan** / **Pembayaran Supplier**: alokasikan ke satu atau beberapa tagihan, pilih rekening kas/bank.
 
-## 7. Kas, akuntansi & laporan — Keuangan
+## 7. Aset tetap — Keuangan
+
+1. **Aset Tetap → Kategori Aset**: metode (garis lurus / saldo menurun), masa manfaat, nilai sisa, dan akun aset, akumulasi & beban penyusutan. Kategori standar sudah tersedia (tanah, bangunan, mesin, kendaraan, inventaris kantor).
+2. **Aset Tetap → Daftar Aset Tetap → + Catat Aset**, pilih cara perolehan:
+   - **Tunai / Transfer**: dibayar dari rekening kas/bank (PPN masukan opsional).
+   - **Kredit**: otomatis dibuatkan **tagihan supplier**, dibayar lewat Pembayaran Supplier seperti biasa.
+   - **Saldo Awal**: aset lama sebelum memakai sistem, isi tanggal perolehan asli dan akumulasi penyusutan s.d. bulan mulai disusutkan.
+3. **Aset Tetap → Penyusutan Bulanan**: pratinjau lalu **Posting Penyusutan** (jurnal akhir bulan). Bulan yang terlewat ikut disusulkan. Sistem juga memposting otomatis tiap tanggal 1 untuk bulan lalu (perintah `assets:depreciate`, perlu cron `php artisan schedule:run`). Periode yang sudah ditutup tidak bisa diposting; hanya posting terakhir yang bisa dibatalkan.
+4. Halaman aset menampilkan **jadwal penyusutan** (sudah diposting & proyeksi), nilai buku, dan jurnalnya.
+5. **Lepas Aset**: dijual (isi harga jual & rekening penerimaan) atau dihapus/rusak. Penyusutan harus sudah diposting s.d. bulan sebelum tanggal pelepasan; selisih dengan nilai buku dijurnal sebagai laba/rugi pelepasan aset.
+6. Daftar aset bisa difilter per tanggal & kategori dan diekspor ke Excel / PDF (harga perolehan, penyusutan periode, akumulasi, nilai buku).
+
+## 8. Kas, akuntansi & laporan — Keuangan
 
 - **Keuangan → Kas & Bank**: saldo tiap rekening, mutasi, bukti kas masuk/keluar (mis. listrik, sewa) & transfer antar rekening.
 - **Akuntansi**: Jurnal Umum (otomatis + manual), Buku Besar, Neraca Saldo, Laba Rugi, Neraca, Arus Kas, Anggaran vs realisasi, **Tutup Buku** per bulan (periode tertutup menolak transaksi bertanggal di dalamnya).

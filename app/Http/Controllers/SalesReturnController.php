@@ -153,7 +153,9 @@ class SalesReturnController extends Controller implements HasMiddleware
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array'],
             'items.*' => ['nullable', 'numeric', 'min:0'],
-        ], [], ['return_date' => 'tanggal retur', 'reason' => 'alasan retur', 'items' => 'jumlah retur']);
+            'defects' => ['nullable', 'array'],
+            'defects.*' => ['nullable', 'numeric', 'min:0'],
+        ], [], ['return_date' => 'tanggal retur', 'reason' => 'alasan retur', 'items' => 'jumlah retur', 'defects.*' => 'jumlah cacat']);
     }
 
     /**

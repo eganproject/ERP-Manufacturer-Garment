@@ -12,6 +12,7 @@ use Illuminate\Support\Collection;
  *
  * Bahan baku: harga pokok rata-rata, atau harga beli standar bila belum ada penerimaan.
  * Barang jadi: HPP rata-rata hasil produksi, atau HPP standar BOM aktif bila belum pernah diproduksi.
+ * Stok cacat (karantina) dinilai dengan HPP rata-rata stok cacat dan ikut dalam nilai persediaan.
  */
 class StockValuationReport
 {
@@ -87,7 +88,7 @@ class StockValuationReport
     {
         return ProductVariant::with(['product.unit', 'product.category', 'product.activeBom.items.material'])
             ->when($categoryId, fn ($q, $id) => $q->whereHas('product', fn ($p) => $p->where('category_id', $id)))
-            ->when(! $includeZero, fn ($q) => $q->where('stock', '!=', 0))
+            ->when(! $includeZero, fn ($q) => $q->where(fn ($w) => $w->where('stock', '!=', 0)->orWhere('defect_stock', '!=', 0)))
             ->get()
             ->sortBy(fn (ProductVariant $v) => $v->product->name.'|'.$v->id)
             ->values()
@@ -107,7 +108,9 @@ class StockValuationReport
                     'stock' => (float) $v->stock,
                     'unit_cost' => $unitCost,
                     'basis' => $basis,
-                    'value' => round((float) $v->stock * $unitCost, 2),
+                    'defect_stock' => (float) $v->defect_stock,
+                    'defect_value' => round((float) $v->defect_stock * (float) $v->defect_cost, 2),
+                    'value' => round((float) $v->stock * $unitCost + (float) $v->defect_stock * (float) $v->defect_cost, 2),
                     'selling_value' => round((float) $v->stock * $v->selling_price, 2),
                     'low_stock' => false,
                 ];
@@ -136,12 +139,13 @@ class StockValuationReport
             'unit' => ['Satuan', 'text'],
             'unit_cost' => ['HPP / Satuan', 'money'],
             'basis_label' => ['Dasar HPP', 'text'],
+            ...($isProducts ? ['defect_stock' => ['Stok Cacat', 'qty'], 'defect_value' => ['Nilai Stok Cacat', 'money']] : []),
             'value' => ['Nilai Persediaan', 'money'],
             ...($isProducts ? ['selling_value' => ['Nilai Jual', 'money']] : []),
         ];
 
         $rows = $data['rows']->map(fn ($row) => $row + ['basis_label' => self::basisLabel($row['basis'])]);
-        $totals = ['value' => $data['totals']['value']] + ($isProducts ? ['selling_value' => $data['totals']['selling_value']] : []);
+        $totals = ['value' => $data['totals']['value']] + ($isProducts ? ['selling_value' => $data['totals']['selling_value'], 'defect_value' => round($data['rows']->sum('defect_value'), 2)] : []);
 
         return new ReportTable(
             'Laporan Nilai Persediaan',

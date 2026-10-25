@@ -44,10 +44,16 @@ class Bill extends Model
         return $this->belongsTo(SubcontractOrder::class);
     }
 
-    /** Dokumen sumber tagihan: PO (bahan) atau order maklon (jasa). */
-    public function source(): PurchaseOrder|SubcontractOrder|null
+    /** Aset tetap yang dibeli kredit lewat tagihan ini. */
+    public function fixedAsset()
     {
-        return $this->purchaseOrder ?? $this->subcontractOrder;
+        return $this->hasOne(FixedAsset::class);
+    }
+
+    /** Dokumen sumber tagihan: PO (bahan), order maklon (jasa), atau aset tetap. */
+    public function source(): PurchaseOrder|SubcontractOrder|FixedAsset|null
+    {
+        return $this->purchaseOrder ?? $this->subcontractOrder ?? $this->fixedAsset;
     }
 
     public function items()

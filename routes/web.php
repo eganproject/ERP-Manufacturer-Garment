@@ -7,12 +7,16 @@ use App\Http\Controllers\Accounting\JournalController;
 use App\Http\Controllers\Accounting\PeriodController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AgingController;
+use App\Http\Controllers\Assets\AssetCategoryController;
+use App\Http\Controllers\Assets\DepreciationController;
+use App\Http\Controllers\Assets\FixedAssetController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BillController;
 use App\Http\Controllers\BomController;
 use App\Http\Controllers\CashBankController;
 use App\Http\Controllers\CostingController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DefectController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\Master\CategoryController;
 use App\Http\Controllers\Master\CustomerController;
@@ -241,6 +245,21 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('adjustment', 'adjustmentForm')->name('adjustment')->middleware('can:stock.adjust');
         Route::post('adjustment', 'adjust')->name('adjustment.store')->middleware('can:stock.adjust');
     });
+
+    // Barang cacat (karantina) dari retur penjualan / temuan gudang
+    Route::resource('defects', DefectController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('defects/{defect}/cancel', [DefectController::class, 'cancel'])->name('defects.cancel');
+
+    // Aset tetap & penyusutan
+    Route::resource('asset-categories', AssetCategoryController::class)->except('show');
+    Route::resource('fixed-assets', FixedAssetController::class)->except('destroy');
+    Route::controller(FixedAssetController::class)->prefix('fixed-assets/{fixed_asset}')->name('fixed-assets.')->group(function () {
+        Route::post('cancel', 'cancel')->name('cancel');
+        Route::post('dispose', 'dispose')->name('dispose');
+        Route::post('cancel-disposal', 'cancelDisposal')->name('cancel-disposal');
+    });
+    Route::resource('depreciation-runs', DepreciationController::class)->only(['index', 'store', 'show']);
+    Route::post('depreciation-runs/{depreciation_run}/cancel', [DepreciationController::class, 'cancel'])->name('depreciation-runs.cancel');
 
     // Administrasi
     Route::prefix('admin')->group(function () {

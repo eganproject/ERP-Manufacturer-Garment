@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProductVariant extends Model
 {
-    protected $guarded = ['id', 'stock', 'average_cost'];
+    protected $guarded = ['id', 'stock', 'average_cost', 'defect_stock', 'defect_cost'];
 
     protected $casts = [
         'price' => 'decimal:2',
         'average_cost' => 'decimal:2',
         'stock' => 'decimal:2',
+        'defect_stock' => 'decimal:2',
+        'defect_cost' => 'decimal:2',
     ];
 
     public function product()
