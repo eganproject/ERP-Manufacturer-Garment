@@ -6,6 +6,7 @@ use App\Enums\ProductionCostType;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\SalesOrderStatus;
 use App\Enums\StageStatus;
+use App\Enums\SubcontractStatus;
 use App\Models\ActivityLog;
 use App\Models\Bom;
 use App\Models\Product;
@@ -15,6 +16,7 @@ use App\Models\ProductionStage;
 use App\Models\SalesOrder;
 use App\Services\DocumentNumber;
 use App\Services\ProductionService;
+use App\Services\SubcontractService;
 use App\Support\DocumentPdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -34,7 +36,7 @@ class ProductionOrderController extends Controller implements HasMiddleware
         ];
     }
 
-    public function __construct(private ProductionService $service) {}
+    public function __construct(private ProductionService $service, private SubcontractService $subcontracts) {}
 
     public function index(Request $request)
     {
@@ -81,7 +83,7 @@ class ProductionOrderController extends Controller implements HasMiddleware
 
     public function show(ProductionOrder $productionOrder)
     {
-        $productionOrder->load(['product.unit', 'bom.items.material', 'salesOrder.customer', 'items.variant', 'materials.material.unit', 'stages', 'costs', 'creator', 'activities.user']);
+        $productionOrder->load(['product.unit', 'bom.items.material', 'salesOrder.customer', 'items.variant', 'materials.material.unit', 'stages.subcontractOrder.supplier', 'costs', 'creator', 'activities.user', 'subcontractOrders.supplier']);
 
         return view('production-orders.show', [
             'order' => $productionOrder,
@@ -115,6 +117,7 @@ class ProductionOrderController extends Controller implements HasMiddleware
     public function destroy(ProductionOrder $productionOrder)
     {
         abort_unless($productionOrder->isEditable(), 403, 'Hanya SPK draft yang dapat dihapus.');
+        $productionOrder->subcontractOrders()->each(fn ($order) => $order->delete());
         ActivityLog::record('deleted', "Menghapus SPK {$productionOrder->number}");
         $productionOrder->delete();
 
@@ -125,7 +128,9 @@ class ProductionOrderController extends Controller implements HasMiddleware
     {
         $this->service->start($productionOrder);
 
-        return back()->with('success', 'Produksi dimulai, bahan baku sudah dikeluarkan dari gudang.');
+        return back()->with('success', $productionOrder->subcontractOrders()->exists()
+            ? 'Produksi dimulai. Bahan internal sudah dikeluarkan; bahan untuk vendor maklon dikirim lewat order maklon.'
+            : 'Produksi dimulai, bahan baku sudah dikeluarkan dari gudang.');
     }
 
     public function updateStage(Request $request, ProductionOrder $productionOrder, ProductionStage $stage)
@@ -183,7 +188,11 @@ class ProductionOrderController extends Controller implements HasMiddleware
     public function cancel(ProductionOrder $productionOrder)
     {
         abort_unless($productionOrder->isEditable(), 403, 'SPK yang sudah berjalan tidak dapat dibatalkan.');
-        $productionOrder->update(['status' => ProductionOrderStatus::Cancelled]);
+        DB::transaction(function () use ($productionOrder) {
+            $productionOrder->subcontractOrders()->where('status', SubcontractStatus::Open)->get()
+                ->each(fn ($order) => $this->subcontracts->cancel($order, 'SPK dibatalkan'));
+            $productionOrder->update(['status' => ProductionOrderStatus::Cancelled]);
+        });
         ActivityLog::record('cancelled', 'Membatalkan SPK', $productionOrder);
 
         return back()->with('success', 'SPK dibatalkan.');

@@ -9,6 +9,8 @@ enum StockMovementType: string
     case ProductionOutput = 'production_output';
     case SalesDelivery = 'sales_delivery';
     case Adjustment = 'adjustment';
+    case SubcontractIssue = 'subcontract_issue';
+    case SubcontractReturn = 'subcontract_return';
 
     public function label(): string
     {
@@ -18,6 +20,8 @@ enum StockMovementType: string
             self::ProductionOutput => 'Hasil Produksi',
             self::SalesDelivery => 'Pengiriman Penjualan',
             self::Adjustment => 'Penyesuaian Stok',
+            self::SubcontractIssue => 'Kirim ke Vendor Maklon',
+            self::SubcontractReturn => 'Retur dari Vendor Maklon',
         };
     }
 }

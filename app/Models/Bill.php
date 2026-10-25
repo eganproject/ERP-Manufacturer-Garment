@@ -38,6 +38,17 @@ class Bill extends Model
         return $this->belongsTo(PurchaseOrder::class);
     }
 
+    public function subcontractOrder()
+    {
+        return $this->belongsTo(SubcontractOrder::class);
+    }
+
+    /** Dokumen sumber tagihan: PO (bahan) atau order maklon (jasa). */
+    public function source(): PurchaseOrder|SubcontractOrder|null
+    {
+        return $this->purchaseOrder ?? $this->subcontractOrder;
+    }
+
     public function items()
     {
         return $this->hasMany(BillItem::class);

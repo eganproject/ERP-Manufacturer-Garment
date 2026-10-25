@@ -13,6 +13,9 @@ use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
 use App\Models\SalesOrder;
+use App\Models\SubcontractOrder;
+use App\Models\SubcontractReceipt;
+use App\Models\SubcontractTransfer;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
@@ -42,6 +45,9 @@ class AppServiceProvider extends ServiceProvider
             'invoice' => Invoice::class,
             'bill' => Bill::class,
             'payment' => Payment::class,
+            'subcontract_order' => SubcontractOrder::class,
+            'subcontract_transfer' => SubcontractTransfer::class,
+            'subcontract_receipt' => SubcontractReceipt::class,
             'user' => User::class,
         ]);
 

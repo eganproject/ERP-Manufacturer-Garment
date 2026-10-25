@@ -7,6 +7,7 @@ use App\Enums\ProductionOrderStatus;
 use App\Enums\ProductionStage;
 use App\Enums\StageStatus;
 use App\Enums\StockMovementType;
+use App\Enums\SubcontractStatus;
 use App\Models\ActivityLog;
 use App\Models\Bom;
 use App\Models\ProductionCost;
@@ -64,6 +65,7 @@ class ProductionService
 
     /**
      * Mulai produksi: keluarkan bahan dari gudang sesuai kebutuhan BOM.
+     * Bahan yang dialokasikan ke order maklon tidak ikut keluar; bahan itu dikirim lewat surat jalan bahan maklon.
      */
     public function start(ProductionOrder $order): void
     {
@@ -72,12 +74,23 @@ class ProductionService
         }
 
         DB::transaction(function () use ($order) {
+            $reserved = SubcontractService::reservedForVendors($order);
+
             foreach ($order->materials()->with('material')->get() as $line) {
+                $qty = round((float) $line->required_quantity - (float) $line->issued_quantity - ($reserved[$line->material_id] ?? 0), 2);
+
+                if ($qty <= 0) {
+                    continue;
+                }
+
                 $movement = $this->stock->move(
-                    $line->material, -1 * (float) $line->required_quantity, StockMovementType::ProductionIssue,
+                    $line->material, -1 * $qty, StockMovementType::ProductionIssue,
                     $order, $order->number, 'Pengeluaran bahan produksi',
                 );
-                $line->update(['issued_quantity' => $line->required_quantity, 'unit_cost' => $movement->unit_cost]);
+                $line->update([
+                    'unit_cost' => SubcontractService::weightedCost((float) $line->issued_quantity, (float) $line->unit_cost, $qty, (float) $movement->unit_cost),
+                    'issued_quantity' => (float) $line->issued_quantity + $qty,
+                ]);
             }
 
             $this->addStandardCosts($order);
@@ -97,6 +110,10 @@ class ProductionService
 
         if ($order->status !== ProductionOrderStatus::InProgress) {
             throw ValidationException::withMessages(['status' => 'Tahapan hanya dapat diperbarui saat SPK Dalam Proses.']);
+        }
+
+        if ($stage->isSubcontracted() && $stage->subcontractOrder->isOpen()) {
+            throw ValidationException::withMessages(['status' => "Tahap {$stage->stage->label()} dikerjakan maklon ({$stage->subcontractOrder->number}); progres diperbarui lewat penerimaan hasil."]);
         }
 
         $previous = $order->stages()->where('sequence', '<', $stage->sequence)->where('status', '!=', StageStatus::Done->value)->exists();
@@ -137,6 +154,10 @@ class ProductionService
 
         if ($order->stages()->where('status', '!=', StageStatus::Done->value)->exists()) {
             throw ValidationException::withMessages(['status' => 'Semua tahapan produksi harus selesai terlebih dahulu.']);
+        }
+
+        if ($open = $order->subcontractOrders()->where('status', SubcontractStatus::Open)->first()) {
+            throw ValidationException::withMessages(['status' => "Tutup order maklon {$open->number} terlebih dahulu (retur sisa bahan & rekonsiliasi)."]);
         }
 
         DB::transaction(function () use ($order, $finished, $reject) {
@@ -223,6 +244,10 @@ class ProductionService
             throw ValidationException::withMessages(['status' => 'Biaya SPK yang sudah selesai tidak dapat dihapus.']);
         }
 
+        if ($cost->subcontract_receipt_id) {
+            throw ValidationException::withMessages(['status' => 'Biaya jasa maklon tercatat otomatis dari penerimaan hasil dan tidak dapat dihapus manual.']);
+        }
+
         DB::transaction(function () use ($cost, $order) {
             $cost->delete();
             ActivityLog::record('cost', "Menghapus biaya {$cost->type->label()}: {$cost->description} ".rupiah($cost->amount), $order);
@@ -237,8 +262,11 @@ class ProductionService
         $bom = $order->bom;
         $qty = (float) $order->quantity;
 
+        // Bila jahit dimaklonkan, upah jahit diganti ongkos jasa vendor (dicatat saat hasil diterima)
+        $sewingSubcontracted = $order->stages()->where('stage', ProductionStage::Sewing->value)->whereNotNull('subcontract_order_id')->exists();
+
         $standards = [
-            [ProductionCostType::Labor, 'Upah jahit standar BOM', (float) $bom->labor_cost],
+            [ProductionCostType::Labor, 'Upah jahit standar BOM', $sewingSubcontracted ? 0.0 : (float) $bom->labor_cost],
             [ProductionCostType::Overhead, 'Overhead standar BOM', (float) $bom->overhead_cost],
         ];
 

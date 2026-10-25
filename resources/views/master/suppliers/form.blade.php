@@ -12,7 +12,10 @@
                 <x-form.input name="tax_number" label="NPWP" :value="$supplier->tax_number" />
                 <x-form.input name="payment_terms" type="number" min="0" max="365" label="Termin Pembayaran (hari)" :value="$supplier->payment_terms ?? 30" required help="Dipakai untuk menghitung jatuh tempo invoice/tagihan. 0 = tunai." />
                 <x-form.textarea name="address" label="Alamat" :value="$supplier->address" class="sm:col-span-2" />
-                <x-form.checkbox name="is_active" label="Aktif" :checked="$supplier->is_active" />
+                <div class="flex flex-wrap gap-6 sm:col-span-2">
+                    <x-form.checkbox name="is_active" label="Aktif" :checked="$supplier->is_active" />
+                    <x-form.checkbox name="is_subcontractor" label="Vendor maklon (CMT / jasa potong, jahit, finishing) — menerima titipan bahan" :checked="$supplier->is_subcontractor" />
+                </div>
             </div>
             <x-form.actions :cancel="route('suppliers.index')" />
         </form>

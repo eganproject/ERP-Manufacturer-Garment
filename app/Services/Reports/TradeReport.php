@@ -114,7 +114,8 @@ class TradeReport
             $factor = (float) $doc->subtotal > 0 ? $doc->dpp / (float) $doc->subtotal : 1;
 
             return $doc->items->map(function ($item) use ($factor, $isSales, $doc) {
-                $owner = $isSales ? $item->variant->product : $item->material;
+                // Tagihan jasa maklon tidak punya bahan: dikelompokkan sebagai satu baris jasa
+                $owner = $isSales ? $item->variant->product : ($item->material ?? (object) ['id' => 'jasa-maklon', 'code' => 'JASA', 'name' => 'Jasa Maklon', 'unit' => (object) ['code' => 'pcs']]);
 
                 return [
                     'owner' => $owner,

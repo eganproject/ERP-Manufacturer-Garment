@@ -15,6 +15,7 @@ class SupplierController extends Controller
             ->when($request->q, fn ($q, $s) => $q->where(fn ($w) => $w->where('name', 'like', "%{$s}%")
                 ->orWhere('code', 'like', "%{$s}%")
                 ->orWhere('phone', 'like', "%{$s}%")))
+            ->when($request->type === 'subcontractor', fn ($q) => $q->subcontractors())
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString();
@@ -48,7 +49,7 @@ class SupplierController extends Controller
 
     public function destroy(Supplier $supplier)
     {
-        if ($supplier->purchaseOrders()->exists()) {
+        if ($supplier->purchaseOrders()->exists() || $supplier->subcontractOrders()->exists() || $supplier->bills()->exists()) {
             return back()->with('error', 'Supplier sudah memiliki transaksi, nonaktifkan saja.');
         }
 
@@ -72,6 +73,6 @@ class SupplierController extends Controller
 
         $data['payment_terms'] = (int) ($data['payment_terms'] ?? 30);
 
-        return $data + ['is_active' => $request->boolean('is_active')];
+        return $data + ['is_active' => $request->boolean('is_active'), 'is_subcontractor' => $request->boolean('is_subcontractor')];
     }
 }

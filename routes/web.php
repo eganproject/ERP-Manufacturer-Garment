@@ -23,6 +23,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\SubcontractOrderController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -90,6 +91,20 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::delete('costs/{cost}', 'destroyCost')->name('costs.destroy');
     });
 
+    // Produksi maklon (subkontrak ke vendor luar)
+    Route::resource('subcontract-orders', SubcontractOrderController::class)->only(['index', 'create', 'store', 'show']);
+    Route::controller(SubcontractOrderController::class)->prefix('subcontract-orders/{subcontract_order}')->name('subcontract-orders.')->group(function () {
+        Route::get('transfer/{type}', 'transferForm')->name('transfer')->whereIn('type', ['dispatch', 'return']);
+        Route::post('transfer/{type}', 'transfer')->name('transfer.store')->whereIn('type', ['dispatch', 'return']);
+        Route::get('receive', 'receiveForm')->name('receive');
+        Route::post('receive', 'receive')->name('receive.store');
+        Route::post('close', 'close')->name('close');
+        Route::post('cancel', 'cancel')->name('cancel');
+        Route::get('pdf', 'pdf')->name('pdf');
+    });
+    Route::get('subcontract-transfers/{transfer}/pdf', [SubcontractOrderController::class, 'transferPdf'])->name('subcontract-transfers.pdf');
+    Route::get('subcontract-receipts/{receipt}/pdf', [SubcontractOrderController::class, 'receiptPdf'])->name('subcontract-receipts.pdf');
+
     // Perencanaan & biaya produksi
     Route::get('planning/mrp', [MrpController::class, 'index'])->name('mrp.index');
     Route::post('planning/mrp/purchase-orders', [MrpController::class, 'store'])->name('mrp.purchase-orders');
@@ -123,6 +138,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('purchases', 'purchases')->name('purchases')->middleware('can:payables.view');
         Route::get('production', 'production')->name('production')->middleware('can:production.view');
         Route::get('stock-valuation', 'stockValuation')->name('stock-valuation')->middleware('can:costing.view');
+        Route::get('subcontract', 'subcontract')->name('subcontract')->middleware('can:production.view');
     });
 
     // Persediaan

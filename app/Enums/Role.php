@@ -37,6 +37,8 @@ enum Role: string
             'sales.deliver' => 'Kirim barang (surat jalan)',
             'production.view' => 'Lihat SPK produksi',
             'production.manage' => 'Buat & jalankan SPK produksi, catat biaya produksi',
+            'subcontract.manage' => 'Buat order maklon, terima hasil & tutup order maklon',
+            'subcontract.transfer' => 'Kirim bahan ke vendor maklon & terima retur sisa bahan',
             'mrp.view' => 'Lihat perencanaan kebutuhan bahan (MRP)',
             'costing.view' => 'Lihat HPP produksi & margin produk',
             'receivables.view' => 'Lihat invoice & piutang pelanggan',
@@ -80,8 +82,8 @@ enum Role: string
         return match ($this) {
             self::Admin => 'Akses penuh, termasuk pengguna dan pengaturan.',
             self::Purchasing => 'Membuat PO ke supplier (termasuk dari MRP) dan mengelola data supplier & bahan.',
-            self::Gudang => 'Menerima barang, mengirim barang (surat jalan), dan stock opname.',
-            self::Produksi => 'Mengelola BOM, SPK produksi dari potong sampai packing, MRP, dan biaya produksi (HPP).',
+            self::Gudang => 'Menerima barang, mengirim barang (surat jalan), kirim/retur bahan maklon, dan stock opname.',
+            self::Produksi => 'Mengelola BOM, SPK produksi dari potong sampai packing, order maklon ke vendor, MRP, dan biaya produksi (HPP).',
             self::Sales => 'Mengelola pelanggan dan sales order, memantau piutang.',
             self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, menyetujui PO bernilai besar, serta umur piutang/hutang dan laporan HPP & laba kotor.',
         };
@@ -104,13 +106,14 @@ enum Role: string
             self::Gudang => [
                 'purchase.view', 'purchase.receive',
                 'sales.view', 'sales.deliver',
-                'production.view',
+                'production.view', 'subcontract.transfer',
                 'stock.view', 'stock.adjust',
             ],
             self::Produksi => [
                 'master.basic', 'materials.manage', 'products.manage', 'boms.manage',
                 'sales.view',
                 'production.view', 'production.manage',
+                'subcontract.manage', 'subcontract.transfer',
                 'mrp.view', 'costing.view',
                 'stock.view',
             ],

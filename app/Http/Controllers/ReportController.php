@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Supplier;
 use App\Services\Reports\ProductionReport;
 use App\Services\Reports\StockValuationReport;
+use App\Services\Reports\SubcontractReport;
 use App\Services\Reports\TradeReport;
 use App\Support\ReportExport;
 use Illuminate\Http\Request;
@@ -96,6 +97,28 @@ class ReportController extends Controller
         }
 
         return view('reports.stock-valuation', $data + compact('type', 'categoryId', 'categoryOptions'));
+    }
+
+    public function subcontract(Request $request, SubcontractReport $report)
+    {
+        $request->validate($this->periodRules() + [
+            'view' => ['nullable', Rule::in(array_keys(SubcontractReport::VIEWS))],
+            'supplier_id' => ['nullable', 'integer'],
+        ]);
+
+        [$from, $to] = $this->period($request);
+        $view = $request->input('view', 'balance');
+        $supplierId = $request->integer('supplier_id') ?: null;
+        $vendors = Supplier::subcontractors()->orderBy('name')->pluck('name', 'id');
+        $withCost = $request->user()->can('costing.view');
+
+        $data = $view === 'balance' ? $report->balance($supplierId) : $report->vendors($from, $to, $supplierId);
+
+        if ($response = ReportExport::respond($report->table($view, $data, $from, $to, $vendors[$supplierId] ?? null, $withCost), $request->query('export'))) {
+            return $response;
+        }
+
+        return view('reports.subcontract', $data + compact('view', 'from', 'to', 'supplierId', 'vendors', 'withCost'));
     }
 
     private function periodRules(): array

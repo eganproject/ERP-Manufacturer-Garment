@@ -19,6 +19,17 @@ class ProductionStage extends Model
         'finished_at' => 'datetime',
     ];
 
+    public function subcontractOrder()
+    {
+        return $this->belongsTo(SubcontractOrder::class);
+    }
+
+    /** Tahap sedang dikerjakan vendor maklon (diperbarui lewat penerimaan hasil, bukan manual). */
+    public function isSubcontracted(): bool
+    {
+        return $this->subcontract_order_id !== null;
+    }
+
     public function productionOrder()
     {
         return $this->belongsTo(ProductionOrder::class);

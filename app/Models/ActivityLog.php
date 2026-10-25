@@ -51,6 +51,7 @@ class ActivityLog extends Model
             'bill' => 'Tagihan Supplier',
             'payment' => 'Pembayaran',
             'production_order' => 'SPK',
+            'subcontract_order' => 'Order Maklon',
             'user' => 'Pengguna',
             default => $this->subject_type,
         };
@@ -69,6 +70,7 @@ class ActivityLog extends Model
             $subject instanceof Invoice => route('invoices.show', $subject),
             $subject instanceof Bill => route('bills.show', $subject),
             $subject instanceof Payment => route('payments.show', $subject),
+            $subject instanceof SubcontractOrder => route('subcontract-orders.show', $subject),
             default => null,
         };
     }
