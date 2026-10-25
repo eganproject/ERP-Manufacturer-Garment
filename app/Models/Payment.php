@@ -36,6 +36,11 @@ class Payment extends Model
         return $this->belongsTo(Supplier::class);
     }
 
+    public function cashAccount()
+    {
+        return $this->belongsTo(Account::class, 'cash_account_id');
+    }
+
     public function allocations()
     {
         return $this->hasMany(PaymentAllocation::class);

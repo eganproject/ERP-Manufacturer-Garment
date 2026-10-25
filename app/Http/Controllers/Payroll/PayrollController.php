@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Payroll;
 use App\Enums\PaymentMethod;
 use App\Enums\PayrollStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\Payroll;
 use App\Models\PayrollLine;
 use App\Models\PieceworkEntry;
@@ -120,6 +121,7 @@ class PayrollController extends Controller implements HasMiddleware
         $data = $request->validate([
             'payment_date' => ['required', 'date'],
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
+            'cash_account_id' => ['nullable', Account::cashRule()],
         ], [], ['payment_date' => 'tanggal bayar', 'payment_method' => 'cara bayar']);
 
         $this->service->pay($payroll, $data);

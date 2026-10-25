@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Accounting\AccountController;
+use App\Http\Controllers\Accounting\BudgetController;
 use App\Http\Controllers\Accounting\FinancialReportController;
 use App\Http\Controllers\Accounting\JournalController;
 use App\Http\Controllers\Accounting\PeriodController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\AgingController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BillController;
 use App\Http\Controllers\BomController;
+use App\Http\Controllers\CashBankController;
 use App\Http\Controllers\CostingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
@@ -173,6 +175,18 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('payments/{payment}/pdf', 'pdf')->name('payments.pdf');
     });
 
+    // Kas & bank: rekening, mutasi, kas masuk/keluar, transfer antar rekening
+    Route::controller(CashBankController::class)->group(function () {
+        Route::get('cash-bank', 'index')->name('cash-bank.index');
+        Route::get('cash-bank/accounts/{account}', 'statement')->name('cash-bank.statement');
+        Route::get('cash-transactions', 'transactions')->name('cash-transactions.index');
+        Route::get('cash-transactions/create', 'create')->name('cash-transactions.create');
+        Route::post('cash-transactions', 'store')->name('cash-transactions.store');
+        Route::get('cash-transactions/{cashTransaction}', 'show')->name('cash-transactions.show');
+        Route::post('cash-transactions/{cashTransaction}/cancel', 'cancel')->name('cash-transactions.cancel');
+        Route::get('cash-transactions/{cashTransaction}/pdf', 'pdf')->name('cash-transactions.pdf');
+    });
+
     Route::get('reports/receivables-aging', [AgingController::class, 'receivables'])->name('reports.receivables-aging')->middleware('can:receivables.view');
     Route::get('reports/payables-aging', [AgingController::class, 'payables'])->name('reports.payables-aging')->middleware('can:payables.view');
 
@@ -210,7 +224,10 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('trial-balance', 'trialBalance')->name('trial-balance');
             Route::get('profit-loss', 'profitLoss')->name('profit-loss');
             Route::get('balance-sheet', 'balanceSheet')->name('balance-sheet');
+            Route::get('cash-flow', 'cashFlow')->name('cash-flow');
         });
+
+        Route::resource('budgets', BudgetController::class);
     });
 
     // Persediaan

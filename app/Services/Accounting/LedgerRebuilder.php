@@ -12,6 +12,7 @@ use App\Enums\StockMovementType;
 use App\Enums\SubcontractStatus;
 use App\Models\AccountingPeriod;
 use App\Models\Bill;
+use App\Models\CashTransaction;
 use App\Models\Delivery;
 use App\Models\EmployeeAdvance;
 use App\Models\GoodsReceipt;
@@ -69,7 +70,7 @@ class LedgerRebuilder
                         }
 
                         if ((float) $return->refunded_amount > 0) {
-                            $this->auto->returnRefund($return, (float) $return->refunded_amount, $return->refund_date ?? $return->return_date, $return->refund_method);
+                            $this->auto->returnRefund($return, (float) $return->refunded_amount, $return->refund_date ?? $return->return_date, $return->refund_method, $return->refund_account_id);
                         }
                     });
                 }
@@ -87,6 +88,8 @@ class LedgerRebuilder
 
                 EmployeeAdvance::where('status', ReturnStatus::Posted)->orderBy('date')->orderBy('id')->each(fn ($a) => $this->auto->employeeAdvance($a));
                 Payroll::where('status', PayrollStatus::Paid)->orderBy('payment_date')->orderBy('id')->each(fn ($p) => $this->auto->payrollPayment($p));
+
+                CashTransaction::where('status', PaymentStatus::Posted)->orderBy('date')->orderBy('id')->each(fn ($t) => $this->auto->cashTransaction($t));
 
                 StockMovement::where('type', StockMovementType::Adjustment)->orderBy('date')->orderBy('id')->each(fn ($m) => $this->auto->stockAdjustment($m));
 

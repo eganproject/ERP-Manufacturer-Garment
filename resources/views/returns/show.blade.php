@@ -135,9 +135,10 @@
                         @csrf
                         <x-form.input name="refund_date" label="Tanggal" :value="now()" required data-date />
                         <x-form.select name="refund_method" label="Metode" :options="\App\Enums\PaymentMethod::options()" value="transfer" :placeholder="false" required />
+                        <x-form.cash-account name="refund_account_id" />
                         <x-form.input name="refund_reference" label="No. Referensi" />
                         <x-form.input name="amount" label="Jumlah" required data-money="2" :value="$return->balance()" />
-                        <div class="md:col-span-4 flex justify-end"><button type="submit" class="btn-success">Catat Pengembalian Dana</button></div>
+                        <div class="md:col-span-3 flex items-end justify-end"><button type="submit" class="btn-success">Catat Pengembalian Dana</button></div>
                     </form>
                 </x-card>
             @endcan

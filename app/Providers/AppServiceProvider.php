@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Enums\Role;
 use App\Models\AccountingPeriod;
 use App\Models\Bill;
+use App\Models\Budget;
+use App\Models\CashTransaction;
 use App\Models\Customer;
 use App\Models\Delivery;
 use App\Models\Employee;
@@ -73,6 +75,8 @@ class AppServiceProvider extends ServiceProvider
             'employee_advance' => EmployeeAdvance::class,
             'payroll' => Payroll::class,
             'piecework_sheet' => PieceworkSheet::class,
+            'cash_transaction' => CashTransaction::class,
+            'budget' => Budget::class,
         ]);
 
         // Hak akses berbasis peran (lihat App\Enums\Role)

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Services\Accounting\CashFlowReport;
 use App\Services\Accounting\FinancialReports;
 use App\Support\ReportExport;
 use Illuminate\Http\Request;
@@ -72,6 +73,20 @@ class FinancialReportController extends Controller
         }
 
         return view('accounting.reports.balance-sheet', $data + compact('asOf'));
+    }
+
+    public function cashFlow(Request $request, CashFlowReport $report)
+    {
+        $request->validate($this->rules() + ['method' => ['nullable', Rule::in(['direct', 'indirect'])]]);
+        [$from, $to] = $this->period($request);
+        $method = $request->query('method', 'direct');
+        $data = $report->build($from, $to, $method);
+
+        if ($response = ReportExport::respond($report->table($data, $from, $to), $request->query('export'))) {
+            return $response;
+        }
+
+        return view('accounting.reports.cash-flow', $data + compact('from', 'to'));
     }
 
     private function rules(): array

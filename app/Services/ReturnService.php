@@ -259,9 +259,10 @@ class ReturnService
                 'refund_date' => Carbon::parse($data['refund_date']),
                 'refund_method' => $data['refund_method'],
                 'refund_reference' => $data['refund_reference'] ?? null,
+                'refund_account_id' => $data['refund_account_id'] ?? null,
             ]);
 
-            $this->journal->returnRefund($return, $amount, Carbon::parse($data['refund_date']), $data['refund_method']);
+            $this->journal->returnRefund($return, $amount, Carbon::parse($data['refund_date']), $data['refund_method'], $data['refund_account_id'] ?? null);
 
             $verb = $return instanceof SalesReturn ? 'Mengembalikan dana ke pelanggan' : 'Menerima pengembalian dana dari supplier';
             ActivityLog::record('refunded', "{$verb} ".rupiah($amount), $return);

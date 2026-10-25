@@ -1,4 +1,5 @@
 @use('App\Enums\AccountType')
+@use('App\Enums\CashFlowActivity')
 <x-layouts.app :title="$account->exists ? 'Ubah Akun '.$account->code : 'Tambah Akun'">
     <x-card class="max-w-3xl">
         <form method="POST" action="{{ $account->exists ? route('accounts.update', $account) : route('accounts.store') }}">
@@ -26,6 +27,30 @@
                     <div class="flex items-end pb-2"><x-form.checkbox name="is_header" label="Akun induk / header (tidak dapat dijurnal)" :checked="$account->is_header" /></div>
                 @endunless
                 <x-form.textarea name="description" label="Keterangan" :value="$account->description" rows="2" class="md:col-span-2" />
+
+                <div x-data="{ cash: @js((bool) old('is_cash', $account->is_cash)) }" class="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 p-4 md:col-span-2 md:grid-cols-2">
+                    <div class="md:col-span-2">
+                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                            <input type="hidden" name="is_cash" value="0">
+                            <input type="checkbox" name="is_cash" value="1" x-model="cash" class="rounded border-gray-300 text-indigo-600" @disabled($account->is_system && $account->is_cash)>
+                            @if ($account->is_system && $account->is_cash)<input type="hidden" name="is_cash" value="1">@endif
+                            Rekening kas / bank (golongan Aset)
+                        </label>
+                        <p class="mt-1 text-xs text-gray-500">Muncul di menu Kas &amp; Bank, bisa dipilih saat menerima/membayar, dan dihitung sebagai kas di laporan arus kas.</p>
+                        @error('is_cash')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <template x-if="cash">
+                        <div class="contents">
+                            <x-form.input name="bank_name" label="Nama Bank" :value="$account->bank_name" placeholder="Mis. BCA KCP Bandung" />
+                            <x-form.input name="bank_account_number" label="No. Rekening" :value="$account->bank_account_number" />
+                            <x-form.input name="bank_account_holder" label="Atas Nama" :value="$account->bank_account_holder" />
+                        </div>
+                    </template>
+                    <template x-if="!cash">
+                        <x-form.select name="cash_flow_activity" label="Kelompok Arus Kas" :options="CashFlowActivity::options()" :value="$account->cash_flow_activity" :placeholder="'Otomatis ('.($account->exists ? $account->defaultCashFlowActivity()->label() : 'menurut kelompok akun').')'"
+                                       help="Untuk laporan arus kas. Otomatis: aset tetap = investasi, hutang jangka panjang & modal = pendanaan, lainnya = operasi." />
+                    </template>
+                </div>
                 <x-form.checkbox name="is_active" label="Aktif" :checked="$account->is_active ?? true" />
             </div>
 

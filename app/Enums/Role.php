@@ -52,9 +52,13 @@ enum Role: string
             'receivables.manage' => 'Buat invoice & catat penerimaan pelanggan',
             'payables.view' => 'Lihat tagihan & hutang supplier',
             'payables.manage' => 'Catat tagihan & pembayaran supplier',
-            'accounting.view' => 'Lihat jurnal, buku besar & laporan keuangan',
+            'cashbank.view' => 'Lihat rekening kas & bank, mutasi rekening, bukti kas',
+            'cashbank.manage' => 'Catat kas masuk/keluar & transfer antar rekening',
+            'accounting.view' => 'Lihat jurnal, buku besar & laporan keuangan (termasuk arus kas)',
             'accounting.manage' => 'Kelola bagan akun, pemetaan akun & jurnal manual',
             'accounting.close' => 'Tutup / buka periode akuntansi',
+            'budget.view' => 'Lihat anggaran & laporan anggaran vs realisasi',
+            'budget.manage' => 'Susun & ubah anggaran',
             'stock.view' => 'Lihat stok & kartu stok',
             'stock.adjust' => 'Penyesuaian stok (stock opname)',
             'users.manage' => 'Kelola pengguna',
@@ -95,7 +99,7 @@ enum Role: string
             self::Gudang => 'Menerima barang, mengirim barang (surat jalan), retur penjualan & pembelian, kirim/retur bahan maklon, dan stock opname.',
             self::Produksi => 'Mengelola BOM, SPK produksi dari potong sampai packing, order maklon ke vendor, karyawan & tarif borongan, input hasil kerja harian, menyusun penggajian borongan, MRP, dan biaya produksi (HPP).',
             self::Sales => 'Mengelola pelanggan, sales order, dan retur penjualan, memantau piutang.',
-            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, nota kredit/debit retur, menyetujui PO bernilai besar, menyetujui & membayar upah borongan serta kasbon, jurnal & tutup buku, serta laporan keuangan (buku besar, neraca saldo, laba rugi, neraca), umur piutang/hutang dan HPP.',
+            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, nota kredit/debit retur, menyetujui PO bernilai besar, menyetujui & membayar upah borongan serta kasbon, kas & bank (kas masuk/keluar, transfer antar rekening), jurnal & tutup buku, anggaran, serta laporan keuangan (buku besar, neraca saldo, laba rugi, neraca, arus kas, anggaran vs realisasi), umur piutang/hutang dan HPP.',
         };
     }
 
@@ -142,7 +146,9 @@ enum Role: string
                 'payables.view', 'payables.manage',
                 'costing.view',
                 'payroll.view', 'payroll.manage', 'payroll.pay',
+                'cashbank.view', 'cashbank.manage',
                 'accounting.view', 'accounting.manage', 'accounting.close',
+                'budget.view', 'budget.manage',
             ],
         };
     }

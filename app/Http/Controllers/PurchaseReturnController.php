@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PaymentMethod;
+use App\Models\Account;
 use App\Models\Bill;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseReturn;
@@ -165,6 +166,7 @@ class PurchaseReturnController extends Controller implements HasMiddleware
             'refund_date' => ['required', 'date'],
             'refund_method' => ['required', Rule::enum(PaymentMethod::class)],
             'refund_reference' => ['nullable', 'string', 'max:100'],
+            'refund_account_id' => ['nullable', Account::cashRule()],
             'amount' => ['required', 'numeric', 'min:1'],
         ], [], ['refund_date' => 'tanggal', 'refund_method' => 'metode', 'amount' => 'jumlah']);
     }

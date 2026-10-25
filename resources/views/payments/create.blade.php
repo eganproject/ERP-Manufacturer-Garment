@@ -31,15 +31,16 @@
                 <input type="hidden" name="party_id" value="{{ $party->id }}">
 
                 <x-card title="2. Detail Pembayaran">
-                    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
                         <x-form.input name="payment_date" label="Tanggal Bayar" :value="now()" required data-date />
                         <x-form.select name="method" label="Metode" :options="$methods" value="transfer" :placeholder="false" required />
+                        <x-form.cash-account />
                         <x-form.input name="reference" label="No. Referensi" placeholder="No. transfer / giro / cek" />
                         <div>
                             <span class="form-label">Total Dibayar</span>
                             <p class="py-2 text-lg font-semibold text-gray-900" x-text="'Rp ' + ERP.formatNumber(total)"></p>
                         </div>
-                        <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-4" />
+                        <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-5" />
                     </div>
                 </x-card>
 

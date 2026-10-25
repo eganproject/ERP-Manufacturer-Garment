@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Enums\AccountType;
+use App\Enums\CashFlowActivity;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Setting;
@@ -58,6 +59,7 @@ class AccountController extends Controller
             'type' => AccountType::tryFrom((string) $request->type) ?? AccountType::Expense,
             'parent_id' => $request->integer('parent_id') ?: null,
             'is_active' => true,
+            'is_cash' => $request->boolean('is_cash'),
         ]);
 
         return view('accounting.accounts.form', $this->formData($account));
@@ -81,8 +83,10 @@ class AccountController extends Controller
 
         // Akun sistem / yang sudah dipakai jurnal: kode, tipe & jenis akun dikunci
         if ($account->is_system || $account->lines()->exists()) {
-            $data = array_intersect_key($data, array_flip(['name', 'description', 'is_active', 'parent_id']));
+            $data = array_intersect_key($data, array_flip(['name', 'description', 'is_active', 'parent_id', 'is_cash', 'bank_name', 'bank_account_number', 'bank_account_holder', 'cash_flow_activity']));
             $data['is_active'] = $account->is_system ? true : $data['is_active'];
+            // Kas & bank bawaan tetap rekening kas
+            $data['is_cash'] = $account->is_system && $account->is_cash ? true : $data['is_cash'];
         }
 
         $account->update($data);
@@ -141,6 +145,11 @@ class AccountController extends Controller
             'is_header' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'description' => ['nullable', 'string', 'max:255'],
+            'is_cash' => ['nullable', 'boolean'],
+            'bank_name' => ['nullable', 'string', 'max:255'],
+            'bank_account_number' => ['nullable', 'string', 'max:50'],
+            'bank_account_holder' => ['nullable', 'string', 'max:255'],
+            'cash_flow_activity' => ['nullable', Rule::enum(CashFlowActivity::class)],
         ], [
             'code.regex' => 'Kode akun hanya boleh berisi angka, huruf, titik, atau tanda minus.',
             'parent_id.exists' => 'Akun induk harus berupa akun header.',
@@ -160,6 +169,12 @@ class AccountController extends Controller
             }
         }
 
+        $isCash = $request->boolean('is_cash') && ! $request->boolean('is_header');
+
+        if ($isCash && ($account?->type ?? $type) !== AccountType::Asset) {
+            throw ValidationException::withMessages(['is_cash' => 'Rekening kas/bank harus bergolongan Aset.']);
+        }
+
         return [
             'code' => $data['code'],
             'name' => $data['name'],
@@ -169,6 +184,11 @@ class AccountController extends Controller
             'is_header' => $request->boolean('is_header'),
             'is_active' => $request->boolean('is_active'),
             'description' => $data['description'] ?? null,
+            'is_cash' => $isCash,
+            'bank_name' => $isCash ? ($data['bank_name'] ?? null) : null,
+            'bank_account_number' => $isCash ? ($data['bank_account_number'] ?? null) : null,
+            'bank_account_holder' => $isCash ? ($data['bank_account_holder'] ?? null) : null,
+            'cash_flow_activity' => $isCash ? null : ($data['cash_flow_activity'] ?? null),
         ];
     }
 
