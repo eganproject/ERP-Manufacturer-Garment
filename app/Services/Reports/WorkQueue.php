@@ -11,10 +11,12 @@ use App\Models\Invoice;
 use App\Models\Material;
 use App\Models\Payroll;
 use App\Models\ProductionOrder;
+use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
 use App\Models\SalesOrder;
 use App\Models\SubcontractOrder;
 use App\Models\User;
+use App\Services\DepreciationService;
 use Illuminate\Support\Collection;
 
 /**
@@ -76,7 +78,21 @@ class WorkQueue
         $add('payroll.pay', 'Penggajian siap dibayar', fn () => Payroll::where('status', PayrollStatus::Approved)->count(),
             route('payrolls.index', ['status' => PayrollStatus::Approved->value]), 'Bayar upah & cetak slip');
 
+        // Persediaan & aset tetap
+        $add('defects.manage', 'Barang cacat menunggu diproses', fn () => ProductVariant::where('defect_stock', '>', 0)->count(),
+            route('defects.index'), 'Perbaiki, kembalikan ke stok jual, atau musnahkan');
+        $add('assets.manage', 'Penyusutan aset belum diposting', fn () => $this->pendingDepreciation(),
+            route('depreciation-runs.index'), 'Posting penyusutan s.d. bulan lalu', 'gray');
+
         return collect($tasks);
+    }
+
+    /** Jumlah aset aktif yang penyusutannya belum diposting s.d. bulan lalu. */
+    private function pendingDepreciation(): int
+    {
+        $lastMonth = today()->startOfMonth()->subMonthNoOverflow();
+
+        return app(DepreciationService::class)->preview($lastMonth)->count();
     }
 
     /**

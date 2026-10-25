@@ -8,9 +8,12 @@ use App\Models\Bill;
 use App\Models\Budget;
 use App\Models\CashTransaction;
 use App\Models\Customer;
+use App\Models\DefectHandling;
 use App\Models\Delivery;
+use App\Models\DepreciationRun;
 use App\Models\Employee;
 use App\Models\EmployeeAdvance;
+use App\Models\FixedAsset;
 use App\Models\GoodsReceipt;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
@@ -77,6 +80,9 @@ class AppServiceProvider extends ServiceProvider
             'piecework_sheet' => PieceworkSheet::class,
             'cash_transaction' => CashTransaction::class,
             'budget' => Budget::class,
+            'fixed_asset' => FixedAsset::class,
+            'depreciation_run' => DepreciationRun::class,
+            'defect_handling' => DefectHandling::class,
         ]);
 
         // Hak akses berbasis peran (lihat App\Enums\Role)

@@ -37,9 +37,13 @@ class LedgerAccounts
         'accrued_expense' => ['Biaya masih harus dibayar (biaya produksi lain)', '2104', 'Persediaan & Produksi'],
         'production_variance' => ['Selisih biaya produksi', '5103', 'Persediaan & Produksi'],
         'stock_adjustment' => ['Selisih persediaan (stock opname)', '5104', 'Persediaan & Produksi'],
+        'defect_inventory' => ['Persediaan barang cacat (karantina)', '1305', 'Persediaan & Produksi'],
+        'defect_writeoff' => ['Beban barang cacat dimusnahkan', '5105', 'Persediaan & Produksi'],
         'employee_advance' => ['Piutang karyawan (kasbon)', '1203', 'Upah Borongan'],
         'wage_allowance' => ['Bonus / tunjangan upah produksi', '5205', 'Upah Borongan'],
         'payroll_other_income' => ['Potongan upah lain (denda, dll)', '7199', 'Upah Borongan'],
+        'asset_gain' => ['Laba pelepasan aset tetap', '7102', 'Aset Tetap'],
+        'asset_loss' => ['Rugi pelepasan aset tetap', '8104', 'Aset Tetap'],
         'retained_earnings' => ['Laba ditahan', '3201', 'Ekuitas'],
         'opening_equity' => ['Ekuitas saldo awal (stok awal)', '3901', 'Ekuitas'],
     ];

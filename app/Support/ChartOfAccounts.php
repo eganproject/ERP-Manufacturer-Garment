@@ -44,6 +44,7 @@ class ChartOfAccounts
             ['1302', 'Persediaan Barang Dalam Proses (WIP)', $a, '1300'],
             ['1303', 'Persediaan Barang Jadi', $a, '1300'],
             ['1304', 'Bahan di Vendor Maklon', $a, '1300'],
+            ['1305', 'Persediaan Barang Cacat (Karantina)', $a, '1300'],
             ['1400', 'Pajak & Uang Muka', $a, '1000', true],
             ['1401', 'PPN Masukan', $a, '1400'],
             ['1402', 'Uang Muka Pembelian', $a, '1400'],
@@ -86,6 +87,7 @@ class ChartOfAccounts
             ['5102', 'Selisih Harga Pembelian', $c, '5000'],
             ['5103', 'Selisih Biaya Produksi', $c, '5000'],
             ['5104', 'Selisih Persediaan (Stock Opname)', $c, '5000'],
+            ['5105', 'Beban Barang Cacat Dimusnahkan', $c, '5000'],
             ['5200', 'Biaya Overhead Pabrik', $c, '5000', true],
             ['5201', 'Listrik & Air Pabrik', $c, '5200'],
             ['5202', 'Penyusutan Mesin & Bangunan Pabrik', $c, '5200'],
@@ -107,12 +109,14 @@ class ChartOfAccounts
 
             ['7000', 'PENDAPATAN LAIN-LAIN', $oi, null, true],
             ['7101', 'Pendapatan Bunga / Jasa Giro', $oi, '7000'],
+            ['7102', 'Laba Pelepasan Aset Tetap', $oi, '7000'],
             ['7199', 'Pendapatan Lain-lain', $oi, '7000'],
 
             ['8000', 'BEBAN LAIN-LAIN', $oe, null, true],
             ['8101', 'Beban Administrasi Bank', $oe, '8000'],
             ['8102', 'Beban Bunga Pinjaman', $oe, '8000'],
             ['8103', 'Beban Pajak Penghasilan', $oe, '8000'],
+            ['8104', 'Rugi Pelepasan Aset Tetap', $oe, '8000'],
             ['8199', 'Beban Lain-lain', $oe, '8000'],
         ];
     }

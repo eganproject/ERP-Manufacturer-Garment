@@ -14,7 +14,7 @@
 
     @if ($order)
         <form method="POST" action="{{ route($kind->route.'.store') }}" class="space-y-6"
-              data-confirm="{{ $kind->isSales ? 'Barang retur akan masuk kembali ke stok barang jadi.' : 'Bahan retur akan dikeluarkan dari stok.' }} Bagian yang sudah ditagih menjadi {{ strtolower($kind->noteLabel) }}." data-confirm-icon="question" data-confirm-button="Ya, simpan retur">
+              data-confirm="{{ $kind->isSales ? 'Barang retur akan masuk kembali ke stok barang jadi (yang cacat ke stok cacat).' : 'Bahan retur akan dikeluarkan dari stok.' }} Bagian yang sudah ditagih menjadi {{ strtolower($kind->noteLabel) }}." data-confirm-icon="question" data-confirm-button="Ya, simpan retur">
             @csrf
             <input type="hidden" name="order_id" value="{{ $order->id }}">
 
@@ -34,7 +34,7 @@
             <x-card title="3. Barang yang Diretur" :padding="false">
                 <div class="overflow-x-auto">
                     <table class="table-base">
-                        <thead><tr><th>{{ $kind->itemLabel }}</th><th class="text-right">{{ $kind->shippedLabel }}</th><th class="text-right">Sudah Diretur</th><th class="text-right">Belum Ditagih</th>@unless ($kind->isSales)<th class="text-right">Stok</th>@endunless<th class="text-right">Harga</th><th class="w-40">Retur Sekarang</th></tr></thead>
+                        <thead><tr><th>{{ $kind->itemLabel }}</th><th class="text-right">{{ $kind->shippedLabel }}</th><th class="text-right">Sudah Diretur</th><th class="text-right">Belum Ditagih</th>@unless ($kind->isSales)<th class="text-right">Stok</th>@endunless<th class="text-right">Harga</th><th class="w-40">Retur Sekarang</th>@if ($kind->isSales)<th class="w-40">Di antaranya Cacat</th>@endif</tr></thead>
                         <tbody class="divide-y divide-gray-100">
                             @foreach ($lines as $line)
                                 <tr>
@@ -53,6 +53,15 @@
                                             <span class="text-xs text-gray-400">-</span>
                                         @endif
                                     </td>
+                                    @if ($kind->isSales)
+                                        <td>
+                                            @if ($line['returnable'] > 0)
+                                                <input type="number" step="any" min="0" max="{{ $line['returnable'] }}" name="defects[{{ $line['id'] }}]"
+                                                       value="{{ old('defects.'.$line['id']) }}" placeholder="0" class="form-control">
+                                                @error('defects.'.$line['id'])<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                                            @endif
+                                        </td>
+                                    @endif
                                 </tr>
                             @endforeach
                         </tbody>
@@ -61,6 +70,9 @@
                 <p class="border-t border-gray-100 px-5 py-3 text-xs text-gray-500">
                     Retur mengurangi barang yang belum ditagih lebih dulu. Kelebihannya menjadi {{ strtolower($kind->noteLabel) }}
                     (harga {{ $kind->isSales ? 'SO setelah diskon' : 'tagihan supplier' }} + PPN) yang otomatis mengurangi {{ strtolower($kind->documentLabel) }} terbuka {{ $kind->isSales ? 'SO' : 'PO' }} ini.
+                    @if ($kind->isSales)
+                        <br>Isi <strong>Di antaranya Cacat</strong> untuk barang rusak/cacat: barang itu masuk ke <strong>stok cacat</strong> (tidak ikut terjual) dan diproses di menu Persediaan → Barang Cacat (perbaiki, musnahkan, atau kembalikan ke stok jual).
+                    @endif
                 </p>
                 @error('items')<p class="px-5 pb-3 text-xs text-red-600">{{ $message }}</p>@enderror
                 @error('stock')<p class="px-5 pb-3 text-xs text-red-600">{{ $message }}</p>@enderror

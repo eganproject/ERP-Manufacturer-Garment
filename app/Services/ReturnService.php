@@ -6,6 +6,7 @@ use App\Enums\InvoiceStatus;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\ReturnStatus;
 use App\Enums\SalesOrderStatus;
+use App\Enums\StockLocation;
 use App\Enums\StockMovementType;
 use App\Models\ActivityLog;
 use App\Models\Bill;
@@ -24,7 +25,9 @@ use Illuminate\Validation\ValidationException;
 /**
  * Retur penjualan (RJ) dan retur pembelian (RB).
  *
- * - Retur penjualan: barang masuk lagi ke stok dengan HPP rata-rata saat dikirim.
+ * - Retur penjualan: barang masuk lagi ke stok dengan HPP rata-rata saat dikirim. Barang yang
+ *   kondisinya cacat masuk ke stok cacat (karantina), bukan stok jual, lalu diproses lewat
+ *   {@see DefectService} (perbaiki, musnahkan, atau kembalikan ke stok jual).
  * - Retur pembelian: bahan keluar dari stok dengan harga pokok rata-rata saat itu.
  * - Retur atas barang yang belum ditagih hanya mengurangi jumlah yang bisa ditagih.
  * - Retur atas barang yang sudah ditagih menjadi nota kredit/debit (DPP + PPN) yang otomatis
@@ -37,7 +40,7 @@ class ReturnService
 
     /**
      * @param  array<int, float|string|null>  $quantities  sales_order_item_id => qty diretur
-     * @param  array{return_date: string, reason: string, notes?: string|null}  $data
+     * @param  array{return_date: string, reason: string, notes?: string|null, defects?: array<int, float|string|null>}  $data  defects: item => qty cacat
      */
     public function createSalesReturn(SalesOrder $order, array $quantities, array $data): SalesReturn
     {
@@ -77,24 +80,39 @@ class ReturnService
                     ]);
                 }
 
+                $defectQty = round(max(0, (float) ($data['defects'][$itemId] ?? 0)), 2);
+
+                if ($defectQty > $qty + 0.0001) {
+                    throw ValidationException::withMessages([
+                        "defects.$itemId" => "Jumlah cacat {$item->variant->display_name} tidak boleh melebihi jumlah retur (".qty($qty).').',
+                    ]);
+                }
+
                 // Barang yang belum ditagih diretur lebih dulu; sisanya mengurangi invoice (nota kredit)
                 $billedQty = round(max(0, $qty - $item->uninvoicedQuantity()), 2);
                 $unitCost = $item->deliveredUnitCost();
+                $note = 'Retur '.$order->number.' dari '.$order->customer->name;
 
                 $item->returned_quantity = (float) $item->returned_quantity + $qty;
                 $item->returned_invoiced_quantity = (float) $item->returned_invoiced_quantity + $billedQty;
                 $item->save();
 
-                $this->stock->move(
-                    $item->variant, $qty, StockMovementType::SalesReturn,
-                    $return, $return->number, 'Retur '.$order->number.' dari '.$order->customer->name, $date,
-                    unitCost: $unitCost > 0 ? $unitCost : null,
-                );
+                // Barang layak jual kembali ke stok jual, barang cacat ke stok cacat (karantina)
+                if ($qty - $defectQty > 0.0001) {
+                    $this->stock->move($item->variant, round($qty - $defectQty, 2), StockMovementType::SalesReturn,
+                        $return, $return->number, $note, $date, unitCost: $unitCost > 0 ? $unitCost : null);
+                }
+                if ($defectQty > 0) {
+                    $this->stock->move($item->variant, $defectQty, StockMovementType::SalesReturn,
+                        $return, $return->number, $note.' (cacat)', $date, unitCost: $unitCost > 0 ? $unitCost : null,
+                        location: StockLocation::Defect);
+                }
 
                 $return->items()->create([
                     'sales_order_item_id' => $item->id,
                     'product_variant_id' => $item->product_variant_id,
                     'quantity' => $qty,
+                    'defect_quantity' => $defectQty,
                     'billed_quantity' => $billedQty,
                     'price' => $item->price,
                     'subtotal' => round($qty * (float) $item->price, 2),
@@ -290,8 +308,15 @@ class ReturnService
                 $orderItem->save();
 
                 if ($isSales) {
-                    $this->stock->move($orderItem->variant, -1 * (float) $line->quantity, StockMovementType::SalesReturn,
-                        $return, $return->number, 'Pembatalan retur '.$return->number, $date);
+                    $good = round((float) $line->quantity - (float) $line->defect_quantity, 2);
+                    if ($good > 0) {
+                        $this->stock->move($orderItem->variant, -1 * $good, StockMovementType::SalesReturn,
+                            $return, $return->number, 'Pembatalan retur '.$return->number, $date);
+                    }
+                    if ((float) $line->defect_quantity > 0) {
+                        $this->stock->move($orderItem->variant, -1 * (float) $line->defect_quantity, StockMovementType::SalesReturn,
+                            $return, $return->number, 'Pembatalan retur '.$return->number.' (cacat)', $date, location: StockLocation::Defect);
+                    }
                 } else {
                     $this->stock->move($orderItem->material, (float) $line->quantity, StockMovementType::PurchaseReturn,
                         $return, $return->number, 'Pembatalan retur '.$return->number, $date,

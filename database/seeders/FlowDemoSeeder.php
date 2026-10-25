@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\CashTransactionType;
+use App\Enums\DefectHandlingType;
 use App\Enums\PaymentType;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\PurchaseOrderStatus;
@@ -10,6 +11,7 @@ use App\Enums\SalesOrderStatus;
 use App\Enums\StageStatus;
 use App\Models\Account;
 use App\Models\ActivityLog;
+use App\Models\AssetCategory;
 use App\Models\Bom;
 use App\Models\Customer;
 use App\Models\Employee;
@@ -22,7 +24,10 @@ use App\Models\Supplier;
 use App\Models\User;
 use App\Services\BillService;
 use App\Services\CashBankService;
+use App\Services\DefectService;
+use App\Services\DepreciationService;
 use App\Services\DocumentNumber;
+use App\Services\FixedAssetService;
 use App\Services\InvoiceService;
 use App\Services\PaymentService;
 use App\Services\PayrollService;
@@ -40,7 +45,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Data demo satu siklus penuh (± 5 minggu terakhir) lewat service yang sama dengan aplikasi:
  * SO → SPK (internal & maklon) → PO + persetujuan → penerimaan → tagihan → upah borongan → penggajian
- * → surat jalan → invoice → retur → pembayaran → kas & bank. Beberapa dokumen sengaja dibiarkan terbuka
+ * → surat jalan → invoice → retur (sebagian cacat → perbaikan) → pembayaran → kas & bank → aset tetap
+ * & penyusutan. Beberapa dokumen sengaja dibiarkan terbuka
  * supaya panel "Perlu Ditindaklanjuti" di dashboard terisi.
  *
  * Jalankan: php artisan db:seed --class=FlowDemoSeeder (dilewati bila sudah ada SO).
@@ -83,6 +89,9 @@ class FlowDemoSeeder extends Seeder
         $payments = app(PaymentService::class);
         $returns = app(ReturnService::class);
         $cashBank = app(CashBankService::class);
+        $assets = app(FixedAssetService::class);
+        $defects = app(DefectService::class);
+        $assetCategory = fn (string $code) => AssetCategory::where('code', $code)->value('id');
 
         $material = fn (string $code) => Material::where('code', $code)->firstOrFail();
         $supplier = fn (string $code) => Supplier::where('code', $code)->firstOrFail();
@@ -101,6 +110,28 @@ class FlowDemoSeeder extends Seeder
         $cashBank->record(CashTransactionType::In, ['date' => $this->d(0), 'cash_account_id' => $bank, 'party_name' => 'Pemilik', 'description' => 'Setoran modal awal ke rekening bank'],
             [['account_id' => Account::where('code', '3101')->value('id'), 'amount' => 150000000]]);
         $cashBank->record(CashTransactionType::Transfer, ['date' => $this->d(0), 'cash_account_id' => $bank, 'to_account_id' => $cash, 'amount' => 5000000, 'description' => 'Isi kas kecil pabrik']);
+
+        // Hari 0: aset lama (saldo awal) mulai disusutkan bulan ini, lalu beli mesin baru tunai & kredit
+        $assets->create([
+            'acquisition_type' => 'opening', 'name' => 'Mesin jahit high speed (10 unit)', 'asset_category_id' => $assetCategory('MSN'),
+            'location' => 'Lantai 2 – Jahit', 'acquisition_date' => $this->base->copy()->subMonths(24)->startOfMonth()->toDateString(),
+            'cost' => 75000000, 'opening_accumulated' => 18750000, 'depreciation_start' => $this->base->copy()->startOfMonth()->toDateString(),
+        ]);
+        $assets->create([
+            'acquisition_type' => 'opening', 'name' => 'Tanah & lahan pabrik', 'asset_category_id' => $assetCategory('TNH'),
+            'acquisition_date' => $this->base->copy()->subYears(6)->toDateString(), 'cost' => 350000000,
+            'depreciation_start' => $this->base->copy()->startOfMonth()->toDateString(),
+        ]);
+        $this->on(2);
+        $assets->create([
+            'acquisition_type' => 'cash', 'name' => 'Mesin obras 4 benang', 'asset_category_id' => $assetCategory('MSN'), 'serial_number' => 'OB-7781',
+            'location' => 'Lantai 2 – Jahit', 'acquisition_date' => $this->d(2), 'cost' => 18000000, 'cash_account_id' => $bank, 'reference' => 'KW-0921',
+        ]);
+        $machineSupplier = Supplier::firstOrCreate(['code' => 'SUP-003'], ['name' => 'CV Sinar Mesin Garmen', 'contact_person' => 'Wawan', 'phone' => '0812-9999-0001', 'address' => 'Bandung', 'payment_terms' => 30]);
+        $assets->create([
+            'acquisition_type' => 'credit', 'name' => 'Mesin potong kain otomatis', 'asset_category_id' => $assetCategory('MSN'), 'serial_number' => 'CUT-2201',
+            'location' => 'Lantai 1 – Potong', 'acquisition_date' => $this->d(2), 'cost' => 24000000, 'tax_rate' => 11, 'supplier_id' => $machineSupplier->id, 'reference' => 'INV-SMG-118',
+        ]);
 
         // Hari 0: dua pesanan pelanggan
         $as('sales');
@@ -266,7 +297,13 @@ class FlowDemoSeeder extends Seeder
         $this->on(18);
         $as('sales');
         $itemM = $soA->items()->where('product_variant_id', $variant($kaos, 'M')->id)->first();
-        $returns->createSalesReturn($soA->fresh('items'), [$itemM->id => 5], ['return_date' => $this->d(18), 'reason' => 'Jahitan samping lepas']);
+        $returns->createSalesReturn($soA->fresh('items'), [$itemM->id => 5], ['return_date' => $this->d(18), 'reason' => 'Jahitan samping lepas', 'defects' => [$itemM->id => 3]]);
+
+        // Hari 19: 2 pcs cacat dijahit ulang (masuk stok jual lagi), 1 pcs masih di stok cacat
+        $this->on(19);
+        $as('produksi');
+        $defects->record(DefectHandlingType::Rework, ['date' => $this->d(19), 'notes' => 'Jahit ulang sisi samping', 'extra_cost' => 6000, 'cash_account_id' => $cash],
+            [['product_variant_id' => $variant($kaos, 'M')->id, 'quantity' => 2]]);
 
         // Hari 20: pelunasan & pembayaran
         $this->on(20);
@@ -311,6 +348,10 @@ class FlowDemoSeeder extends Seeder
         $as('purchasing');
         $po4 = $this->purchaseOrder($supplier('SUP-001'), 34, 38, [[$material('KN-CMB30-PTH'), 100, 118000]], 'Stok kain putih untuk pesanan kaos putih');
         $purchase->submit($po4);
+
+        // Penyusutan aset tetap s.d. bulan lalu
+        $as('keuangan');
+        app(DepreciationService::class)->run(today()->startOfMonth()->subMonthNoOverflow());
     }
 
     /** Pindahkan "hari ini" ke hari ke-n skenario (jam kerja) agar tanggal mutasi & jurnal sesuai dokumen. */

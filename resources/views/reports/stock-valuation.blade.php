@@ -85,7 +85,7 @@
                                     <div class="text-xs text-gray-500">{{ $row['code'] }}</div>
                                 </td>
                                 <td>{{ $row['category'] }}</td>
-                                <td @class(['text-right whitespace-nowrap', 'text-red-600 font-medium' => $row['low_stock'] || $row['stock'] < 0])>{{ qty($row['stock']) }} <span class="text-xs text-gray-500">{{ $row['unit'] }}</span></td>
+                                <td @class(['text-right whitespace-nowrap', 'text-red-600 font-medium' => $row['low_stock'] || $row['stock'] < 0])>{{ qty($row['stock']) }} <span class="text-xs text-gray-500">{{ $row['unit'] }}</span>@if (($row['defect_stock'] ?? 0) > 0)<div class="text-xs text-red-600">+ {{ qty($row['defect_stock']) }} cacat ({{ rupiah($row['defect_value'], false) }})</div>@endif</td>
                                 <td class="text-right whitespace-nowrap">
                                     {{ rupiah($row['unit_cost'], false) }}
                                     <div @class(['text-xs', 'text-gray-500' => $row['basis'] === 'average', 'text-amber-600' => $row['basis'] !== 'average'])>{{ StockValuationReport::basisLabel($row['basis']) }}</div>

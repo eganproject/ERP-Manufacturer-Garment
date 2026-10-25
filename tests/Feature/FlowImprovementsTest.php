@@ -146,7 +146,7 @@ class FlowImprovementsTest extends TestCase
         $this->assertSame(0.0, round((float) JournalLine::sum(DB::raw('debit - credit')), 2));
 
         // Persediaan di buku besar = nilai persediaan dari kartu stok
-        $inventory = (float) JournalLine::whereHas('account', fn ($q) => $q->whereIn('code', ['1301', '1303']))->sum(DB::raw('debit - credit'));
+        $inventory = (float) JournalLine::whereHas('account', fn ($q) => $q->whereIn('code', ['1301', '1303', '1305']))->sum(DB::raw('debit - credit'));
         $this->assertEqualsWithDelta(array_sum(app(StockValuationReport::class)->grandTotal()), $inventory, 0.05);
 
         foreach (['admin', 'purchasing', 'gudang', 'produksi', 'sales', 'keuangan'] as $role) {

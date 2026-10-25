@@ -56,7 +56,11 @@
                             <tr>
                                 @if ($kind->isSales)
                                     <td>{{ $item->variant->display_name }}<div class="text-xs text-gray-500">{{ $item->variant->sku }}</div></td>
-                                    <td class="text-right">{{ qty($item->quantity) }}</td>
+                                    <td class="text-right">{{ qty($item->quantity) }}
+                                        @if ((float) $item->defect_quantity > 0)
+                                            <div class="text-xs text-red-600">{{ qty($item->defect_quantity) }} cacat → stok cacat</div>
+                                        @endif
+                                    </td>
                                 @else
                                     <td>{{ $item->material->display_name }}</td>
                                     <td class="text-right">{{ qty($item->quantity) }} {{ $item->material->unit->code }}</td>

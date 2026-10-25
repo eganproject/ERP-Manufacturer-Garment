@@ -13,6 +13,10 @@ enum StockMovementType: string
     case Adjustment = 'adjustment';
     case SubcontractIssue = 'subcontract_issue';
     case SubcontractReturn = 'subcontract_return';
+    case DefectQuarantine = 'defect_quarantine';
+    case DefectRework = 'defect_rework';
+    case DefectRestock = 'defect_restock';
+    case DefectScrap = 'defect_scrap';
 
     public function label(): string
     {
@@ -26,6 +30,10 @@ enum StockMovementType: string
             self::Adjustment => 'Penyesuaian Stok',
             self::SubcontractIssue => 'Kirim ke Vendor Maklon',
             self::SubcontractReturn => 'Retur dari Vendor Maklon',
+            self::DefectQuarantine => 'Pindah ke Stok Cacat',
+            self::DefectRework => 'Perbaikan Barang Cacat',
+            self::DefectRestock => 'Barang Cacat Layak Jual',
+            self::DefectScrap => 'Pemusnahan Barang Cacat',
         };
     }
 }

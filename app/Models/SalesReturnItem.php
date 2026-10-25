@@ -10,6 +10,7 @@ class SalesReturnItem extends Model
 
     protected $casts = [
         'quantity' => 'decimal:2',
+        'defect_quantity' => 'decimal:2',
         'billed_quantity' => 'decimal:2',
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
@@ -27,6 +28,12 @@ class SalesReturnItem extends Model
     public function salesOrderItem()
     {
         return $this->belongsTo(SalesOrderItem::class);
+    }
+
+    /** Nilai HPP bagian barang cacat yang masuk ke stok cacat. */
+    public function defectCost(): float
+    {
+        return round((float) $this->defect_quantity * (float) $this->unit_cost, 2);
     }
 
     public function variant()

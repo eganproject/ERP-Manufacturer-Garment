@@ -24,7 +24,7 @@ class BillController extends Controller implements HasMiddleware
 
     public function index(Request $request)
     {
-        $bills = Bill::with(['supplier', 'purchaseOrder', 'subcontractOrder'])
+        $bills = Bill::with(['supplier', 'purchaseOrder', 'subcontractOrder', 'fixedAsset'])
             ->when($request->q, fn ($q, $s) => $q->where(fn ($w) => $w->where('number', 'like', "%{$s}%")
                 ->orWhere('supplier_invoice_number', 'like', "%{$s}%")
                 ->orWhereHas('supplier', fn ($c) => $c->where('name', 'like', "%{$s}%"))
@@ -132,7 +132,7 @@ class BillController extends Controller implements HasMiddleware
 
     public function show(Bill $bill)
     {
-        $bill->load(['supplier', 'purchaseOrder', 'subcontractOrder', 'items.material.unit', 'allocations.payment', 'creditApplications.source', 'creator', 'activities.user']);
+        $bill->load(['supplier', 'purchaseOrder', 'subcontractOrder', 'fixedAsset', 'items.material.unit', 'allocations.payment', 'creditApplications.source', 'creator', 'activities.user']);
 
         return view('bills.show', compact('bill'));
     }

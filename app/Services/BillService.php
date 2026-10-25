@@ -7,6 +7,7 @@ use App\Enums\PurchaseOrderStatus;
 use App\Enums\SubcontractStatus;
 use App\Models\ActivityLog;
 use App\Models\Bill;
+use App\Models\FixedAsset;
 use App\Models\PurchaseOrder;
 use App\Models\SubcontractOrder;
 use App\Models\SubcontractReceipt;
@@ -134,6 +135,31 @@ class BillService
         });
     }
 
+    /**
+     * Tagihan pembelian aset tetap secara kredit (tanpa PO). Nilainya sudah dicatat di hutang belum
+     * ditagih saat aset dicatat, sehingga tagihan memindahkannya ke hutang usaha (+ PPN masukan).
+     *
+     * @param  array{bill_date: string, due_date?: string|null, supplier_invoice_number?: string|null, tax_rate?: float|string|null}  $data
+     */
+    public function createFromFixedAsset(FixedAsset $asset, array $data): Bill
+    {
+        $asset->loadMissing('supplier');
+        $supplierInvoice = $this->checkSupplierInvoice($asset->supplier_id, $data);
+
+        return DB::transaction(function () use ($asset, $data, $supplierInvoice) {
+            $bill = $this->createBill($asset->supplier, Carbon::parse($data['bill_date']), [[
+                'description' => "Pembelian aset tetap {$asset->number} – {$asset->name}",
+                'quantity' => 1,
+                'price' => $asset->cost,
+                'subtotal' => $asset->cost,
+            ]], $data + ['notes' => "Aset tetap {$asset->number}"], $supplierInvoice, []);
+
+            ActivityLog::record('created', "Mencatat tagihan {$bill->number} pembelian aset {$asset->number}", $bill);
+
+            return $bill;
+        });
+    }
+
     private function checkSupplierInvoice(int $supplierId, array $data): ?string
     {
         $supplierInvoice = trim((string) ($data['supplier_invoice_number'] ?? '')) ?: null;
@@ -178,8 +204,12 @@ class BillService
         return $bill;
     }
 
-    public function cancel(Bill $bill, ?string $reason = null): void
+    public function cancel(Bill $bill, ?string $reason = null, bool $fromAsset = false): void
     {
+        if (! $fromAsset && $bill->fixedAsset()->exists()) {
+            throw ValidationException::withMessages(['status' => 'Tagihan ini berasal dari pembelian aset tetap. Batalkan dari halaman aset tetapnya.']);
+        }
+
         if (! $bill->canCancel()) {
             throw ValidationException::withMessages(['status' => 'Tagihan yang sudah ada pembayaran tidak dapat dibatalkan. Batalkan pembayarannya terlebih dulu.']);
         }
@@ -200,7 +230,9 @@ class BillService
             $this->journal->reverse($bill, 'tagihan dibatalkan'.($reason ? " – {$reason}" : ''));
 
             ActivityLog::record('cancelled', 'Membatalkan tagihan'.($reason ? ": {$reason}" : ''), $bill);
-            ActivityLog::record('bill_cancelled', "Tagihan {$bill->number} dibatalkan", $bill->source());
+            if ($source = $bill->source()) {
+                ActivityLog::record('bill_cancelled', "Tagihan {$bill->number} dibatalkan", $source);
+            }
         });
     }
 }
