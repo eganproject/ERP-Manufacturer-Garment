@@ -47,6 +47,7 @@
                 @unless ($isOpening)
                     <x-form.input name="tax_rate" type="number" step="any" min="0" label="PPN Masukan (%)" value="0" />
                     <x-form.input name="reference" label="No. Faktur / Kuitansi" />
+                    <x-form.input name="tax_invoice_number" label="No. Faktur Pajak" placeholder="Bila ada PPN masukan" help="Untuk laporan PPN masukan." />
                 @endunless
             </div>
         </x-card>

@@ -68,6 +68,7 @@ class FixedAssetService
                 'supplier_id' => $supplierId,
                 'cash_account_id' => $cashAccountId,
                 'reference' => $data['reference'] ?? null,
+                'tax_invoice_number' => $type !== AssetAcquisitionType::Cash ? null : VatService::normalizeNumber($data['tax_invoice_number'] ?? null),
                 'cost' => $cost,
                 'tax_rate' => $taxRate,
                 'tax_amount' => $type === AssetAcquisitionType::Cash ? round($cost * $taxRate / 100) : 0,
@@ -92,6 +93,8 @@ class FixedAssetService
                     'bill_date' => $date->toDateString(),
                     'due_date' => $data['due_date'] ?? null,
                     'supplier_invoice_number' => $data['reference'] ?? null,
+                    'tax_invoice_number' => $data['tax_invoice_number'] ?? null,
+                    'tax_invoice_date' => $date->toDateString(),
                     'tax_rate' => $taxRate,
                 ]);
                 $asset->update(['bill_id' => $bill->id]);

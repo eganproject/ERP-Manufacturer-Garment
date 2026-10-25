@@ -37,6 +37,7 @@ use App\Services\PurchaseService;
 use App\Services\ReturnService;
 use App\Services\SalesService;
 use App\Services\SubcontractService;
+use App\Services\VatService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -197,7 +198,7 @@ class FlowDemoSeeder extends Seeder
         ]);
         $this->stage($production, $spkA, 'cutting', 300);
         $as('keuangan');
-        $bills->createFromPurchaseOrder($po1->fresh('items'), $this->billLines($po1), ['bill_date' => $this->d(4), 'supplier_invoice_number' => 'INV/TN/10/2210', 'tax_rate' => 11]);
+        $bills->createFromPurchaseOrder($po1->fresh('items'), $this->billLines($po1), ['bill_date' => $this->d(4), 'supplier_invoice_number' => 'INV/TN/10/2210', 'tax_rate' => 11, 'tax_invoice_number' => '010.002-26.00004521', 'tax_invoice_date' => $this->d(4)]);
         $bills->createFromPurchaseOrder($po3->fresh('items'), $this->billLines($po3), ['bill_date' => $this->d(4), 'supplier_invoice_number' => 'INV/TN/10/2211']);
 
         // Hari 5: kasbon karyawan
@@ -257,6 +258,7 @@ class FlowDemoSeeder extends Seeder
         $this->deliverAvailable($sales, $soA, 12, 'D 1845 BB', 'Asep');
         $as('keuangan');
         $invA = $invoices->createFromSalesOrder($soA->fresh('items'), $this->uninvoiced($soA), ['invoice_date' => $this->d(12), 'due_date' => $this->d(42), 'tax_rate' => 11]);
+        app(VatService::class)->setTaxInvoice($invA, '010.000-26.00000101', $this->d(12)); // faktur kemeja (invB) sengaja belum diisi
 
         // Hari 13: sisa bahan kembali dari vendor, order maklon ditutup, sisa SO kaos ditutup
         $this->on(13);
@@ -352,6 +354,13 @@ class FlowDemoSeeder extends Seeder
         // Penyusutan aset tetap s.d. bulan lalu
         $as('keuangan');
         app(DepreciationService::class)->run(today()->startOfMonth()->subMonthNoOverflow());
+
+        // Tutup masa PPN bulan lalu (bila bisa), kurang bayar disetor lewat kas keluar
+        $vat = app(VatService::class);
+        $lastMonth = today()->startOfMonth()->subMonthNoOverflow();
+        if ($vat->closeBlocker($lastMonth) === null) {
+            $vat->close($lastMonth, 'Data demo');
+        }
     }
 
     /** Pindahkan "hari ini" ke hari ke-n skenario (jam kerja) agar tanggal mutasi & jurnal sesuai dokumen. */

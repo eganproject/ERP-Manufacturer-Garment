@@ -50,6 +50,7 @@ class ChartOfAccounts
             ['1402', 'Uang Muka Pembelian', $a, '1400'],
             ['1403', 'Biaya Dibayar di Muka', $a, '1400'],
             ['1404', 'PPh Dibayar di Muka', $a, '1400'],
+            ['1405', 'PPN Lebih Bayar (Kompensasi)', $a, '1400'],
             ['1500', 'Aset Tetap', $a, '1000', true],
             ['1501', 'Tanah', $a, '1500'],
             ['1502', 'Bangunan', $a, '1500'],
@@ -68,6 +69,7 @@ class ChartOfAccounts
             ['2106', 'Hutang Pajak Lainnya (PPh)', $l, '2100'],
             ['2107', 'Saldo Nota Kredit Pelanggan (Retur Penjualan)', $l, '2100'],
             ['2108', 'Uang Muka Penjualan', $l, '2100'],
+            ['2109', 'Hutang PPN', $l, '2100'],
             ['2200', 'Kewajiban Jangka Panjang', $l, '2000', true],
             ['2201', 'Hutang Bank', $l, '2200'],
 

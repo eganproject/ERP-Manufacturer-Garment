@@ -26,6 +26,8 @@ class LedgerAccounts
         'payable' => ['Hutang usaha', '2101', 'Pembelian'],
         'unbilled_payable' => ['Hutang barang & jasa belum ditagih', '2102', 'Pembelian'],
         'vat_in' => ['PPN masukan', '1401', 'Pembelian'],
+        'vat_payable' => ['Hutang PPN (kurang bayar masa PPN)', '2109', 'Pajak'],
+        'vat_overpaid' => ['PPN lebih bayar (kompensasi)', '1405', 'Pajak'],
         'supplier_debit' => ['Piutang nota debit supplier', '1202', 'Pembelian'],
         'purchase_variance' => ['Selisih harga pembelian', '5102', 'Pembelian'],
         'raw_material' => ['Persediaan bahan baku', '1301', 'Persediaan & Produksi'],

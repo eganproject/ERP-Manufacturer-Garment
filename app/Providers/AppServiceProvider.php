@@ -33,6 +33,7 @@ use App\Models\SubcontractReceipt;
 use App\Models\SubcontractTransfer;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Models\VatPeriod;
 use App\Support\LedgerAccounts;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
@@ -83,6 +84,7 @@ class AppServiceProvider extends ServiceProvider
             'fixed_asset' => FixedAsset::class,
             'depreciation_run' => DepreciationRun::class,
             'defect_handling' => DefectHandling::class,
+            'vat_period' => VatPeriod::class,
         ]);
 
         // Hak akses berbasis peran (lihat App\Enums\Role)

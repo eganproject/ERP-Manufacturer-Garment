@@ -2,11 +2,13 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\InvoiceStatus;
 use App\Enums\PayrollStatus;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\SalesOrderStatus;
 use App\Enums\SubcontractStatus;
+use App\Models\Bill;
 use App\Models\Invoice;
 use App\Models\Material;
 use App\Models\Payroll;
@@ -17,6 +19,7 @@ use App\Models\SalesOrder;
 use App\Models\SubcontractOrder;
 use App\Models\User;
 use App\Services\DepreciationService;
+use App\Services\VatService;
 use Illuminate\Support\Collection;
 
 /**
@@ -48,6 +51,12 @@ class WorkQueue
             ->filter->canInvoice()->count(), route('invoices.create'), 'Buat invoice dari barang yang sudah dikirim');
         $add('receivables.view', 'Invoice lewat jatuh tempo', fn () => Invoice::overdue()->count(),
             route('invoices.index', ['status' => 'overdue']), 'Tagih pelanggan / catat penerimaan', 'red');
+
+        $add('tax.manage', 'Faktur pajak keluaran belum diisi', fn () => Invoice::where('status', '!=', InvoiceStatus::Cancelled)
+            ->where('tax_amount', '>', 0)->whereNull('tax_invoice_number')->count(),
+            route('reports.vat'), 'Isi nomor faktur pajak di halaman invoice', 'gray');
+        $add('tax.manage', 'Masa PPN belum ditutup', fn () => $this->vatPeriodPending(),
+            route('reports.vat'), 'Tutup masa PPN bulan lalu & setor kurang bayar', 'gray');
 
         // Pembelian
         $add('purchase.approve', 'PO menunggu persetujuan', fn () => PurchaseOrder::where('status', PurchaseOrderStatus::PendingApproval)->count(),
@@ -85,6 +94,17 @@ class WorkQueue
             route('depreciation-runs.index'), 'Posting penyusutan s.d. bulan lalu', 'gray');
 
         return collect($tasks);
+    }
+
+    /** 1 bila masa PPN bulan lalu ada transaksi ber-PPN dan bisa (belum) ditutup. */
+    private function vatPeriodPending(): int
+    {
+        $month = today()->startOfMonth()->subMonthNoOverflow();
+        $range = [$month->toDateString(), $month->copy()->endOfMonth()->format('Y-m-d 23:59:59')];
+        $taxed = Invoice::where('status', '!=', InvoiceStatus::Cancelled)->where('tax_amount', '>', 0)->whereBetween('invoice_date', $range)->exists()
+            || Bill::where('status', '!=', InvoiceStatus::Cancelled)->where('tax_amount', '>', 0)->whereBetween('bill_date', $range)->exists();
+
+        return $taxed && app(VatService::class)->closeBlocker($month) === null ? 1 : 0;
     }
 
     /** Jumlah aset aktif yang penyusutannya belum diposting s.d. bulan lalu. */
