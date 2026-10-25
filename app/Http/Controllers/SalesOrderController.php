@@ -3,17 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Enums\SalesOrderStatus;
+use App\Models\ActivityLog;
 use App\Models\Customer;
+use App\Models\Delivery;
 use App\Models\ProductVariant;
 use App\Models\SalesOrder;
 use App\Services\DocumentNumber;
 use App\Services\SalesService;
+use App\Support\DocumentPdf;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class SalesOrderController extends Controller
+class SalesOrderController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('can:sales.view', only: ['index', 'show', 'pdf', 'deliveryPdf']),
+            new Middleware('can:sales.manage', only: ['create', 'store', 'edit', 'update', 'destroy', 'confirm', 'cancel']),
+            new Middleware('can:sales.deliver', only: ['deliverForm', 'deliver']),
+        ];
+    }
+
     public function index(Request $request)
     {
         $orders = SalesOrder::with('customer')
@@ -43,6 +57,7 @@ class SalesOrderController extends Controller
                 'created_by' => auth()->id(),
             ]);
             $order->items()->createMany($items);
+            ActivityLog::record('created', "Membuat SO {$order->number}", $order);
 
             return $order;
         });
@@ -52,7 +67,7 @@ class SalesOrderController extends Controller
 
     public function show(SalesOrder $salesOrder)
     {
-        $salesOrder->load(['customer', 'items.variant.product', 'productionOrders.product', 'creator']);
+        $salesOrder->load(['customer', 'items.variant.product', 'productionOrders.product', 'deliveries.items.variant.product', 'creator', 'activities.user']);
 
         return view('sales-orders.show', ['order' => $salesOrder]);
     }
@@ -74,6 +89,7 @@ class SalesOrderController extends Controller
             $salesOrder->update($data);
             $salesOrder->items()->delete();
             $salesOrder->items()->createMany($items);
+            ActivityLog::record('updated', 'Mengubah SO', $salesOrder);
         });
 
         return redirect()->route('sales-orders.show', $salesOrder)->with('success', 'SO berhasil diperbarui.');
@@ -82,6 +98,7 @@ class SalesOrderController extends Controller
     public function destroy(SalesOrder $salesOrder)
     {
         abort_unless($salesOrder->isEditable(), 403, 'Hanya SO draft yang dapat dihapus.');
+        ActivityLog::record('deleted', "Menghapus SO {$salesOrder->number}");
         $salesOrder->delete();
 
         return redirect()->route('sales-orders.index')->with('success', 'SO berhasil dihapus.');
@@ -91,23 +108,58 @@ class SalesOrderController extends Controller
     {
         abort_unless($salesOrder->isEditable(), 403);
         $salesOrder->update(['status' => SalesOrderStatus::Confirmed]);
+        ActivityLog::record('confirmed', 'Mengonfirmasi SO', $salesOrder);
 
         return back()->with('success', 'SO dikonfirmasi.');
     }
 
-    public function deliver(SalesOrder $salesOrder, SalesService $service)
+    public function deliverForm(SalesOrder $salesOrder)
     {
-        $service->deliver($salesOrder);
+        abort_unless($salesOrder->canDeliver(), 403, 'SO ini tidak dapat dikirim.');
+        $salesOrder->load(['customer', 'items.variant.product']);
 
-        return back()->with('success', 'SO dikirim, stok barang jadi berkurang.');
+        return view('sales-orders.deliver', ['order' => $salesOrder]);
+    }
+
+    public function deliver(Request $request, SalesOrder $salesOrder, SalesService $service)
+    {
+        $data = $request->validate([
+            'delivery_date' => ['required', 'date'],
+            'vehicle_number' => ['nullable', 'string', 'max:30'],
+            'driver_name' => ['nullable', 'string', 'max:100'],
+            'shipping_address' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string'],
+            'items' => ['required', 'array'],
+            'items.*' => ['nullable', 'numeric', 'min:0'],
+        ], [], ['delivery_date' => 'tanggal kirim', 'items' => 'jumlah kirim']);
+
+        $delivery = $service->deliver($salesOrder, $data['items'], $data);
+
+        return redirect()->route('sales-orders.show', $salesOrder)
+            ->with('success', "Surat jalan {$delivery->number} tersimpan, stok barang jadi berkurang.");
     }
 
     public function cancel(SalesOrder $salesOrder)
     {
-        abort_unless(in_array($salesOrder->status, [SalesOrderStatus::Draft, SalesOrderStatus::Confirmed], true), 403);
+        abort_unless($salesOrder->canCancel(), 403, 'SO yang sudah ada pengiriman tidak dapat dibatalkan.');
         $salesOrder->update(['status' => SalesOrderStatus::Cancelled]);
+        ActivityLog::record('cancelled', 'Membatalkan SO', $salesOrder);
 
         return back()->with('success', 'SO dibatalkan.');
+    }
+
+    public function pdf(SalesOrder $salesOrder)
+    {
+        $salesOrder->load(['customer', 'items.variant.product.unit', 'creator']);
+
+        return DocumentPdf::stream('pdf.sales-order', ['order' => $salesOrder], $salesOrder->number);
+    }
+
+    public function deliveryPdf(Delivery $delivery)
+    {
+        $delivery->load(['salesOrder.customer', 'items.variant.product.unit', 'creator']);
+
+        return DocumentPdf::stream('pdf.delivery', ['delivery' => $delivery], $delivery->number);
     }
 
     private function formData(SalesOrder $order): array

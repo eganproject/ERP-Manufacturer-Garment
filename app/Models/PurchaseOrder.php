@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use App\Enums\PurchaseOrderStatus;
+use App\Models\Concerns\HasActivityLog;
 use Illuminate\Database\Eloquent\Model;
 
 class PurchaseOrder extends Model
 {
+    use HasActivityLog;
+
     protected $guarded = ['id'];
 
     protected $casts = [

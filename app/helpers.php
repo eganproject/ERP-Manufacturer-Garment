@@ -35,3 +35,33 @@ if (! function_exists('tanggal')) {
         return Carbon::parse($date)->translatedFormat($format);
     }
 }
+
+if (! function_exists('terbilang')) {
+    /**
+     * Ubah angka menjadi kalimat Bahasa Indonesia, mis. 1250 => "seribu dua ratus lima puluh".
+     */
+    function terbilang(float|int|string|null $value): string
+    {
+        $n = (int) round(abs((float) $value));
+        $words = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas'];
+
+        $convert = function (int $n) use (&$convert, $words): string {
+            return match (true) {
+                $n < 12 => $words[$n],
+                $n < 20 => $convert($n - 10).' belas',
+                $n < 100 => $convert(intdiv($n, 10)).' puluh '.$convert($n % 10),
+                $n < 200 => 'seratus '.$convert($n - 100),
+                $n < 1000 => $convert(intdiv($n, 100)).' ratus '.$convert($n % 100),
+                $n < 2000 => 'seribu '.$convert($n - 1000),
+                $n < 1_000_000 => $convert(intdiv($n, 1000)).' ribu '.$convert($n % 1000),
+                $n < 1_000_000_000 => $convert(intdiv($n, 1_000_000)).' juta '.$convert($n % 1_000_000),
+                $n < 1_000_000_000_000 => $convert(intdiv($n, 1_000_000_000)).' miliar '.$convert($n % 1_000_000_000),
+                default => $convert(intdiv($n, 1_000_000_000_000)).' triliun '.$convert($n % 1_000_000_000_000),
+            };
+        };
+
+        $result = trim(preg_replace('/\s+/', ' ', $convert($n)));
+
+        return $result === '' ? 'nol' : $result;
+    }
+}

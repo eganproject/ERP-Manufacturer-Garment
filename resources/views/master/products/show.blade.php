@@ -1,7 +1,11 @@
 <x-layouts.app :title="$product->name">
     <x-slot:actions>
-        <a href="{{ route('production-orders.create', ['product_id' => $product->id]) }}" class="btn-secondary">Buat SPK</a>
-        <a href="{{ route('boms.create', ['product_id' => $product->id]) }}" class="btn-secondary">+ BOM</a>
+        @can('production.manage')
+            <a href="{{ route('production-orders.create', ['product_id' => $product->id]) }}" class="btn-secondary">Buat SPK</a>
+        @endcan
+        @can('boms.manage')
+            <a href="{{ route('boms.create', ['product_id' => $product->id]) }}" class="btn-secondary">+ BOM</a>
+        @endcan
         <a href="{{ route('products.edit', $product) }}" class="btn-primary">Ubah Produk</a>
     </x-slot:actions>
 

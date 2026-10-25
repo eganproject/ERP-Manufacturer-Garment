@@ -6,6 +6,7 @@ use App\Enums\ProductionOrderStatus;
 use App\Enums\ProductionStage;
 use App\Enums\StageStatus;
 use App\Enums\StockMovementType;
+use App\Models\ActivityLog;
 use App\Models\Bom;
 use App\Models\ProductionOrder;
 use App\Models\ProductionStage as Stage;
@@ -81,6 +82,8 @@ class ProductionService
                 'status' => ProductionOrderStatus::InProgress,
                 'materials_issued_at' => now(),
             ]);
+
+            ActivityLog::record('started', 'Memulai produksi dan mengeluarkan bahan dari gudang', $order);
         });
     }
 
@@ -113,6 +116,8 @@ class ProductionService
 
         $stage->finished_at = $status === StageStatus::Done ? ($stage->finished_at ?? now()) : null;
         $stage->save();
+
+        ActivityLog::record('stage', "Tahap {$stage->stage->label()}: {$status->label()}", $order);
     }
 
     /**
@@ -159,6 +164,8 @@ class ProductionService
                 'reject_quantity' => $reject,
                 'completed_at' => now(),
             ]);
+
+            ActivityLog::record('completed', 'Menyelesaikan produksi, hasil '.qty($total).' pcs masuk stok', $order);
         });
     }
 }

@@ -15,10 +15,10 @@ class DashboardController extends Controller
     public function __invoke()
     {
         $stats = [
-            'open_sales' => SalesOrder::where('status', SalesOrderStatus::Confirmed)->count(),
+            'open_sales' => SalesOrder::whereIn('status', SalesOrderStatus::open())->count(),
             'open_purchases' => PurchaseOrder::whereIn('status', [PurchaseOrderStatus::Ordered, PurchaseOrderStatus::Partial])->count(),
             'active_production' => ProductionOrder::where('status', ProductionOrderStatus::InProgress)->count(),
-            'sales_this_month' => SalesOrder::whereIn('status', [SalesOrderStatus::Confirmed, SalesOrderStatus::Delivered])
+            'sales_this_month' => SalesOrder::whereIn('status', [SalesOrderStatus::Confirmed, SalesOrderStatus::Partial, SalesOrderStatus::Delivered])
                 ->whereBetween('order_date', [now()->startOfMonth(), now()->endOfMonth()])
                 ->sum('total'),
         ];

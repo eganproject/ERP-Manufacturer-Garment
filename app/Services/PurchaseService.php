@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\StockMovementType;
+use App\Models\ActivityLog;
 use App\Models\GoodsReceipt;
 use App\Models\PurchaseOrder;
 use Illuminate\Support\Carbon;
@@ -69,6 +70,8 @@ class PurchaseService
             }
 
             $po->refreshReceiptStatus();
+
+            ActivityLog::record('received', "Menerima barang {$receipt->number}", $po);
 
             return $receipt;
         });

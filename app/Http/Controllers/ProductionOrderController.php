@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\SalesOrderStatus;
 use App\Enums\StageStatus;
+use App\Models\ActivityLog;
 use App\Models\Bom;
 use App\Models\Product;
 use App\Models\ProductionOrder;
@@ -12,14 +13,25 @@ use App\Models\ProductionStage;
 use App\Models\SalesOrder;
 use App\Services\DocumentNumber;
 use App\Services\ProductionService;
+use App\Support\DocumentPdf;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
-class ProductionOrderController extends Controller
+class ProductionOrderController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('can:production.view', only: ['index', 'show', 'pdf']),
+            new Middleware('can:production.manage', except: ['index', 'show', 'pdf']),
+        ];
+    }
+
     public function __construct(private ProductionService $service) {}
 
     public function index(Request $request)
@@ -57,6 +69,7 @@ class ProductionOrderController extends Controller
                 'created_by' => auth()->id(),
             ]);
             $this->service->syncItems($order, $data['items']);
+            ActivityLog::record('created', "Membuat SPK {$order->number}", $order);
 
             return $order;
         });
@@ -66,7 +79,7 @@ class ProductionOrderController extends Controller
 
     public function show(ProductionOrder $productionOrder)
     {
-        $productionOrder->load(['product.unit', 'bom', 'salesOrder.customer', 'items.variant', 'materials.material.unit', 'stages', 'creator']);
+        $productionOrder->load(['product.unit', 'bom', 'salesOrder.customer', 'items.variant', 'materials.material.unit', 'stages', 'creator', 'activities.user']);
 
         return view('production-orders.show', [
             'order' => $productionOrder,
@@ -90,6 +103,7 @@ class ProductionOrderController extends Controller
         DB::transaction(function () use ($productionOrder, $data) {
             $productionOrder->update(collect($data)->except('items')->all());
             $this->service->syncItems($productionOrder->fresh('product'), $data['items']);
+            ActivityLog::record('updated', 'Mengubah SPK', $productionOrder);
         });
 
         return redirect()->route('production-orders.show', $productionOrder)->with('success', 'SPK berhasil diperbarui.');
@@ -98,6 +112,7 @@ class ProductionOrderController extends Controller
     public function destroy(ProductionOrder $productionOrder)
     {
         abort_unless($productionOrder->isEditable(), 403, 'Hanya SPK draft yang dapat dihapus.');
+        ActivityLog::record('deleted', "Menghapus SPK {$productionOrder->number}");
         $productionOrder->delete();
 
         return redirect()->route('production-orders.index')->with('success', 'SPK berhasil dihapus.');
@@ -144,8 +159,16 @@ class ProductionOrderController extends Controller
     {
         abort_unless($productionOrder->isEditable(), 403, 'SPK yang sudah berjalan tidak dapat dibatalkan.');
         $productionOrder->update(['status' => ProductionOrderStatus::Cancelled]);
+        ActivityLog::record('cancelled', 'Membatalkan SPK', $productionOrder);
 
         return back()->with('success', 'SPK dibatalkan.');
+    }
+
+    public function pdf(ProductionOrder $productionOrder)
+    {
+        $productionOrder->load(['product.unit', 'bom', 'salesOrder.customer', 'items.variant', 'materials.material.unit', 'stages', 'creator']);
+
+        return DocumentPdf::stream('pdf.production-order', ['order' => $productionOrder], $productionOrder->number);
     }
 
     private function formData(ProductionOrder $order): array
@@ -160,7 +183,7 @@ class ProductionOrderController extends Controller
             'order' => $order,
             'products' => $products,
             'salesOrders' => SalesOrder::with(['customer', 'items'])
-                ->where('status', SalesOrderStatus::Confirmed)
+                ->whereIn('status', SalesOrderStatus::open())
                 ->orWhere('id', $order->sales_order_id)
                 ->latest()
                 ->get(),

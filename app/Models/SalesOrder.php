@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use App\Enums\SalesOrderStatus;
+use App\Models\Concerns\HasActivityLog;
 use Illuminate\Database\Eloquent\Model;
 
 class SalesOrder extends Model
 {
+    use HasActivityLog;
+
     protected $guarded = ['id'];
 
     protected $casts = [
@@ -33,6 +36,11 @@ class SalesOrder extends Model
         return $this->hasMany(ProductionOrder::class);
     }
 
+    public function deliveries()
+    {
+        return $this->hasMany(Delivery::class);
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -41,5 +49,27 @@ class SalesOrder extends Model
     public function isEditable(): bool
     {
         return $this->status === SalesOrderStatus::Draft;
+    }
+
+    public function canDeliver(): bool
+    {
+        return in_array($this->status, SalesOrderStatus::open(), true);
+    }
+
+    public function canCancel(): bool
+    {
+        return in_array($this->status, [SalesOrderStatus::Draft, SalesOrderStatus::Confirmed], true);
+    }
+
+    public function refreshDeliveryStatus(): void
+    {
+        $this->load('items');
+        $allDelivered = $this->items->every(fn ($item) => $item->outstandingQuantity() <= 0);
+        $anyDelivered = $this->items->contains(fn ($item) => (float) $item->delivered_quantity > 0);
+
+        $this->status = $allDelivered
+            ? SalesOrderStatus::Delivered
+            : ($anyDelivered ? SalesOrderStatus::Partial : SalesOrderStatus::Confirmed);
+        $this->save();
     }
 }
