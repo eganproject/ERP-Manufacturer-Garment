@@ -16,6 +16,7 @@ class SettingController extends Controller
             'invoice' => Setting::invoice(),
             'poApprovalThreshold' => Setting::poApprovalThreshold(),
             'payroll' => Setting::payroll(),
+            'quotation' => Setting::quotation(),
         ]);
     }
 
@@ -34,9 +35,11 @@ class SettingController extends Controller
             'invoice_bank_info' => ['nullable', 'string', 'max:500'],
             'invoice_notes' => ['nullable', 'string', 'max:500'],
             'po_approval_threshold' => ['nullable', 'numeric', 'min:0'],
+            'quotation_validity_days' => ['nullable', 'integer', 'between:1,365'],
+            'quotation_terms' => ['nullable', 'string', 'max:1000'],
             'payroll_cycle' => ['nullable', 'in:'.implode(',', array_keys(Setting::PAYROLL_CYCLES))],
             'payroll_week_start' => ['nullable', 'integer', 'between:1,7'],
-        ], [], ['invoice_tax_rate' => 'PPN default', 'invoice_bank_info' => 'rekening pembayaran', 'po_approval_threshold' => 'batas persetujuan PO', 'payroll_cycle' => 'siklus penggajian']);
+        ], [], ['invoice_tax_rate' => 'PPN default', 'invoice_bank_info' => 'rekening pembayaran', 'po_approval_threshold' => 'batas persetujuan PO', 'payroll_cycle' => 'siklus penggajian', 'quotation_validity_days' => 'masa berlaku penawaran', 'quotation_terms' => 'syarat penawaran']);
 
         $data['payroll_cycle'] ??= 'weekly';
         $data['payroll_week_start'] = (int) ($data['payroll_week_start'] ?? 1);

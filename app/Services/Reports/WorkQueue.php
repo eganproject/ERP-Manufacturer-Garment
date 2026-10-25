@@ -6,6 +6,7 @@ use App\Enums\InvoiceStatus;
 use App\Enums\PayrollStatus;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\PurchaseOrderStatus;
+use App\Enums\QuotationStatus;
 use App\Enums\SalesOrderStatus;
 use App\Enums\SubcontractStatus;
 use App\Models\Bill;
@@ -15,6 +16,7 @@ use App\Models\Payroll;
 use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
+use App\Models\Quotation;
 use App\Models\SalesOrder;
 use App\Models\SubcontractOrder;
 use App\Models\User;
@@ -40,6 +42,10 @@ class WorkQueue
         };
 
         // Penjualan
+        $add('sales.manage', 'Penawaran menunggu jawaban pelanggan', fn () => Quotation::active()->where('status', QuotationStatus::Sent)->count(),
+            route('quotations.index', ['status' => 'active']), 'Follow up pelanggan, jadikan SO bila setuju', 'blue');
+        $add('sales.manage', 'Penawaran kedaluwarsa', fn () => Quotation::expired()->count(),
+            route('quotations.index', ['status' => 'expired']), 'Buat revisi atau batalkan', 'gray');
         $add('sales.manage', 'SO draft belum dikonfirmasi', fn () => SalesOrder::where('status', SalesOrderStatus::Draft)->count(),
             route('sales-orders.index', ['status' => SalesOrderStatus::Draft->value]), 'Konfirmasi agar bisa diproduksi & dikirim', 'gray');
         $add('production.manage', 'SO terbuka belum dibuatkan SPK', fn () => SalesOrder::whereIn('status', SalesOrderStatus::open())

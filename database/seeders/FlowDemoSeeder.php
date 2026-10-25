@@ -34,6 +34,7 @@ use App\Services\PayrollService;
 use App\Services\PieceworkService;
 use App\Services\ProductionService;
 use App\Services\PurchaseService;
+use App\Services\QuotationService;
 use App\Services\ReturnService;
 use App\Services\SalesService;
 use App\Services\SubcontractService;
@@ -327,10 +328,33 @@ class FlowDemoSeeder extends Seeder
         $payments->record(PaymentType::Receipt, $soB->customer_id, [$invB->id => 10000000],
             ['payment_date' => $this->d(25), 'method' => 'transfer', 'cash_account_id' => $bank, 'reference' => 'TRF-MANDIRI-551']);
 
+        // Hari 26–30: penawaran harga → repeat order kaos (jadi SO), penawaran lain ditolak / menunggu jawaban
+        $this->on(26);
+        $as('sales');
+        $quotes = app(QuotationService::class);
+        $kaosLines = fn (int $price) => [
+            ['product_variant_id' => $variant($kaos, 'M')->id, 'quantity' => 60, 'price' => $price],
+            ['product_variant_id' => $variant($kaos, 'L')->id, 'quantity' => 60, 'price' => $price, 'description' => 'Sablon logo dada kiri'],
+        ];
+        $quoteC = $quotes->save(['customer_id' => $customer('CUS-001')->id, 'quotation_date' => $this->d(26), 'subject' => 'Repeat order kaos hitam', 'lead_time_days' => 14, 'tax_rate' => 11,
+            'terms' => 'DP 30% saat order, pelunasan 30 hari setelah barang diterima.'], $kaosLines(65000));
+        $quotes->send($quoteC);
+        $quoteLost = $quotes->save(['customer_id' => $customer('CUS-002')->id, 'quotation_date' => $this->d(26), 'subject' => 'Kemeja seragam 200 pcs', 'tax_rate' => 11],
+            [['product_variant_id' => $variant($kemeja, 'M')->id, 'quantity' => 200, 'price' => 180000]]);
+        $quotes->send($quoteLost);
+        $this->on(28);
+        $quotes->reject($quoteLost, 'Pelanggan memilih vendor lain (harga)');
+        $quoteC = $quotes->revise($quoteC); // nego harga turun
+        $quoteC = $quotes->save(['customer_id' => $quoteC->customer_id, 'quotation_date' => $this->d(28), 'valid_until' => $this->d(42), 'subject' => $quoteC->subject,
+            'lead_time_days' => 14, 'tax_rate' => 11, 'terms' => $quoteC->terms], $kaosLines(62000), $quoteC);
+        $quotes->send($quoteC);
+
         // Hari 30–33: pesanan baru sedang berjalan (dibiarkan terbuka)
         $this->on(30);
         $as('sales');
-        $soC = $this->salesOrder($customer('CUS-001'), 30, 44, [[$variant($kaos, 'M'), 60, 62000], [$variant($kaos, 'L'), 60, 62000]], 'Repeat order kaos hitam');
+        $soC = $quotes->convert($quoteC, ['order_date' => $this->d(30), 'delivery_date' => $this->d(44)]);
+        $soC->update(['status' => SalesOrderStatus::Confirmed]);
+        ActivityLog::record('confirmed', 'Mengonfirmasi SO', $soC);
         $this->on(31);
         $as('produksi');
         $spkC = $this->spk($kaos, $soC, 31, 40);
@@ -347,6 +371,8 @@ class FlowDemoSeeder extends Seeder
         $this->on(34);
         $as('sales');
         $this->salesOrder($customer('CUS-002'), 34, 50, [[$variant($kemeja, 'L'), 30, 175000]], 'Kemeja seragam kantor', confirm: false);
+        $quotes->send($quotes->save(['customer_id' => $customer('CUS-002')->id, 'quotation_date' => $this->d(34), 'subject' => 'Kemeja seragam bordir logo', 'lead_time_days' => 21, 'tax_rate' => 11],
+            [['product_variant_id' => $variant($kemeja, 'XL')->id, 'quantity' => 50, 'price' => 185000]]));
         $as('purchasing');
         $po4 = $this->purchaseOrder($supplier('SUP-001'), 34, 38, [[$material('KN-CMB30-PTH'), 100, 118000]], 'Stok kain putih untuk pesanan kaos putih');
         $purchase->submit($po4);

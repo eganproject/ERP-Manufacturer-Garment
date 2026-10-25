@@ -43,6 +43,9 @@
             <dl class="space-y-3 text-sm">
                 <div><dt class="text-gray-500">Status</dt><dd><x-status-badge :status="$order->status" /></dd></div>
                 <div><dt class="text-gray-500">Pelanggan</dt><dd class="font-medium">{{ $order->customer->name }}</dd><dd class="text-gray-500">{{ $order->customer->phone }}</dd></div>
+                @if ($order->quotation)
+                    <div><dt class="text-gray-500">Dari Penawaran</dt><dd><a href="{{ route('quotations.show', $order->quotation) }}" class="font-medium text-indigo-600 hover:underline">{{ $order->quotation->number }}</a></dd></div>
+                @endif
                 <div><dt class="text-gray-500">Tanggal Order</dt><dd>{{ tanggal($order->order_date) }}</dd></div>
                 <div><dt class="text-gray-500">Target Kirim</dt><dd>{{ tanggal($order->delivery_date) }}</dd></div>
                 <div><dt class="text-gray-500">Dibuat oleh</dt><dd>{{ $order->creator?->name ?? '-' }}</dd></div>

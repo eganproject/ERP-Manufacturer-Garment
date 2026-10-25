@@ -87,6 +87,19 @@ class Setting extends Model
         ];
     }
 
+    /**
+     * Penawaran harga: masa berlaku default (hari) dan syarat & ketentuan default.
+     *
+     * @return array{validity_days: int, terms: string|null}
+     */
+    public static function quotation(): array
+    {
+        return [
+            'validity_days' => max(1, (int) static::get('quotation_validity_days', 14)),
+            'terms' => static::get('quotation_terms'),
+        ];
+    }
+
     /** Siklus penggajian borongan yang tersedia. */
     public const PAYROLL_CYCLES = ['weekly' => 'Mingguan (7 hari)', 'biweekly' => 'Dua mingguan (14 hari)', 'monthly' => 'Bulanan'];
 

@@ -35,6 +35,7 @@ use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\PurchaseReturnController;
+use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\SalesReturnController;
@@ -86,6 +87,17 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('pdf', 'pdf')->name('pdf');
     });
     Route::get('goods-receipts/{receipt}/pdf', [PurchaseOrderController::class, 'receiptPdf'])->name('goods-receipts.pdf');
+
+    // Penawaran harga → Sales Order
+    Route::resource('quotations', QuotationController::class);
+    Route::controller(QuotationController::class)->prefix('quotations/{quotation}')->name('quotations.')->group(function () {
+        Route::post('send', 'send')->name('send');
+        Route::post('convert', 'convert')->name('convert');
+        Route::post('reject', 'reject')->name('reject');
+        Route::post('cancel', 'cancel')->name('cancel');
+        Route::post('revise', 'revise')->name('revise');
+        Route::get('pdf', 'pdf')->name('pdf');
+    });
 
     // Penjualan
     Route::resource('sales-orders', SalesOrderController::class);
