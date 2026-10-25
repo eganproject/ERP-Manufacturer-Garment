@@ -13,13 +13,14 @@
             .'<td class="'.$pad.'text-right whitespace-nowrap font-semibold '.$tone.'">'.e(rupiah($row['gross_profit'], false)).'</td>'
             .'<td class="'.$pad.'text-right whitespace-nowrap '.$tone.'">'.e($pct($row['margin'])).'</td>';
     };
+    $returnsHint = $totals['returns'] > 0 ? ' · setelah retur '.rupiah($totals['returns']) : '';
     $cards = $withCost ? [
-        ['Penjualan (DPP)', rupiah($totals['dpp']), $totals['count'].' invoice · termasuk PPN '.rupiah($totals['total'])],
+        ['Penjualan (DPP)', rupiah($totals['dpp']), $totals['count'].' invoice'.$returnsHint.' · termasuk PPN '.rupiah($totals['total'])],
         ['Laba kotor', rupiah($totals['gross_profit']), 'Margin '.$pct($totals['margin']).' · HPP '.rupiah($totals['cost'])],
         ['Belum diterima', rupiah($totals['outstanding']), 'Terbayar '.rupiah($totals['paid'])],
         ['Nilai SO dikonfirmasi', rupiah($summary['orders']), 'Pesanan dibuat pada periode yang sama'],
     ] : [
-        [$isSales ? 'Penjualan (DPP)' : 'Pembelian (DPP)', rupiah($totals['dpp']), $totals['count'].' '.strtolower($docLabel).' · rata-rata '.rupiah($summary['average'])],
+        [$isSales ? 'Penjualan (DPP)' : 'Pembelian (DPP)', rupiah($totals['dpp']), $totals['count'].' '.strtolower($docLabel).$returnsHint.' · rata-rata '.rupiah($summary['average'])],
         ['Total termasuk PPN', rupiah($totals['total']), 'PPN '.rupiah($totals['tax'])],
         [$isSales ? 'Belum diterima' : 'Belum dibayar', rupiah($totals['outstanding']), 'Terbayar '.rupiah($totals['paid'])],
         [$isSales ? 'Nilai SO dikonfirmasi' : 'Nilai PO dipesan', rupiah($summary['orders']), 'Pesanan dibuat pada periode yang sama'],
@@ -45,7 +46,7 @@
             <x-report.export-buttons />
         </div>
         <p class="mt-2 text-xs text-gray-500">
-                Dihitung dari {{ strtolower($docLabel) }} {{ $isSales ? 'penjualan' : 'supplier' }} yang tidak dibatalkan. Nilai = DPP (subtotal − diskon, sebelum PPN).
+                Dihitung dari {{ strtolower($docLabel) }} {{ $isSales ? 'penjualan' : 'supplier' }} yang tidak dibatalkan. Nilai = DPP (subtotal − diskon, sebelum PPN), dikurangi nota retur pada periode yang sama.
                 @if ($withCost) HPP = harga pokok rata-rata barang saat dikirim (surat jalan); laba kotor = DPP − HPP. @endif
             </p>
     </x-card>

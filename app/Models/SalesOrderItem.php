@@ -12,6 +12,8 @@ class SalesOrderItem extends Model
         'quantity' => 'decimal:2',
         'delivered_quantity' => 'decimal:2',
         'invoiced_quantity' => 'decimal:2',
+        'returned_quantity' => 'decimal:2',
+        'returned_invoiced_quantity' => 'decimal:2',
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
     ];
@@ -47,9 +49,20 @@ class SalesOrderItem extends Model
         return max(0, (float) $this->quantity - (float) $this->delivered_quantity);
     }
 
-    /** Jumlah yang sudah dikirim tetapi belum dibuatkan invoice. */
+    /**
+     * Jumlah yang sudah dikirim tetapi belum dibuatkan invoice. Retur atas barang yang belum
+     * ditagih mengurangi jumlah ini (barangnya kembali, jadi tidak ditagihkan).
+     */
     public function uninvoicedQuantity(): float
     {
-        return max(0, (float) $this->delivered_quantity - (float) $this->invoiced_quantity);
+        $returnedUninvoiced = (float) $this->returned_quantity - (float) $this->returned_invoiced_quantity;
+
+        return max(0, round((float) $this->delivered_quantity - (float) $this->invoiced_quantity - $returnedUninvoiced, 2));
+    }
+
+    /** Barang terkirim yang masih dapat diretur pelanggan. */
+    public function returnableQuantity(): float
+    {
+        return max(0, round((float) $this->delivered_quantity - (float) $this->returned_quantity, 2));
     }
 }

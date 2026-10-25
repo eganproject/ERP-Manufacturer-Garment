@@ -41,6 +41,18 @@ class PurchaseOrder extends Model
         return $this->hasMany(Bill::class);
     }
 
+    public function returns()
+    {
+        return $this->hasMany(PurchaseReturn::class);
+    }
+
+    /** Masih ada barang diterima yang dapat diretur ke supplier. */
+    public function canReturn(): bool
+    {
+        return $this->status !== PurchaseOrderStatus::Cancelled
+            && $this->items->contains(fn ($item) => $item->returnableQuantity() > 0);
+    }
+
     /** Masih ada barang diterima yang belum ditagih supplier. */
     public function canBill(): bool
     {

@@ -28,8 +28,8 @@ class DashboardController extends Controller
             'sales_this_month' => SalesOrder::whereIn('status', [SalesOrderStatus::Confirmed, SalesOrderStatus::Partial, SalesOrderStatus::Delivered])
                 ->whereBetween('order_date', [now()->startOfMonth(), now()->endOfMonth()])
                 ->sum('total'),
-            'receivable_overdue' => (float) Invoice::overdue()->selectRaw('COALESCE(SUM(total - paid_amount), 0) as v')->value('v'),
-            'payable_due' => (float) Bill::open()->whereDate('due_date', '<=', today()->addDays(7))->selectRaw('COALESCE(SUM(total - paid_amount), 0) as v')->value('v'),
+            'receivable_overdue' => (float) Invoice::overdue()->selectRaw('COALESCE(SUM(total - paid_amount - credited_amount), 0) as v')->value('v'),
+            'payable_due' => (float) Bill::open()->whereDate('due_date', '<=', today()->addDays(7))->selectRaw('COALESCE(SUM(total - paid_amount - credited_amount), 0) as v')->value('v'),
         ];
 
         $overdueInvoices = Invoice::with('customer')->overdue()->orderBy('due_date')->limit(6)->get();

@@ -36,8 +36,8 @@ class InvoiceController extends Controller implements HasMiddleware
             ->withQueryString();
 
         $summary = [
-            'outstanding' => (float) Invoice::open()->selectRaw('COALESCE(SUM(total - paid_amount), 0) as v')->value('v'),
-            'overdue' => (float) Invoice::overdue()->selectRaw('COALESCE(SUM(total - paid_amount), 0) as v')->value('v'),
+            'outstanding' => (float) Invoice::open()->selectRaw('COALESCE(SUM(total - paid_amount - credited_amount), 0) as v')->value('v'),
+            'overdue' => (float) Invoice::overdue()->selectRaw('COALESCE(SUM(total - paid_amount - credited_amount), 0) as v')->value('v'),
             'overdue_count' => Invoice::overdue()->count(),
         ];
 
@@ -60,7 +60,7 @@ class InvoiceController extends Controller implements HasMiddleware
 
         // SO yang masih memiliki barang terkirim tetapi belum ditagih
         $billableOrders = SalesOrder::with('customer')
-            ->whereHas('items', fn ($q) => $q->whereColumn('delivered_quantity', '>', 'invoiced_quantity'))
+            ->whereHas('items', fn ($q) => $q->whereRaw('delivered_quantity - invoiced_quantity - returned_quantity + returned_invoiced_quantity > 0'))
             ->latest('order_date')
             ->get();
 
@@ -91,7 +91,7 @@ class InvoiceController extends Controller implements HasMiddleware
 
     public function show(Invoice $invoice)
     {
-        $invoice->load(['customer', 'salesOrder', 'items.variant.product', 'allocations.payment', 'creator', 'activities.user']);
+        $invoice->load(['customer', 'salesOrder', 'items.variant.product', 'allocations.payment', 'creditApplications.source', 'creator', 'activities.user']);
 
         return view('invoices.show', compact('invoice'));
     }
