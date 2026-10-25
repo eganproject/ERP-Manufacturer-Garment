@@ -25,6 +25,11 @@ class ProductionCost extends Model
         return $this->belongsTo(SubcontractReceipt::class);
     }
 
+    public function pieceworkSheet()
+    {
+        return $this->belongsTo(PieceworkSheet::class);
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

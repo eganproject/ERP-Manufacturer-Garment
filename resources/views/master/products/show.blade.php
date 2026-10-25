@@ -3,6 +3,9 @@
         @can('production.manage')
             <a href="{{ route('production-orders.create', ['product_id' => $product->id]) }}" class="btn-secondary">Buat SPK</a>
         @endcan
+        @can('employees.manage')
+            <a href="{{ route('piece-rates.edit', $product) }}" class="btn-secondary">Tarif Borongan</a>
+        @endcan
         @can('boms.manage')
             <a href="{{ route('boms.create', ['product_id' => $product->id]) }}" class="btn-secondary">+ BOM</a>
         @endcan

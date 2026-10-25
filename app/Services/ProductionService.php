@@ -250,6 +250,10 @@ class ProductionService
             throw ValidationException::withMessages(['status' => 'Biaya SPK yang sudah selesai tidak dapat dihapus.']);
         }
 
+        if ($cost->piecework_sheet_id) {
+            throw ValidationException::withMessages(['status' => 'Upah borongan tercatat otomatis dari hasil kerja harian; hapus lembar hasil kerjanya bila perlu koreksi.']);
+        }
+
         if ($cost->subcontract_receipt_id) {
             throw ValidationException::withMessages(['status' => 'Biaya jasa maklon tercatat otomatis dari penerimaan hasil dan tidak dapat dihapus manual.']);
         }
@@ -272,8 +276,11 @@ class ProductionService
         // Bila jahit dimaklonkan, upah jahit diganti ongkos jasa vendor (dicatat saat hasil diterima)
         $sewingSubcontracted = $order->stages()->where('stage', ProductionStage::Sewing->value)->whereNotNull('subcontract_order_id')->exists();
 
+        // Artikel dengan tarif borongan: upah aktual masuk dari hasil kerja harian karyawan
+        $piecework = $order->product->usesPiecework();
+
         $standards = [
-            [ProductionCostType::Labor, 'Upah jahit standar BOM', $sewingSubcontracted ? 0.0 : (float) $bom->labor_cost],
+            [ProductionCostType::Labor, 'Upah jahit standar BOM', $sewingSubcontracted || $piecework ? 0.0 : (float) $bom->labor_cost],
             [ProductionCostType::Overhead, 'Overhead standar BOM', (float) $bom->overhead_cost],
         ];
 

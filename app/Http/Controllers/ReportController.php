@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Services\Reports\LaborReport;
 use App\Services\Reports\ProductionReport;
 use App\Services\Reports\StockValuationReport;
 use App\Services\Reports\SubcontractReport;
@@ -119,6 +121,27 @@ class ReportController extends Controller
         }
 
         return view('reports.subcontract', $data + compact('view', 'from', 'to', 'supplierId', 'vendors', 'withCost'));
+    }
+
+    public function labor(Request $request, LaborReport $report)
+    {
+        $request->validate($this->periodRules() + [
+            'view' => ['nullable', Rule::in(array_keys(LaborReport::VIEWS))],
+            'employee_id' => ['nullable', 'integer'],
+        ]);
+
+        [$from, $to] = $this->period($request);
+        $view = $request->input('view', 'employees');
+        $employeeId = $request->integer('employee_id') ?: null;
+        $employees = Employee::orderBy('name')->pluck('name', 'id');
+
+        $data = $report->build($view, $from, $to, $employeeId);
+
+        if ($response = ReportExport::respond($report->table($view, $data, $from, $to, $employees[$employeeId] ?? null), $request->query('export'))) {
+            return $response;
+        }
+
+        return view('reports.labor', $data + compact('view', 'from', 'to', 'employeeId', 'employees'));
     }
 
     private function periodRules(): array

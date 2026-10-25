@@ -41,6 +41,11 @@ enum Role: string
             'production.manage' => 'Buat & jalankan SPK produksi, catat biaya produksi',
             'subcontract.manage' => 'Buat order maklon, terima hasil & tutup order maklon',
             'subcontract.transfer' => 'Kirim bahan ke vendor maklon & terima retur sisa bahan',
+            'employees.manage' => 'Kelola karyawan produksi & tarif borongan per artikel',
+            'piecework.record' => 'Catat hasil kerja borongan harian',
+            'payroll.view' => 'Lihat hasil kerja, penggajian borongan & slip upah',
+            'payroll.manage' => 'Susun penggajian borongan per periode (draft, bonus & potongan)',
+            'payroll.pay' => 'Setujui & bayar upah borongan, catat kasbon karyawan',
             'mrp.view' => 'Lihat perencanaan kebutuhan bahan (MRP)',
             'costing.view' => 'Lihat HPP produksi & margin produk',
             'receivables.view' => 'Lihat invoice & piutang pelanggan',
@@ -88,9 +93,9 @@ enum Role: string
             self::Admin => 'Akses penuh, termasuk pengguna dan pengaturan.',
             self::Purchasing => 'Membuat PO ke supplier (termasuk dari MRP), retur pembelian, dan mengelola data supplier & bahan.',
             self::Gudang => 'Menerima barang, mengirim barang (surat jalan), retur penjualan & pembelian, kirim/retur bahan maklon, dan stock opname.',
-            self::Produksi => 'Mengelola BOM, SPK produksi dari potong sampai packing, order maklon ke vendor, MRP, dan biaya produksi (HPP).',
+            self::Produksi => 'Mengelola BOM, SPK produksi dari potong sampai packing, order maklon ke vendor, karyawan & tarif borongan, input hasil kerja harian, menyusun penggajian borongan, MRP, dan biaya produksi (HPP).',
             self::Sales => 'Mengelola pelanggan, sales order, dan retur penjualan, memantau piutang.',
-            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, nota kredit/debit retur, menyetujui PO bernilai besar, jurnal & tutup buku, serta laporan keuangan (buku besar, neraca saldo, laba rugi, neraca), umur piutang/hutang dan HPP.',
+            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, nota kredit/debit retur, menyetujui PO bernilai besar, menyetujui & membayar upah borongan serta kasbon, jurnal & tutup buku, serta laporan keuangan (buku besar, neraca saldo, laba rugi, neraca), umur piutang/hutang dan HPP.',
         };
     }
 
@@ -119,6 +124,7 @@ enum Role: string
                 'sales.view',
                 'production.view', 'production.manage',
                 'subcontract.manage', 'subcontract.transfer',
+                'employees.manage', 'piecework.record', 'payroll.view', 'payroll.manage',
                 'mrp.view', 'costing.view',
                 'stock.view',
             ],
@@ -135,6 +141,7 @@ enum Role: string
                 'receivables.view', 'receivables.manage',
                 'payables.view', 'payables.manage',
                 'costing.view',
+                'payroll.view', 'payroll.manage', 'payroll.pay',
                 'accounting.view', 'accounting.manage', 'accounting.close',
             ],
         };

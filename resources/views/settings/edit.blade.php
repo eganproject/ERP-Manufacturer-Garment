@@ -38,6 +38,14 @@
                 <x-form.input name="po_approval_threshold" label="Batas Persetujuan PO (Rp)" :value="$poApprovalThreshold" data-money inputmode="numeric"
                     help="PO dengan total sebesar ini atau lebih harus disetujui pengguna berhak 'Setujui PO' (Admin/Keuangan) sebelum dipesan. Isi 0 untuk menonaktifkan." />
             </div>
+
+            <h3 class="mt-8 mb-3 border-t border-gray-200 pt-5 text-sm font-semibold text-gray-800">Penggajian Borongan</h3>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <x-form.select name="payroll_cycle" label="Siklus Penggajian" :options="\App\Models\Setting::PAYROLL_CYCLES" :value="$payroll['cycle']" :placeholder="false"
+                    help="Dipakai untuk menyarankan periode penggajian berikutnya. Periode tetap bisa diubah saat menyusun penggajian." />
+                <x-form.select name="payroll_week_start" label="Hari Awal Periode" :options="[1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu', 7 => 'Minggu']" :value="$payroll['week_start']" :placeholder="false"
+                    help="Untuk siklus mingguan / dua mingguan, mis. Sabtu bila upah dibayar tiap Jumat." />
+            </div>
             <x-form.actions />
         </form>
     </x-card>

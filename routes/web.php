@@ -20,6 +20,11 @@ use App\Http\Controllers\Master\SupplierController;
 use App\Http\Controllers\Master\UnitController;
 use App\Http\Controllers\MrpController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Payroll\EmployeeAdvanceController;
+use App\Http\Controllers\Payroll\EmployeeController;
+use App\Http\Controllers\Payroll\PayrollController;
+use App\Http\Controllers\Payroll\PieceRateController;
+use App\Http\Controllers\Payroll\PieceworkController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
@@ -123,6 +128,27 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('subcontract-transfers/{transfer}/pdf', [SubcontractOrderController::class, 'transferPdf'])->name('subcontract-transfers.pdf');
     Route::get('subcontract-receipts/{receipt}/pdf', [SubcontractOrderController::class, 'receiptPdf'])->name('subcontract-receipts.pdf');
 
+    // Upah borongan karyawan produksi
+    Route::resource('employees', EmployeeController::class);
+    Route::post('employees/{employee}/advances', [EmployeeAdvanceController::class, 'store'])->name('employees.advances.store')->middleware('can:payroll.pay');
+    Route::post('employee-advances/{advance}/cancel', [EmployeeAdvanceController::class, 'cancel'])->name('employee-advances.cancel')->middleware('can:payroll.pay');
+    Route::controller(PieceRateController::class)->middleware('can:employees.manage')->group(function () {
+        Route::get('piece-rates', 'index')->name('piece-rates.index');
+        Route::get('piece-rates/{product}', 'edit')->name('piece-rates.edit');
+        Route::put('piece-rates/{product}', 'update')->name('piece-rates.update');
+    });
+    Route::resource('piecework', PieceworkController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+    Route::resource('payrolls', PayrollController::class)->only(['index', 'create', 'store', 'show', 'update']);
+    Route::controller(PayrollController::class)->prefix('payrolls/{payroll}')->name('payrolls.')->group(function () {
+        Route::post('recalculate', 'recalculate')->name('recalculate');
+        Route::post('approve', 'approve')->name('approve');
+        Route::post('pay', 'pay')->name('pay');
+        Route::post('cancel', 'cancel')->name('cancel');
+        Route::get('pdf', 'pdf')->name('pdf');
+        Route::get('slips', 'slips')->name('slips');
+        Route::get('slips/{line}', 'slip')->name('slip');
+    });
+
     // Perencanaan & biaya produksi
     Route::get('planning/mrp', [MrpController::class, 'index'])->name('mrp.index');
     Route::post('planning/mrp/purchase-orders', [MrpController::class, 'store'])->name('mrp.purchase-orders');
@@ -157,6 +183,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('production', 'production')->name('production')->middleware('can:production.view');
         Route::get('stock-valuation', 'stockValuation')->name('stock-valuation')->middleware('can:costing.view');
         Route::get('subcontract', 'subcontract')->name('subcontract')->middleware('can:production.view');
+        Route::get('labor', 'labor')->name('labor')->middleware('can:payroll.view');
     });
 
     // Akuntansi: bagan akun, jurnal, tutup buku, laporan keuangan

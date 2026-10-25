@@ -37,6 +37,7 @@ class ChartOfAccounts
             ['1200', 'Piutang', $a, '1000', true],
             ['1201', 'Piutang Usaha', $a, '1200'],
             ['1202', 'Piutang Nota Debit Supplier (Retur Pembelian)', $a, '1200'],
+            ['1203', 'Piutang Karyawan (Kasbon)', $a, '1200'],
             ['1209', 'Piutang Lain-lain', $a, '1200'],
             ['1300', 'Persediaan', $a, '1000', true],
             ['1301', 'Persediaan Bahan Baku', $a, '1300'],
@@ -90,6 +91,7 @@ class ChartOfAccounts
             ['5202', 'Penyusutan Mesin & Bangunan Pabrik', $c, '5200'],
             ['5203', 'Pemeliharaan Mesin', $c, '5200'],
             ['5204', 'Bahan Pembantu & Overhead Lain', $c, '5200'],
+            ['5205', 'Bonus & Tunjangan Tenaga Kerja Produksi', $c, '5200'],
             ['5209', 'Overhead Pabrik Dibebankan ke Produksi', $c, '5200', false, 'credit'],
 
             ['6000', 'BEBAN USAHA', $x, null, true],

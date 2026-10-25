@@ -10,12 +10,14 @@ use App\Enums\SubcontractTransferType;
 use App\Models\Bill;
 use App\Models\CreditApplication;
 use App\Models\Delivery;
+use App\Models\EmployeeAdvance;
 use App\Models\GoodsReceipt;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\Material;
 use App\Models\Payment;
+use App\Models\Payroll;
 use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\PurchaseReturn;
@@ -44,6 +46,9 @@ use Illuminate\Support\Carbon;
  * - Kirim bahan maklon : Dr Bahan di vendor          / Cr Persediaan bahan (retur sebaliknya)
  * - Tutup order maklon : Dr WIP                      / Cr Bahan di vendor (bahan terpakai/susut)
  * - SPK selesai        : Dr Persediaan barang jadi ± selisih biaya produksi / Cr WIP
+ * - Upah borongan      : Dr WIP / Cr Hutang upah (lewat biaya produksi per lembar hasil kerja)
+ * - Kasbon karyawan    : Dr Piutang karyawan         / Cr Kas/Bank
+ * - Bayar upah borongan: Dr Hutang upah + bonus/tunjangan / Cr Kas/Bank + Piutang karyawan (potong kasbon) + pendapatan lain (potongan lain)
  * - Penyesuaian stok   : Persediaan ↔ Selisih persediaan (penyesuaian pertama = saldo awal → Ekuitas saldo awal)
  */
 class AutoJournal
@@ -280,6 +285,36 @@ class AutoJournal
             ['account' => $isMaterial ? 'raw_material' : 'finished_goods', 'amount' => $value],
             ['account' => $opening ? 'opening_equity' : 'stock_adjustment', 'amount' => -$value],
         ], sourceNumber: 'ADJ-'.$movement->id);
+    }
+
+    /** Kasbon karyawan dibayarkan. */
+    public function employeeAdvance(EmployeeAdvance $advance): ?JournalEntry
+    {
+        $advance->loadMissing('employee');
+
+        return $this->post($advance, $advance->date, "Kasbon {$advance->number} – {$advance->employee->name}".($advance->notes ? " ({$advance->notes})" : ''), [
+            ['account' => 'employee_advance', 'amount' => (float) $advance->amount, 'reference' => $advance->employee],
+            ['account' => $this->cashAccount($advance->payment_method), 'amount' => -(float) $advance->amount],
+        ]);
+    }
+
+    /** Pembayaran upah borongan satu periode: melunasi hutang upah yang sudah dibebankan ke SPK. */
+    public function payrollPayment(Payroll $payroll): ?JournalEntry
+    {
+        $payroll->loadMissing('lines.employee');
+
+        $lines = [
+            ['account' => 'wages_payable', 'amount' => (float) $payroll->total_gross],
+            ['account' => 'wage_allowance', 'amount' => (float) $payroll->total_allowance],
+            ['account' => $this->cashAccount($payroll->payment_method), 'amount' => -(float) $payroll->total_net],
+            ['account' => 'payroll_other_income', 'amount' => -round((float) $payroll->lines->sum('other_deduction'), 2)],
+        ];
+
+        foreach ($payroll->lines as $line) {
+            $lines[] = ['account' => 'employee_advance', 'amount' => -(float) $line->advance_deduction, 'reference' => $line->employee];
+        }
+
+        return $this->post($payroll, $payroll->payment_date ?? today(), "Pembayaran upah borongan {$payroll->number} periode {$payroll->periodLabel()}", $lines, 'paid');
     }
 
     /** Batalkan semua jurnal dokumen (invoice/tagihan/pembayaran/retur dibatalkan). */

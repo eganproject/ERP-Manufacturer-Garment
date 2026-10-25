@@ -7,11 +7,15 @@ use App\Models\AccountingPeriod;
 use App\Models\Bill;
 use App\Models\Customer;
 use App\Models\Delivery;
+use App\Models\Employee;
+use App\Models\EmployeeAdvance;
 use App\Models\GoodsReceipt;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
 use App\Models\Material;
 use App\Models\Payment;
+use App\Models\Payroll;
+use App\Models\PieceworkSheet;
 use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
@@ -65,6 +69,10 @@ class AppServiceProvider extends ServiceProvider
             'journal_entry' => JournalEntry::class,
             'accounting_period' => AccountingPeriod::class,
             'user' => User::class,
+            'employee' => Employee::class,
+            'employee_advance' => EmployeeAdvance::class,
+            'payroll' => Payroll::class,
+            'piecework_sheet' => PieceworkSheet::class,
         ]);
 
         // Hak akses berbasis peran (lihat App\Enums\Role)
