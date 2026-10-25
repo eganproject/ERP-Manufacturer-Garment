@@ -64,4 +64,18 @@ class Setting extends Model
             'city' => static::get('company_city'),
         ];
     }
+
+    /**
+     * Pengaturan invoice: PPN default dan rekening tujuan pembayaran.
+     *
+     * @return array{tax_rate: float, bank_info: string|null, invoice_notes: string|null}
+     */
+    public static function invoice(): array
+    {
+        return [
+            'tax_rate' => (float) static::get('invoice_tax_rate', 0),
+            'bank_info' => static::get('invoice_bank_info'),
+            'invoice_notes' => static::get('invoice_notes'),
+        ];
+    }
 }

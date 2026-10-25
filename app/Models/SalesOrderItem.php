@@ -11,6 +11,7 @@ class SalesOrderItem extends Model
     protected $casts = [
         'quantity' => 'decimal:2',
         'delivered_quantity' => 'decimal:2',
+        'invoiced_quantity' => 'decimal:2',
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
     ];
@@ -28,5 +29,11 @@ class SalesOrderItem extends Model
     public function outstandingQuantity(): float
     {
         return max(0, (float) $this->quantity - (float) $this->delivered_quantity);
+    }
+
+    /** Jumlah yang sudah dikirim tetapi belum dibuatkan invoice. */
+    public function uninvoicedQuantity(): float
+    {
+        return max(0, (float) $this->delivered_quantity - (float) $this->invoiced_quantity);
     }
 }

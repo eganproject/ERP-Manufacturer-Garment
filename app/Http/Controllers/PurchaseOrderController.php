@@ -71,7 +71,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
 
     public function show(PurchaseOrder $purchaseOrder)
     {
-        $purchaseOrder->load(['supplier', 'items.material.unit', 'receipts.items.material', 'creator', 'activities.user']);
+        $purchaseOrder->load(['supplier', 'items.material.unit', 'receipts.items.material', 'bills', 'creator', 'activities.user']);
 
         return view('purchase-orders.show', ['order' => $purchaseOrder]);
     }

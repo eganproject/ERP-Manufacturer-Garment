@@ -11,7 +11,7 @@ class SettingController extends Controller
 {
     public function edit()
     {
-        return view('settings.edit', ['company' => Setting::company()]);
+        return view('settings.edit', ['company' => Setting::company(), 'invoice' => Setting::invoice()]);
     }
 
     public function update(Request $request)
@@ -25,7 +25,10 @@ class SettingController extends Controller
             'company_npwp' => ['nullable', 'string', 'max:30'],
             'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:1024'],
             'remove_logo' => ['nullable', 'boolean'],
-        ]);
+            'invoice_tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'invoice_bank_info' => ['nullable', 'string', 'max:500'],
+            'invoice_notes' => ['nullable', 'string', 'max:500'],
+        ], [], ['invoice_tax_rate' => 'PPN default', 'invoice_bank_info' => 'rekening pembayaran']);
 
         $old = Setting::get('company_logo');
 

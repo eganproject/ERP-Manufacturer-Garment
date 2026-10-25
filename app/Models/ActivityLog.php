@@ -47,6 +47,9 @@ class ActivityLog extends Model
             'goods_receipt' => 'Penerimaan',
             'sales_order' => 'SO',
             'delivery' => 'Surat Jalan',
+            'invoice' => 'Invoice',
+            'bill' => 'Tagihan Supplier',
+            'payment' => 'Pembayaran',
             'production_order' => 'SPK',
             'user' => 'Pengguna',
             default => $this->subject_type,
@@ -63,6 +66,9 @@ class ActivityLog extends Model
             $subject instanceof SalesOrder => route('sales-orders.show', $subject),
             $subject instanceof Delivery => route('sales-orders.show', $subject->sales_order_id),
             $subject instanceof ProductionOrder => route('production-orders.show', $subject),
+            $subject instanceof Invoice => route('invoices.show', $subject),
+            $subject instanceof Bill => route('bills.show', $subject),
+            $subject instanceof Payment => route('payments.show', $subject),
             default => null,
         };
     }

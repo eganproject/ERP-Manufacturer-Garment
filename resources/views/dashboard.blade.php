@@ -5,6 +5,8 @@
             ['label' => 'SO menunggu dikirim', 'value' => $stats['open_sales'], 'link' => route('sales-orders.index', ['status' => 'confirmed']), 'can' => 'sales.view'],
             ['label' => 'SPK dalam proses', 'value' => $stats['active_production'], 'link' => route('production-orders.index', ['status' => 'in_progress']), 'can' => 'production.view'],
             ['label' => 'PO belum diterima', 'value' => $stats['open_purchases'], 'link' => route('purchase-orders.index'), 'can' => 'purchase.view'],
+            ['label' => 'Piutang jatuh tempo', 'value' => rupiah($stats['receivable_overdue']), 'link' => route('invoices.index', ['status' => 'overdue']), 'can' => 'receivables.view'],
+            ['label' => 'Hutang jatuh tempo ≤ 7 hari', 'value' => rupiah($stats['payable_due']), 'link' => route('reports.payables-aging'), 'can' => 'payables.view'],
         ], fn ($card) => auth()->user()->can($card['can'])) as $card)
             <a href="{{ $card['link'] }}" class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-indigo-300">
                 <p class="text-sm text-gray-500">{{ $card['label'] }}</p>
@@ -57,6 +59,48 @@
             </table>
         </x-card>
 
+        @endcan
+
+        @can('receivables.view')
+        <x-card title="Invoice lewat jatuh tempo" :padding="false">
+            <x-slot:header><a href="{{ route('reports.receivables-aging') }}" class="text-xs text-indigo-600 hover:underline">Umur piutang</a></x-slot:header>
+            <table class="table-base">
+                <thead><tr><th>Invoice</th><th>Pelanggan</th><th class="text-right">Lewat</th><th class="text-right">Sisa</th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse ($overdueInvoices as $inv)
+                        <tr>
+                            <td><a href="{{ route('invoices.show', $inv) }}" class="font-medium text-indigo-600 hover:underline">{{ $inv->number }}</a></td>
+                            <td>{{ $inv->customer->name }}</td>
+                            <td class="text-right text-red-600">{{ $inv->daysOverdue() }} hari</td>
+                            <td class="text-right whitespace-nowrap">{{ rupiah($inv->outstanding()) }}</td>
+                        </tr>
+                    @empty
+                        <x-empty-row colspan="4" message="Tidak ada invoice yang lewat jatuh tempo." />
+                    @endforelse
+                </tbody>
+            </table>
+        </x-card>
+        @endcan
+
+        @can('payables.view')
+        <x-card title="Tagihan supplier jatuh tempo 7 hari" :padding="false">
+            <x-slot:header><a href="{{ route('reports.payables-aging') }}" class="text-xs text-indigo-600 hover:underline">Umur hutang</a></x-slot:header>
+            <table class="table-base">
+                <thead><tr><th>Tagihan</th><th>Supplier</th><th>Jatuh Tempo</th><th class="text-right">Sisa</th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse ($upcomingBills as $bill)
+                        <tr>
+                            <td><a href="{{ route('bills.show', $bill) }}" class="font-medium text-indigo-600 hover:underline">{{ $bill->number }}</a></td>
+                            <td>{{ $bill->supplier->name }}</td>
+                            <td @class(['text-red-600' => $bill->isOverdue()])>{{ tanggal($bill->due_date) }}</td>
+                            <td class="text-right whitespace-nowrap">{{ rupiah($bill->outstanding()) }}</td>
+                        </tr>
+                    @empty
+                        <x-empty-row colspan="4" message="Tidak ada tagihan yang segera jatuh tempo." />
+                    @endforelse
+                </tbody>
+            </table>
+        </x-card>
         @endcan
 
         @can('sales.view')

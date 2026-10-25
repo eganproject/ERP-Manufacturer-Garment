@@ -12,6 +12,7 @@ enum Role: string
     case Gudang = 'gudang';
     case Produksi = 'produksi';
     case Sales = 'sales';
+    case Keuangan = 'keuangan';
 
     /**
      * Daftar semua hak akses beserta keterangannya.
@@ -35,6 +36,10 @@ enum Role: string
             'sales.deliver' => 'Kirim barang (surat jalan)',
             'production.view' => 'Lihat SPK produksi',
             'production.manage' => 'Buat & jalankan SPK produksi',
+            'receivables.view' => 'Lihat invoice & piutang pelanggan',
+            'receivables.manage' => 'Buat invoice & catat penerimaan pelanggan',
+            'payables.view' => 'Lihat tagihan & hutang supplier',
+            'payables.manage' => 'Catat tagihan & pembayaran supplier',
             'stock.view' => 'Lihat stok & kartu stok',
             'stock.adjust' => 'Penyesuaian stok (stock opname)',
             'users.manage' => 'Kelola pengguna',
@@ -51,6 +56,7 @@ enum Role: string
             self::Gudang => 'Gudang',
             self::Produksi => 'Produksi',
             self::Sales => 'Sales',
+            self::Keuangan => 'Keuangan',
         };
     }
 
@@ -62,6 +68,7 @@ enum Role: string
             self::Gudang => 'amber',
             self::Produksi => 'indigo',
             self::Sales => 'green',
+            self::Keuangan => 'gray',
         };
     }
 
@@ -72,7 +79,8 @@ enum Role: string
             self::Purchasing => 'Membuat PO ke supplier dan mengelola data supplier & bahan.',
             self::Gudang => 'Menerima barang, mengirim barang (surat jalan), dan stock opname.',
             self::Produksi => 'Mengelola BOM dan SPK produksi dari potong sampai packing.',
-            self::Sales => 'Mengelola pelanggan dan sales order.',
+            self::Sales => 'Mengelola pelanggan dan sales order, memantau piutang.',
+            self::Keuangan => 'Membuat invoice, mencatat tagihan supplier, penerimaan & pembayaran, serta umur piutang/hutang.',
         };
     }
 
@@ -86,6 +94,7 @@ enum Role: string
             self::Purchasing => [
                 'master.basic', 'suppliers.manage', 'materials.manage',
                 'purchase.view', 'purchase.manage', 'purchase.receive',
+                'payables.view',
                 'stock.view',
             ],
             self::Gudang => [
@@ -103,8 +112,15 @@ enum Role: string
             self::Sales => [
                 'customers.manage', 'products.manage',
                 'sales.view', 'sales.manage',
+                'receivables.view',
                 'production.view',
                 'stock.view',
+            ],
+            self::Keuangan => [
+                'customers.manage', 'suppliers.manage',
+                'sales.view', 'purchase.view',
+                'receivables.view', 'receivables.manage',
+                'payables.view', 'payables.manage',
             ],
         };
     }

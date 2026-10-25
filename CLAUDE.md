@@ -7,3 +7,4 @@
 - Nomor dokumen: `App\Services\DocumentNumber::generate()`.
 - Gunakan class `form-control` (bukan `form-input`, bentrok dengan plugin @tailwindcss/forms) dan atribut `data-select`, `data-date`, `data-money` untuk plugin form.
 - Jalankan `php artisan test` dan `./vendor/bin/pint` sebelum commit.
+- Keuangan: invoice (AR) dibuat dari barang terkirim (`InvoiceService`), tagihan supplier (AP) dari barang diterima (`BillService`), pembayaran lewat `PaymentService` (alokasi ke banyak dokumen). Jangan ubah `paid_amount`/status invoice langsung; panggil `refreshPaymentStatus()` (trait `Payable`).

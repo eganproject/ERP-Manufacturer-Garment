@@ -10,6 +10,7 @@
                 <x-form.input name="phone" label="Telepon / WA" :value="$supplier->phone" data-phone placeholder="08xx-xxxx-xxxx" />
                 <x-form.input name="email" type="email" label="Email" :value="$supplier->email" />
                 <x-form.input name="tax_number" label="NPWP" :value="$supplier->tax_number" />
+                <x-form.input name="payment_terms" type="number" min="0" max="365" label="Termin Pembayaran (hari)" :value="$supplier->payment_terms ?? 30" required help="Dipakai untuk menghitung jatuh tempo invoice/tagihan. 0 = tunai." />
                 <x-form.textarea name="address" label="Alamat" :value="$supplier->address" class="sm:col-span-2" />
                 <x-form.checkbox name="is_active" label="Aktif" :checked="$supplier->is_active" />
             </div>

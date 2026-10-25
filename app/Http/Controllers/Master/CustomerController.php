@@ -67,7 +67,10 @@ class CustomerController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
             'tax_number' => ['nullable', 'string', 'max:30'],
+            'payment_terms' => ['nullable', 'integer', 'min:0', 'max:365'],
         ]);
+
+        $data['payment_terms'] = (int) ($data['payment_terms'] ?? 30);
 
         return $data + ['is_active' => $request->boolean('is_active')];
     }
