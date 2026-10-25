@@ -48,7 +48,7 @@
                     @forelse ($rows as $row)
                         @if ($isOrders)
                             <tr>
-                                <td><a href="{{ route('production-orders.show', $row['key']) }}" class="font-medium text-indigo-600 hover:underline">{{ $row['number'] }}</a><div class="text-xs text-gray-500">{{ $row['product'] }}</div></td>
+                                <td>@can('production.view')<a href="{{ route('production-orders.show', $row['key']) }}" class="font-medium text-indigo-600 hover:underline">{{ $row['number'] }}</a>@else<span class="font-medium">{{ $row['number'] }}</span>@endcan<div class="text-xs text-gray-500">{{ $row['product'] }}</div></td>
                                 <td class="text-right">{{ qty($row['quantity']) }}</td>
                                 <td class="text-right">{{ $row['employees'] }}</td>
                                 <td class="text-right">{{ qty($row['good']) }}</td>

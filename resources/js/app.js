@@ -33,6 +33,8 @@ const pluginInitializers = {
             maxOptions: 500,
             placeholder: el.dataset.placeholder || 'Pilih...',
             plugins: el.multiple ? ['remove_button'] : [],
+            // Dropdown ditempel ke body agar tidak terpotong tabel yang bisa digeser (overflow)
+            dropdownParent: 'body',
             render: {
                 no_results: () => '<div class="no-results p-2 text-gray-500">Data tidak ditemukan</div>',
             },

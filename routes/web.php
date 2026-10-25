@@ -75,6 +75,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('approve', 'approve')->name('approve');
         Route::post('reject', 'reject')->name('reject');
         Route::post('cancel', 'cancel')->name('cancel');
+        Route::post('close', 'close')->name('close');
         Route::get('receive', 'receiveForm')->name('receive');
         Route::post('receive', 'receive')->name('receive.store');
         Route::get('pdf', 'pdf')->name('pdf');
@@ -88,6 +89,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('deliver', 'deliverForm')->name('deliver');
         Route::post('deliver', 'deliver')->name('deliver.store');
         Route::post('cancel', 'cancel')->name('cancel');
+        Route::post('close', 'close')->name('close');
         Route::get('pdf', 'pdf')->name('pdf');
     });
     Route::get('deliveries/{delivery}/pdf', [SalesOrderController::class, 'deliveryPdf'])->name('deliveries.pdf');

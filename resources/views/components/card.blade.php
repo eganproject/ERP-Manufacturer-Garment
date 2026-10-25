@@ -7,7 +7,7 @@
             {{ $header ?? '' }}
         </div>
     @endif
-    <div @class(['p-5' => $padding])>
+    <div @class(['p-5' => $padding, 'overflow-x-auto' => ! $padding])>
         {{ $slot }}
     </div>
 </div>

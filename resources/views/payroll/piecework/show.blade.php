@@ -18,7 +18,7 @@
         <x-card title="Informasi">
             <dl class="space-y-3 text-sm">
                 <div><dt class="text-gray-500">Tanggal Kerja</dt><dd class="font-medium">{{ tanggal($sheet->date) }}</dd></div>
-                <div><dt class="text-gray-500">SPK</dt><dd><a href="{{ route('production-orders.show', $spk) }}" class="font-medium text-indigo-600 hover:underline">{{ $spk->number }}</a> · {{ $spk->product->name }}</dd></div>
+                <div><dt class="text-gray-500">SPK</dt><dd>@can('production.view')<a href="{{ route('production-orders.show', $spk) }}" class="font-medium text-indigo-600 hover:underline">{{ $spk->number }}</a>@else<span class="font-medium">{{ $spk->number }}</span>@endcan · {{ $spk->product->name }}</dd></div>
                 <div><dt class="text-gray-500">Total Upah</dt><dd class="text-lg font-semibold">{{ rupiah($sheet->total_amount) }}</dd></div>
                 <div><dt class="text-gray-500">Dicatat oleh</dt><dd>{{ $sheet->creator?->name ?? '-' }} · {{ tanggal($sheet->created_at, 'd M Y H:i') }}</dd></div>
                 @if ($sheet->notes)<div><dt class="text-gray-500">Catatan</dt><dd>{{ $sheet->notes }}</dd></div>@endif

@@ -55,6 +55,33 @@
         $showPurchases = auth()->user()->can('payables.view');
     @endphp
 
+    {{-- Pekerjaan berikutnya sesuai hak akses: memandu alur dari pesanan sampai pembayaran --}}
+    <x-card title="Perlu Ditindaklanjuti" :padding="false" class="mb-6">
+        @if ($tasks->isEmpty())
+            <p class="p-5 text-sm text-gray-500">Tidak ada pekerjaan yang menunggu. Semua dokumen sudah diproses.</p>
+        @else
+            <ul class="grid grid-cols-1 divide-y divide-gray-100 md:grid-cols-2 md:divide-y-0 xl:grid-cols-3">
+                @foreach ($tasks as $task)
+                    <li>
+                        <a href="{{ $task['url'] }}" class="flex items-center gap-3 px-5 py-3 transition hover:bg-gray-50">
+                            <span @class([
+                                'flex h-9 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-sm font-semibold',
+                                'bg-amber-50 text-amber-700' => $task['tone'] === 'amber',
+                                'bg-red-50 text-red-700' => $task['tone'] === 'red',
+                                'bg-blue-50 text-blue-700' => $task['tone'] === 'blue',
+                                'bg-gray-100 text-gray-700' => $task['tone'] === 'gray',
+                            ])>{{ $task['count'] }}</span>
+                            <span class="min-w-0">
+                                <span class="block truncate text-sm font-medium text-gray-800">{{ $task['label'] }}</span>
+                                <span class="block truncate text-xs text-gray-500">{{ $task['hint'] }}</span>
+                            </span>
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </x-card>
+
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         @foreach ($cards as $card)
             <a href="{{ $card['link'] }}" class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-indigo-300">

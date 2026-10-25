@@ -72,7 +72,7 @@
                         <tbody class="divide-y divide-gray-100">
                             @forelse ($orders as $order)
                                 <tr>
-                                    <td><a href="{{ route('production-orders.show', $order) }}" class="font-medium text-indigo-600 hover:underline">{{ $order->number }}</a></td>
+                                    <td>@can('production.view')<a href="{{ route('production-orders.show', $order) }}" class="font-medium text-indigo-600 hover:underline">{{ $order->number }}</a>@else<span class="font-medium">{{ $order->number }}</span>@endcan</td>
                                     <td>{{ $order->product->name }}</td>
                                     <td class="whitespace-nowrap">{{ tanggal($order->due_date) }}</td>
                                     <td class="whitespace-nowrap">

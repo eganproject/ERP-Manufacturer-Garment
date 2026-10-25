@@ -72,7 +72,7 @@ class SubcontractReport
     {
         $orders = SubcontractOrder::with(['supplier', 'materials', 'productionOrder.materials', 'receipts'])
             ->where('status', '!=', SubcontractStatus::Cancelled)
-            ->whereBetween('order_date', [$from->toDateString(), $to->toDateString()])
+            ->whereBetween('order_date', [$from->toDateString(), $to->toDateString().' 23:59:59'])
             ->when($supplierId, fn ($q, $id) => $q->where('supplier_id', $id))
             ->get();
 

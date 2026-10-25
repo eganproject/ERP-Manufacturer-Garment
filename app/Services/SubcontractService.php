@@ -104,6 +104,23 @@ class SubcontractService
     }
 
     /**
+     * Tahap internal sebelum tahap maklon yang belum selesai (hasil maklon baru bisa diterima setelah selesai).
+     */
+    public static function pendingPriorStages(SubcontractOrder $order): ?string
+    {
+        $firstSequence = $order->productionStages()->min('sequence');
+
+        $labels = $order->productionOrder->stages()
+            ->where('sequence', '<', $firstSequence)
+            ->where('status', '!=', StageStatus::Done->value)
+            ->orderBy('sequence')
+            ->get()
+            ->map(fn ($row) => $row->stage->label());
+
+        return $labels->isEmpty() ? null : $labels->implode(', ');
+    }
+
+    /**
      * Rencana kirim default per bahan: kebutuhan SPK yang belum dikeluarkan / dialokasikan ke vendor lain.
      *
      * @return array<int, float> material_id => qty
@@ -271,12 +288,11 @@ class SubcontractService
             throw ValidationException::withMessages(['good_quantity' => 'Jumlah diterima melebihi sisa order maklon ('.qty($order->outstandingQuantity()).' pcs).']);
         }
 
-        $stages = $order->productionStages()->get();
-        $firstSequence = $stages->min('sequence');
-
-        if ($spk->stages()->where('sequence', '<', $firstSequence)->where('status', '!=', StageStatus::Done->value)->exists()) {
-            throw ValidationException::withMessages(['status' => 'Selesaikan tahap sebelum tahap maklon terlebih dahulu.']);
+        if ($pending = self::pendingPriorStages($order)) {
+            throw ValidationException::withMessages(['status' => "Tahap {$pending} di SPK {$spk->number} belum selesai. Selesaikan dulu sebelum menerima hasil maklon."]);
         }
+
+        $stages = $order->productionStages()->get();
 
         return DB::transaction(function () use ($order, $spk, $data, $good, $reject, $stages) {
             $date = Carbon::parse($data['date']);

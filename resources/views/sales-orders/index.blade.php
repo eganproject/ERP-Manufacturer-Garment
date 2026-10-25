@@ -7,7 +7,7 @@
         <div class="border-b border-gray-200 p-4">
             <x-search-filter placeholder="Cari no. SO / pelanggan...">
                 <div class="w-52">
-                    <x-form.select name="status" :options="collect(\App\Enums\SalesOrderStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])" :value="request('status')" placeholder="Semua status" />
+                    <x-form.select name="status" :options="['open' => 'Belum selesai dikirim'] + collect(\App\Enums\SalesOrderStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all()" :value="request('status')" placeholder="Semua status" />
                 </div>
             </x-search-filter>
         </div>

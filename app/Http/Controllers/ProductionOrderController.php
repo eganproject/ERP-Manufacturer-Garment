@@ -12,6 +12,7 @@ use App\Models\Bom;
 use App\Models\Product;
 use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
+use App\Models\ProductionOrderItem;
 use App\Models\ProductionStage;
 use App\Models\SalesOrder;
 use App\Services\Accounting\AutoJournal;
@@ -60,6 +61,13 @@ class ProductionOrderController extends Controller implements HasMiddleware
             'product_id' => $request->integer('product_id') ?: null,
             'sales_order_id' => $request->integer('sales_order_id') ?: null,
         ]);
+
+        // Dari SO: pilih otomatis produk pertama yang masih punya sisa qty belum dibuatkan SPK
+        if ($order->sales_order_id && ! $order->product_id && ($so = SalesOrder::with('items.variant')->find($order->sales_order_id))) {
+            $remaining = $this->remainingForSpk($so);
+            $order->product_id = $so->items->first(fn ($item) => ($remaining[$item->product_variant_id] ?? 0) > 0)?->variant?->product_id;
+            $order->due_date = $so->delivery_date;
+        }
 
         return view('production-orders.form', $this->formData($order));
     }
@@ -221,13 +229,34 @@ class ProductionOrderController extends Controller implements HasMiddleware
         return [
             'order' => $order,
             'products' => $products,
-            'salesOrders' => SalesOrder::with(['customer', 'items'])
+            'salesOrders' => $salesOrders = SalesOrder::with(['customer', 'items'])
                 ->whereIn('status', SalesOrderStatus::open())
                 ->orWhere('id', $order->sales_order_id)
                 ->latest()
                 ->get(),
+            'soRemaining' => $salesOrders->mapWithKeys(fn (SalesOrder $so) => [$so->id => $this->remainingForSpk($so, $order->id)]),
             'existingItems' => $order->exists ? $order->items->pluck('quantity', 'product_variant_id') : collect(),
         ];
+    }
+
+    /**
+     * Sisa qty SO per varian yang belum dibuatkan SPK (SPK batal tidak dihitung).
+     *
+     * @return array<int, float>
+     */
+    private function remainingForSpk(SalesOrder $so, ?int $exceptOrderId = null): array
+    {
+        $planned = ProductionOrderItem::query()
+            ->whereHas('productionOrder', fn ($q) => $q->where('sales_order_id', $so->id)
+                ->where('status', '!=', ProductionOrderStatus::Cancelled)
+                ->when($exceptOrderId, fn ($w) => $w->where('id', '!=', $exceptOrderId)))
+            ->selectRaw('product_variant_id, SUM(quantity) as qty')
+            ->groupBy('product_variant_id')
+            ->pluck('qty', 'product_variant_id');
+
+        return $so->items->groupBy('product_variant_id')
+            ->map(fn ($items, $variantId) => max(0, (float) $items->sum('quantity') - (float) ($planned[$variantId] ?? 0)))
+            ->all();
     }
 
     private function validated(Request $request): array

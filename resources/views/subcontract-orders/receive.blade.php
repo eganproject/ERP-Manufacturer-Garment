@@ -1,4 +1,11 @@
 <x-layouts.app :title="'Terima Hasil Maklon - '.$order->number">
+    @if ($pendingStages)
+        <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            Tahap <strong>{{ $pendingStages }}</strong> di SPK
+            <a href="{{ route('production-orders.show', $order->productionOrder) }}" class="font-medium underline">{{ $order->productionOrder->number }}</a>
+            belum selesai. Hasil maklon baru bisa diterima setelah tahap sebelumnya ditandai selesai.
+        </div>
+    @endif
     <form method="POST" action="{{ route('subcontract-orders.receive.store', $order) }}" class="space-y-6"
           x-data="{ good: {{ (float) old('good_quantity', $order->outstandingQuantity()) }}, rate: {{ (float) $order->rate }} }"
           data-confirm="Hasil diterima dan ongkos jasa dibebankan ke HPP SPK." data-confirm-icon="question" data-confirm-button="Ya, simpan">

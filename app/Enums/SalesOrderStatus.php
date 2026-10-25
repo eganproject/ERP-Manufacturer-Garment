@@ -8,6 +8,7 @@ enum SalesOrderStatus: string
     case Confirmed = 'confirmed';
     case Partial = 'partial';
     case Delivered = 'delivered';
+    case Closed = 'closed';
     case Cancelled = 'cancelled';
 
     public function label(): string
@@ -17,6 +18,7 @@ enum SalesOrderStatus: string
             self::Confirmed => 'Dikonfirmasi',
             self::Partial => 'Terkirim Sebagian',
             self::Delivered => 'Terkirim',
+            self::Closed => 'Ditutup',
             self::Cancelled => 'Dibatalkan',
         };
     }
@@ -28,6 +30,7 @@ enum SalesOrderStatus: string
             self::Confirmed => 'blue',
             self::Partial => 'amber',
             self::Delivered => 'green',
+            self::Closed => 'indigo',
             self::Cancelled => 'red',
         };
     }

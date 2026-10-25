@@ -46,7 +46,7 @@
                             <td>
                                 <span class="font-medium">{{ $row['product']->code }}</span> - {{ $row['product']->name }}
                                 @if ($row['product']->activeBom)
-                                    <div class="text-xs"><a href="{{ route('boms.show', $row['product']->activeBom) }}" class="text-indigo-600 hover:underline">{{ $row['product']->activeBom->name }}</a></div>
+                                    <div class="text-xs">@can('boms.manage')<a href="{{ route('boms.show', $row['product']->activeBom) }}" class="text-indigo-600 hover:underline">{{ $row['product']->activeBom->name }}</a>@else{{ $row['product']->activeBom->name }}@endcan</div>
                                 @endif
                             </td>
                             <td class="text-right whitespace-nowrap">{{ qty($row['finished']) }} <span class="text-xs text-gray-500">({{ $row['spk_count'] }} SPK)</span></td>
@@ -83,7 +83,7 @@
                     @forelse ($orders as $order)
                         @php $standard = $order->bom->standardUnitCost(); @endphp
                         <tr>
-                            <td><a href="{{ route('production-orders.show', $order) }}" class="font-medium text-indigo-600 hover:underline">{{ $order->number }}</a></td>
+                            <td>@can('production.view')<a href="{{ route('production-orders.show', $order) }}" class="font-medium text-indigo-600 hover:underline">{{ $order->number }}</a>@else<span class="font-medium">{{ $order->number }}</span>@endcan</td>
                             <td>{{ $order->product->name }}</td>
                             <td class="whitespace-nowrap">{{ tanggal($order->completed_at) }}</td>
                             <td class="text-right whitespace-nowrap">{{ qty($order->finished_quantity) }} / <span class="text-red-600">{{ qty($order->reject_quantity) }}</span></td>

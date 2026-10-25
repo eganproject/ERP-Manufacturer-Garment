@@ -11,6 +11,9 @@
             @if ($order->canCancel())
                 <x-action-form :action="route('sales-orders.cancel', $order)" confirm="SO akan dibatalkan." button="Ya, batalkan">Batalkan</x-action-form>
             @endif
+            @if ($order->canClose())
+                <x-reason-form :action="route('sales-orders.close', $order)" title="Tutup SO?" text="Sisa qty yang belum dikirim tidak akan dikirim dan keluar dari daftar pesanan terbuka / MRP." placeholder="Alasan, mis. pelanggan tidak jadi ambil sisa" button="Ya, tutup SO" :danger="false">Tutup Sisa SO</x-reason-form>
+            @endif
         @endcan
         @if ($order->canDeliver())
             @can('mrp.view')
@@ -131,7 +134,7 @@
                         <tr>
                             <td>
                                 @can('production.view')
-                                    <a href="{{ route('production-orders.show', $po) }}" class="font-medium text-indigo-600 hover:underline">{{ $po->number }}</a>
+                                    @can('production.view')<a href="{{ route('production-orders.show', $po) }}" class="font-medium text-indigo-600 hover:underline">{{ $po->number }}</a>@else<span class="font-medium">{{ $po->number }}</span>@endcan
                                 @else
                                     {{ $po->number }}
                                 @endcan

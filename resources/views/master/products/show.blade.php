@@ -49,7 +49,7 @@
                             <td class="font-medium">{{ $bom->name }}</td>
                             <td>{{ $bom->items->map(fn ($i) => $i->material->name)->implode(', ') }}</td>
                             <td><x-badge :color="$bom->is_active ? 'green' : 'gray'">{{ $bom->is_active ? 'Aktif' : 'Nonaktif' }}</x-badge></td>
-                            <td class="text-right"><a href="{{ route('boms.show', $bom) }}" class="text-sm text-indigo-600 hover:underline">Detail</a></td>
+                            <td class="text-right">@can('boms.manage')<a href="{{ route('boms.show', $bom) }}" class="text-sm text-indigo-600 hover:underline">Detail</a>@endcan</td>
                         </tr>
                     @empty
                         <x-empty-row colspan="4" message="Produk belum memiliki BOM. Buat BOM agar bisa diproduksi." />

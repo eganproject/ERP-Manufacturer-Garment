@@ -83,6 +83,12 @@ class PurchaseOrder extends Model
         return $threshold > 0 && (float) $this->total >= $threshold;
     }
 
+    /** PO diterima sebagian bisa ditutup: sisa qty tidak akan dikirim supplier. */
+    public function canClose(): bool
+    {
+        return $this->status === PurchaseOrderStatus::Partial;
+    }
+
     public function canCancel(): bool
     {
         return in_array($this->status, [PurchaseOrderStatus::Draft, PurchaseOrderStatus::PendingApproval, PurchaseOrderStatus::Ordered], true);

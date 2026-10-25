@@ -22,7 +22,7 @@ class LaborReport
     public function build(string $view, Carbon $from, Carbon $to, ?int $employeeId = null): array
     {
         $entries = PieceworkEntry::with(['employee', 'sheet.productionOrder.product', 'payrollLine.payroll'])
-            ->whereHas('sheet', fn ($q) => $q->whereBetween('date', [$from->toDateString(), $to->toDateString()]))
+            ->whereHas('sheet', fn ($q) => $q->whereBetween('date', [$from->toDateString(), $to->toDateString().' 23:59:59']))
             ->when($employeeId, fn ($q, $id) => $q->where('employee_id', $id))
             ->get();
 

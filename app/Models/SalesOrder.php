@@ -80,6 +80,12 @@ class SalesOrder extends Model
         return in_array($this->status, SalesOrderStatus::open(), true);
     }
 
+    /** SO terkirim sebagian bisa ditutup: sisa qty tidak akan dikirim. */
+    public function canClose(): bool
+    {
+        return $this->status === SalesOrderStatus::Partial;
+    }
+
     public function canCancel(): bool
     {
         return in_array($this->status, [SalesOrderStatus::Draft, SalesOrderStatus::Confirmed], true);

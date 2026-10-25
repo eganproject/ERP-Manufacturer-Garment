@@ -20,6 +20,9 @@
         @if ($order->canCancel())
             <x-action-form :action="route('purchase-orders.cancel', $order)" confirm="PO akan dibatalkan." button="Ya, batalkan">Batalkan</x-action-form>
         @endif
+        @if ($order->canClose())
+            <x-reason-form :action="route('purchase-orders.close', $order)" title="Tutup PO?" text="Sisa qty yang belum diterima tidak lagi ditunggu dari supplier dan keluar dari hitungan MRP." placeholder="Alasan, mis. supplier kehabisan stok" button="Ya, tutup PO" :danger="false">Tutup Sisa PO</x-reason-form>
+        @endif
         @endcan
         @if ($order->canReceive() && auth()->user()->can('purchase.receive'))
             <a href="{{ route('purchase-orders.receive', $order) }}" class="btn-success">Terima Barang</a>
