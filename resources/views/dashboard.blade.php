@@ -65,7 +65,7 @@
                     <li>
                         <a href="{{ $task['url'] }}" class="flex items-center gap-3 px-5 py-3 transition hover:bg-gray-50">
                             <span @class([
-                                'flex h-9 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-sm font-semibold',
+                                'flex h-9 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-sm font-semibold tabular-nums',
                                 'bg-amber-50 text-amber-700' => $task['tone'] === 'amber',
                                 'bg-red-50 text-red-700' => $task['tone'] === 'red',
                                 'bg-blue-50 text-blue-700' => $task['tone'] === 'blue',
@@ -84,16 +84,22 @@
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         @foreach ($cards as $card)
-            <a href="{{ $card['link'] }}" class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-indigo-300">
-                <p class="text-sm text-gray-500">{{ $card['label'] }}</p>
-                <p class="mt-2 text-2xl font-semibold text-gray-900">{{ $card['value'] }}</p>
+            <a href="{{ $card['link'] }}" class="card group relative p-5 transition hover:border-gray-300 hover:shadow-pop">
+                <div class="flex items-start justify-between gap-2">
+                    <p class="text-[13px] font-medium text-gray-500">{{ $card['label'] }}</p>
+                    <svg class="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M9 7h8v8"/></svg>
+                </div>
+                <p class="mt-2 text-2xl font-semibold tracking-tight text-gray-900 tabular-nums">{{ $card['value'] }}</p>
                 <p @class([
-                    'mt-1 text-xs',
+                    'mt-1.5 flex items-center gap-1.5 text-xs',
                     'text-gray-500' => empty($card['tone']),
-                    'text-emerald-600' => ($card['tone'] ?? null) === 'green',
+                    'text-emerald-700' => ($card['tone'] ?? null) === 'green',
                     'text-red-600' => ($card['tone'] ?? null) === 'red',
-                    'text-amber-600' => ($card['tone'] ?? null) === 'amber',
-                ])>{{ $card['hint'] }}</p>
+                    'text-amber-700' => ($card['tone'] ?? null) === 'amber',
+                ])>
+                    @unless (empty($card['tone']))<span @class(['h-1.5 w-1.5 shrink-0 rounded-full', 'bg-emerald-500' => $card['tone'] === 'green', 'bg-red-500' => $card['tone'] === 'red', 'bg-amber-500' => $card['tone'] === 'amber'])></span>@endunless
+                    <span>{{ $card['hint'] }}</span>
+                </p>
             </a>
         @endforeach
     </div>
@@ -104,7 +110,7 @@
                 <x-slot:header>
                     <div class="flex items-center gap-4 text-xs text-gray-600">
                         @if ($showSales)<span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-indigo-500"></span>Penjualan</span>@endif
-                        @if ($showPurchases)<span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-amber-400"></span>Pembelian</span>@endif
+                        @if ($showPurchases)<span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-gray-300"></span>Pembelian</span>@endif
                     </div>
                 </x-slot:header>
                 <div class="flex items-end gap-3" role="img" aria-label="Grafik penjualan dan pembelian 6 bulan terakhir">
@@ -112,16 +118,16 @@
                         <div class="flex-1">
                             <div class="flex h-48 items-end justify-center gap-1">
                                 @if ($showSales)
-                                    <div class="w-1/3 max-w-8 rounded-t bg-indigo-500 transition hover:bg-indigo-600" style="height: {{ max(0.5, $point['sales'] / $maxTrend * 100) }}%" title="Penjualan {{ $point['label'] }}: {{ rupiah($point['sales']) }}"></div>
+                                    <div class="w-1/3 max-w-8 rounded-t bg-indigo-600 transition hover:bg-indigo-700" style="height: {{ max(0.5, $point['sales'] / $maxTrend * 100) }}%" title="Penjualan {{ $point['label'] }}: {{ rupiah($point['sales']) }}"></div>
                                 @endif
                                 @if ($showPurchases)
-                                    <div class="w-1/3 max-w-8 rounded-t bg-amber-400 transition hover:bg-amber-500" style="height: {{ max(0.5, $point['purchases'] / $maxTrend * 100) }}%" title="Pembelian {{ $point['label'] }}: {{ rupiah($point['purchases']) }}"></div>
+                                    <div class="w-1/3 max-w-8 rounded-t bg-gray-300 transition hover:bg-gray-400" style="height: {{ max(0.5, $point['purchases'] / $maxTrend * 100) }}%" title="Pembelian {{ $point['label'] }}: {{ rupiah($point['purchases']) }}"></div>
                                 @endif
                             </div>
                             <div class="mt-2 border-t border-gray-200 pt-1 text-center text-xs leading-5">
                                 <div class="text-gray-500">{{ $point['label'] }}</div>
                                 @if ($showSales)<div class="font-medium text-indigo-600">{{ number_format($point['sales'] / 1000000, 1, ',', '.') }} jt</div>@endif
-                                @if ($showPurchases)<div class="font-medium text-amber-600">{{ number_format($point['purchases'] / 1000000, 1, ',', '.') }} jt</div>@endif
+                                @if ($showPurchases)<div class="font-medium text-gray-500">{{ number_format($point['purchases'] / 1000000, 1, ',', '.') }} jt</div>@endif
                             </div>
                         </div>
                     @endforeach

@@ -60,6 +60,6 @@
                 </div>
             @endforelse
         </div>
-        <div class="p-4">{{ $entries->links() }}</div>
+        <div class="border-t border-gray-100 px-4 py-3 empty:hidden">{{ $entries->links() }}</div>
     </x-card>
 </x-layouts.app>

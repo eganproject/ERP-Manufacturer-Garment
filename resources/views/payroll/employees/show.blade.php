@@ -118,7 +118,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="p-4">{{ $entries->links() }}</div>
+            <div class="border-t border-gray-100 px-4 py-3 empty:hidden">{{ $entries->links() }}</div>
         </x-card>
 
         <x-activity-log :activities="$employee->activities" class="lg:col-span-3" />

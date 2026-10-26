@@ -33,6 +33,6 @@
                 </tbody>
             </table>
         </div>
-        <div class="p-4">{{ $payments->links() }}</div>
+        <div class="border-t border-gray-100 px-4 py-3 empty:hidden">{{ $payments->links() }}</div>
     </x-card>
 </x-layouts.app>

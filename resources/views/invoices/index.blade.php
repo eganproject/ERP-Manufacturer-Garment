@@ -43,6 +43,6 @@
                 </tbody>
             </table>
         </div>
-        <div class="p-4">{{ $invoices->links() }}</div>
+        <div class="border-t border-gray-100 px-4 py-3 empty:hidden">{{ $invoices->links() }}</div>
     </x-card>
 </x-layouts.app>
