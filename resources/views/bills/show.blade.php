@@ -1,5 +1,6 @@
 <x-layouts.app :title="'Tagihan '.$bill->number">
     <x-slot:actions>
+        <a href="{{ route('bills.pdf', $bill) }}" target="_blank" class="btn-secondary">Cetak</a>
         @can('payables.manage')
             @if ($bill->canCancel() && ! $bill->fixedAsset)
                 <form method="POST" action="{{ route('bills.cancel', $bill) }}" class="inline" data-confirm="Tagihan dibatalkan dan barangnya bisa ditagihkan ulang." data-confirm-button="Ya, batalkan">

@@ -57,9 +57,10 @@
     @if ($order->notes)
         <div class="notes"><span class="bold">Catatan:</span> {{ $order->notes }}</div>
     @endif
+    @include('pdf.partials.bank', ['style' => 'margin-top:10px; width:60%;'])
 
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($order->order_date)),
-        'signatures' => [['Hormat kami,', $order->creator?->name], ['Disetujui oleh,', null], ['Pelanggan,', null]],
+        'signatures' => [['Hormat kami,', $order->creator?->name], ['Disetujui oleh,', null, 'director'], ['Pelanggan,', null]],
     ])
 @endsection

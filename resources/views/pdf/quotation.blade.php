@@ -61,11 +61,9 @@
     <div class="terbilang">Terbilang: {{ ucfirst(terbilang($quotation->total)) }} rupiah</div>
 
     @if ($quotation->terms)
-        <div class="notes"><span class="bold">Syarat & Ketentuan:</span><br>{!! nl2br(e($quotation->terms)) !!}</div>
+        <div class="terms"><div class="label">Syarat & Ketentuan</div>{!! nl2br(e($quotation->terms)) !!}</div>
     @endif
-    @if ($settings['bank_info'])
-        <div class="notes"><span class="bold">Pembayaran ke:</span> {{ $settings['bank_info'] }}</div>
-    @endif
+    @include('pdf.partials.bank', ['style' => 'margin-top:10px;'])
 
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($quotation->quotation_date)),

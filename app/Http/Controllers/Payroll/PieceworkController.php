@@ -9,6 +9,7 @@ use App\Models\PieceworkEntry;
 use App\Models\PieceworkSheet;
 use App\Models\ProductionOrder;
 use App\Services\PieceworkService;
+use App\Support\DocumentPdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -21,7 +22,7 @@ class PieceworkController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('can:payroll.view', only: ['index', 'show']),
+            new Middleware('can:payroll.view', only: ['index', 'show', 'pdf']),
             new Middleware('can:piecework.record', only: ['create', 'store', 'destroy']),
         ];
     }
@@ -93,6 +94,13 @@ class PieceworkController extends Controller implements HasMiddleware
         $piecework->load(['productionOrder.product', 'entries.employee', 'entries.payrollLine.payroll', 'cost', 'creator']);
 
         return view('payroll.piecework.show', ['sheet' => $piecework]);
+    }
+
+    public function pdf(PieceworkSheet $piecework)
+    {
+        $piecework->load(['productionOrder.product', 'entries.employee', 'creator']);
+
+        return DocumentPdf::stream('pdf.piecework', ['sheet' => $piecework], $piecework->number);
     }
 
     public function destroy(PieceworkSheet $piecework)

@@ -2,6 +2,7 @@
 <x-layouts.app :title="$handling->type->label().' '.$handling->number">
     <x-slot:actions>
         <a href="{{ route('defects.index') }}" class="btn-secondary">Barang Cacat</a>
+        <a href="{{ route('defects.pdf', $handling) }}" target="_blank" class="btn-secondary">Cetak</a>
         @can('defects.manage')
             @unless ($handling->isCancelled())
                 <x-reason-form :action="route('defects.cancel', $handling)" title="Batalkan dokumen ini?" text="Stok dikembalikan ke lokasi semula dan jurnal dibalik." class="!text-red-600">Batalkan</x-reason-form>

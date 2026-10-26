@@ -62,7 +62,44 @@ class Setting extends Model
             'npwp' => static::get('company_npwp'),
             'logo' => static::get('company_logo'),
             'city' => static::get('company_city'),
+            'website' => static::get('company_website'),
+            'footer' => static::get('document_footer'),
         ];
+    }
+
+    /** Penanda tangan tetap pada dokumen cetak: kunci => [label pengaturan, jabatan default]. */
+    public const SIGNERS = [
+        'director' => ['Pimpinan / Direktur', 'Direktur'],
+        'finance' => ['Keuangan', 'Keuangan'],
+        'purchasing' => ['Pembelian', 'Pembelian'],
+        'warehouse' => ['Kepala Gudang', 'Kepala Gudang'],
+        'production' => ['Kepala Produksi', 'Kepala Produksi'],
+    ];
+
+    /**
+     * Nama & jabatan penanda tangan dokumen. Nama kosong = kolom tanda tangan dibiarkan titik-titik.
+     *
+     * @return array<string, array{name: string|null, title: string}>
+     */
+    public static function signers(): array
+    {
+        $signers = [];
+        foreach (self::SIGNERS as $key => [, $title]) {
+            $signers[$key] = [
+                'name' => static::get("signer_{$key}_name"),
+                'title' => static::get("signer_{$key}_title", $title),
+            ];
+        }
+
+        return $signers;
+    }
+
+    /**
+     * Syarat & ketentuan default yang dicetak di Purchase Order.
+     */
+    public static function purchaseTerms(): ?string
+    {
+        return static::get('purchase_terms');
     }
 
     /**

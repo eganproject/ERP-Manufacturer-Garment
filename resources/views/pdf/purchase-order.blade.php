@@ -53,10 +53,13 @@
     @if ($order->notes)
         <div class="notes"><span class="bold">Catatan:</span> {{ $order->notes }}</div>
     @endif
+    @if ($terms = \App\Models\Setting::purchaseTerms())
+        <div class="terms"><div class="label">Syarat & Ketentuan</div>{!! nl2br(e($terms)) !!}</div>
+    @endif
     <div class="notes small muted">Mohon cantumkan nomor PO ini pada surat jalan dan faktur. Barang yang tidak sesuai spesifikasi akan dikembalikan.</div>
 
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($order->order_date)),
-        'signatures' => [['Dibuat oleh,', $order->creator?->name], ['Disetujui oleh,', $order->approver?->name], ['Supplier,', null]],
+        'signatures' => [['Dibuat oleh,', $order->creator?->name], ['Disetujui oleh,', $order->approver?->name, 'director'], ['Supplier,', null]],
     ])
 @endsection

@@ -4,6 +4,7 @@
 @endphp
 <x-layouts.app :title="'Hasil Kerja '.$sheet->number">
     <x-slot:actions>
+        <a href="{{ route('piecework.pdf', $sheet) }}" target="_blank" class="btn-secondary">Cetak</a>
         @if ($canDelete)
             <x-delete-button :action="route('piecework.destroy', $sheet)" confirm="Lembar hasil kerja dihapus dan upahnya dikeluarkan dari HPP SPK." class="btn-secondary !text-red-600" />
         @endif

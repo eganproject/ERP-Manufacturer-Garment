@@ -7,6 +7,17 @@ Panel **Perlu Ditindaklanjuti** di Dashboard menampilkan pekerjaan berikutnya un
 Data demo (`php artisan migrate --seed`) sudah berisi satu siklus lengkap ± 5 minggu terakhir.
 Masuk dengan `<peran>@erp.test` / `password` untuk melihat sudut pandang tiap peran.
 
+## Persiapan: Pengaturan Perusahaan & dokumen cetak
+
+**Admin** → menu **Pengaturan Perusahaan**. Isi sekali, otomatis dipakai semua dokumen PDF:
+
+- Nama, alamat, kota, telepon, email, website, NPWP & logo → kop setiap dokumen; kota dipakai di tanggal tanda tangan.
+- **Penanda tangan** (pimpinan, keuangan, pembelian, kepala gudang, kepala produksi) beserta jabatannya → mengisi kolom tanda tangan yang belum tercatat orangnya (mis. *Disetujui oleh* di SO, *Kepala Gudang* di stock opname). Kosongkan bila ingin ditulis tangan.
+- **Catatan kaki semua dokumen** → dicetak di bawah setiap halaman. **Syarat & ketentuan PO** → dicetak di setiap Purchase Order.
+- **Rekening pembayaran** → dicetak di invoice, penawaran harga, dan sales order.
+
+Dokumen yang bisa dicetak (tombol **Cetak** di halaman dokumen): penawaran, SO, surat jalan, invoice, kwitansi/bukti bayar, PO, penerimaan barang, tagihan supplier, SPK, order/kirim/terima maklon, retur, hasil kerja borongan, kasbon, penggajian & slip upah, bukti kas/bank, jurnal, barang cacat, transfer gudang, stock opname, pencairan marketplace, dan semua laporan.
+
 ## Gambaran alur
 
 ```

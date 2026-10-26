@@ -8,7 +8,7 @@
 
 @section('content')
     @if ($payment->isCancelled())
-        <div style="text-align:center; color:#dc2626; font-weight:bold; font-size:14px; border:2px solid #dc2626; padding:4px; margin-bottom:8px;">DIBATALKAN</div>
+        <div class="stamp stamp-red">DIBATALKAN</div>
     @endif
 
     <table class="kv" style="font-size:11px;">
@@ -45,7 +45,7 @@
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($payment->payment_date)),
         'signatures' => $isReceipt
-            ? [['Penyetor,', null], ['Diterima oleh,', $payment->creator?->name]]
-            : [['Dibuat oleh,', $payment->creator?->name], ['Disetujui oleh,', null], ['Penerima,', null]],
+            ? [['Penyetor,', null], ['Diterima oleh,', $payment->creator?->name, 'finance']]
+            : [['Dibuat oleh,', $payment->creator?->name], ['Disetujui oleh,', null, 'director'], ['Penerima,', null]],
     ])
 @endsection

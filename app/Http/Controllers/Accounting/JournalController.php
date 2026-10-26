@@ -10,6 +10,7 @@ use App\Models\ActivityLog;
 use App\Models\JournalEntry;
 use App\Services\Accounting\JournalService;
 use App\Services\Accounting\LedgerRebuilder;
+use App\Support\DocumentPdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -26,7 +27,7 @@ class JournalController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('can:accounting.view', only: ['index', 'show']),
+            new Middleware('can:accounting.view', only: ['index', 'show', 'pdf']),
             new Middleware('can:accounting.manage', only: ['create', 'store', 'reverse']),
             new Middleware('can:accounting.close', only: ['rebuild']),
         ];
@@ -74,6 +75,13 @@ class JournalController extends Controller implements HasMiddleware
         $journal->load(['lines.account', 'lines.reference', 'creator', 'reversal', 'reversalOf', 'source']);
 
         return view('accounting.journals.show', ['entry' => $journal]);
+    }
+
+    public function pdf(JournalEntry $journal)
+    {
+        $journal->load(['lines.account', 'lines.reference', 'creator', 'reversal', 'reversalOf', 'source']);
+
+        return DocumentPdf::stream('pdf.journal', ['entry' => $journal], $journal->number);
     }
 
     public function create(Request $request)

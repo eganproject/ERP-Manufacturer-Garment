@@ -49,6 +49,6 @@
 
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($transfer->date)),
-        'signatures' => [['Dikeluarkan (Gudang Asal),', $transfer->creator?->name], ['Pengantar,', null], ['Diterima (Gudang Tujuan),', null]],
+        'signatures' => [['Dikeluarkan (Gudang Asal),', $transfer->creator?->name, 'warehouse'], ['Pengantar,', null], ['Diterima (Gudang Tujuan),', null]],
     ])
 @endsection

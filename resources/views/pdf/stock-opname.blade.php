@@ -44,6 +44,6 @@
 
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($opname->date)),
-        'signatures' => [['Penghitung,', null], ['Kepala Gudang,', $opname->creator?->name], ['Mengetahui,', null]],
+        'signatures' => [['Penghitung,', null], ['Kepala Gudang,', $opname->creator?->name, 'warehouse'], ['Mengetahui,', null, 'director']],
     ])
 @endsection

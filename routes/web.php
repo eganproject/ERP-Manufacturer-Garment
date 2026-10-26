@@ -161,12 +161,14 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::resource('employees', EmployeeController::class);
     Route::post('employees/{employee}/advances', [EmployeeAdvanceController::class, 'store'])->name('employees.advances.store')->middleware('can:payroll.pay');
     Route::post('employee-advances/{advance}/cancel', [EmployeeAdvanceController::class, 'cancel'])->name('employee-advances.cancel')->middleware('can:payroll.pay');
+    Route::get('employee-advances/{advance}/pdf', [EmployeeAdvanceController::class, 'pdf'])->name('employee-advances.pdf')->middleware('can:payroll.view');
     Route::controller(PieceRateController::class)->middleware('can:employees.manage')->group(function () {
         Route::get('piece-rates', 'index')->name('piece-rates.index');
         Route::get('piece-rates/{product}', 'edit')->name('piece-rates.edit');
         Route::put('piece-rates/{product}', 'update')->name('piece-rates.update');
     });
     Route::resource('piecework', PieceworkController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+    Route::get('piecework/{piecework}/pdf', [PieceworkController::class, 'pdf'])->name('piecework.pdf');
     Route::resource('payrolls', PayrollController::class)->only(['index', 'create', 'store', 'show', 'update']);
     Route::controller(PayrollController::class)->prefix('payrolls/{payroll}')->name('payrolls.')->group(function () {
         Route::post('recalculate', 'recalculate')->name('recalculate');
@@ -219,6 +221,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::controller(MarketplaceSettlementController::class)->prefix('settlements/{marketplaceSettlement}')->name('marketplace-settlements.')->group(function () {
             Route::post('post', 'post')->name('post');
             Route::post('rematch', 'rematch')->name('rematch');
+            Route::get('pdf', 'pdf')->name('pdf');
             Route::post('cancel', 'cancel')->name('cancel');
         });
     });
@@ -230,6 +233,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::resource('bills', BillController::class)->only(['index', 'create', 'store', 'show']);
     Route::post('bills/{bill}/cancel', [BillController::class, 'cancel'])->name('bills.cancel');
+    Route::get('bills/{bill}/pdf', [BillController::class, 'pdf'])->name('bills.pdf');
 
     Route::controller(PaymentController::class)->group(function () {
         Route::get('receipts', 'index')->name('receipts.index')->defaults('type', 'receipt');
@@ -290,6 +294,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         Route::resource('journals', JournalController::class)->only(['index', 'create', 'store', 'show']);
         Route::post('journals/{journal}/reverse', [JournalController::class, 'reverse'])->name('journals.reverse');
+        Route::get('journals/{journal}/pdf', [JournalController::class, 'pdf'])->name('journals.pdf');
         Route::post('journals-rebuild', [JournalController::class, 'rebuild'])->name('journals.rebuild');
 
         Route::controller(PeriodController::class)->prefix('periods')->name('periods.')->middleware('can:accounting.close')->group(function () {
@@ -331,6 +336,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     // Barang cacat (karantina) dari retur penjualan / temuan gudang
     Route::resource('defects', DefectController::class)->only(['index', 'create', 'store', 'show']);
     Route::post('defects/{defect}/cancel', [DefectController::class, 'cancel'])->name('defects.cancel');
+    Route::get('defects/{defect}/pdf', [DefectController::class, 'pdf'])->name('defects.pdf');
 
     // Aset tetap & penyusutan
     Route::resource('asset-categories', AssetCategoryController::class)->except('show');

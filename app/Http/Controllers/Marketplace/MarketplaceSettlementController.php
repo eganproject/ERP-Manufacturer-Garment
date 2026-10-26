@@ -8,6 +8,7 @@ use App\Models\MarketplaceSettlement;
 use App\Models\MarketplaceStore;
 use App\Services\Marketplace\MarketplaceImporter;
 use App\Services\Marketplace\MarketplaceSettlementService;
+use App\Support\DocumentPdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -19,8 +20,8 @@ class MarketplaceSettlementController extends Controller implements HasMiddlewar
     public static function middleware(): array
     {
         return [
-            new Middleware('can:marketplace.view', only: ['index', 'show', 'template']),
-            new Middleware('can:marketplace.settle', except: ['index', 'show', 'template']),
+            new Middleware('can:marketplace.view', only: ['index', 'show', 'template', 'pdf']),
+            new Middleware('can:marketplace.settle', except: ['index', 'show', 'template', 'pdf']),
         ];
     }
 
@@ -65,6 +66,13 @@ class MarketplaceSettlementController extends Controller implements HasMiddlewar
         $marketplaceSettlement->load(['store', 'lines.order', 'creator', 'poster', 'activities.user']);
 
         return view('marketplace.settlements.show', ['settlement' => $marketplaceSettlement]);
+    }
+
+    public function pdf(MarketplaceSettlement $marketplaceSettlement)
+    {
+        $marketplaceSettlement->load(['store', 'lines', 'creator', 'poster']);
+
+        return DocumentPdf::stream('pdf.marketplace-settlement', ['settlement' => $marketplaceSettlement], $marketplaceSettlement->number, 'landscape');
     }
 
     public function post(MarketplaceSettlement $marketplaceSettlement, MarketplaceSettlementService $service)
