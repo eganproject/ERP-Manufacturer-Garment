@@ -1,7 +1,8 @@
 <x-layouts.app :title="'Jurnal '.$entry->number">
-    @if ($entry->canReverse())
-        @can('accounting.manage')
-            <x-slot:actions>
+    <x-slot:actions>
+        <a href="{{ route('journals.pdf', $entry) }}" target="_blank" class="btn-secondary">Cetak</a>
+        @if ($entry->canReverse())
+            @can('accounting.manage')
                 <a href="{{ route('journals.create', ['copy' => $entry->id]) }}" class="btn-secondary">Salin Jurnal</a>
                 <div x-data="{ open: false }" class="relative">
                     <button type="button" class="btn-secondary !text-red-600" @click="open = !open">Batalkan (Jurnal Pembalik)</button>
@@ -14,9 +15,9 @@
                         </form>
                     </div>
                 </div>
-            </x-slot:actions>
-        @endcan
-    @endif
+            @endcan
+        @endif
+    </x-slot:actions>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <x-card title="Informasi Jurnal">

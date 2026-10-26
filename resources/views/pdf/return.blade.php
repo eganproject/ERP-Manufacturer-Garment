@@ -9,7 +9,7 @@
 
 @section('content')
     @if (! $return->isPosted())
-        <div style="text-align:center; color:#dc2626; font-weight:bold; font-size:14px; border:2px solid #dc2626; padding:4px; margin-bottom:8px;">DIBATALKAN</div>
+        <div class="stamp stamp-red">DIBATALKAN</div>
     @endif
 
     <table class="info">
@@ -84,7 +84,7 @@
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($return->return_date)),
         'signatures' => $kind->isSales
-            ? [['Pelanggan,', null], ['Gudang,', null], ['Hormat kami,', $return->creator?->name]]
-            : [['Supplier,', null], ['Gudang,', null], ['Hormat kami,', $return->creator?->name]],
+            ? [['Pelanggan,', null], ['Gudang,', null, 'warehouse'], ['Hormat kami,', $return->creator?->name]]
+            : [['Supplier,', null], ['Gudang,', null, 'warehouse'], ['Hormat kami,', $return->creator?->name]],
     ])
 @endsection

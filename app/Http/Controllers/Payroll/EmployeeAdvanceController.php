@@ -8,6 +8,7 @@ use App\Models\Account;
 use App\Models\Employee;
 use App\Models\EmployeeAdvance;
 use App\Services\PayrollService;
+use App\Support\DocumentPdf;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -38,5 +39,12 @@ class EmployeeAdvanceController extends Controller
         $this->service->cancelAdvance($advance);
 
         return back()->with('success', "Kasbon {$advance->number} dibatalkan.");
+    }
+
+    public function pdf(EmployeeAdvance $advance)
+    {
+        $advance->load(['employee', 'creator']);
+
+        return DocumentPdf::stream('pdf.employee-advance', ['advance' => $advance], $advance->number);
     }
 }

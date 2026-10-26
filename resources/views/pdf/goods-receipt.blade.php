@@ -51,6 +51,6 @@
 
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($receipt->receipt_date)),
-        'signatures' => [['Pengirim,', null], ['Diterima oleh (Gudang),', $receipt->creator?->name], ['Diperiksa oleh (QC),', null]],
+        'signatures' => [['Pengirim,', null], ['Diterima oleh (Gudang),', $receipt->creator?->name, 'warehouse'], ['Diperiksa oleh (QC),', null]],
     ])
 @endsection

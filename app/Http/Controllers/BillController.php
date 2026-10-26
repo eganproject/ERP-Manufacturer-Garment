@@ -8,6 +8,7 @@ use App\Models\PurchaseOrder;
 use App\Models\SubcontractOrder;
 use App\Models\Supplier;
 use App\Services\BillService;
+use App\Support\DocumentPdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -17,7 +18,7 @@ class BillController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('can:payables.view', only: ['index', 'show']),
+            new Middleware('can:payables.view', only: ['index', 'show', 'pdf']),
             new Middleware('can:payables.manage', only: ['create', 'store', 'cancel']),
         ];
     }
@@ -139,6 +140,13 @@ class BillController extends Controller implements HasMiddleware
         $bill->load(['supplier', 'purchaseOrder', 'subcontractOrder', 'fixedAsset', 'items.material.unit', 'allocations.payment', 'creditApplications.source', 'creator', 'activities.user']);
 
         return view('bills.show', compact('bill'));
+    }
+
+    public function pdf(Bill $bill)
+    {
+        $bill->load(['supplier', 'purchaseOrder', 'subcontractOrder', 'fixedAsset', 'items.material.unit', 'allocations.payment', 'creator']);
+
+        return DocumentPdf::stream('pdf.bill', ['bill' => $bill], $bill->number);
     }
 
     public function cancel(Request $request, Bill $bill, BillService $service)

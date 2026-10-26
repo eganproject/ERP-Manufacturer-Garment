@@ -86,6 +86,6 @@
 
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($order->start_date)),
-        'signatures' => [['Dibuat oleh (PPIC),', $order->creator?->name], ['Kepala Produksi,', null], ['Gudang,', null]],
+        'signatures' => [['Dibuat oleh (PPIC),', $order->creator?->name], ['Disetujui,', null, 'production'], ['Gudang,', null, 'warehouse']],
     ])
 @endsection

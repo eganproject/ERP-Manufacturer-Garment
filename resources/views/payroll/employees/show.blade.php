@@ -37,7 +37,10 @@
                                 <td>{{ $advance->notes ?: '-' }}<div class="text-xs text-gray-500">{{ $advance->payment_method->label() }}</div></td>
                                 <td class="text-right whitespace-nowrap">{{ rupiah($advance->amount) }}</td>
                                 <td><x-status-badge :status="$advance->status" /></td>
-                                <td class="text-right">
+                                <td class="text-right whitespace-nowrap">
+                                    @can('payroll.view')
+                                        <a href="{{ route('employee-advances.pdf', $advance) }}" target="_blank" class="mr-3 text-sm font-medium text-indigo-600 hover:underline">Cetak</a>
+                                    @endcan
                                     @if ($advance->status === \App\Enums\ReturnStatus::Posted)
                                         @can('payroll.pay')
                                             <x-action-form :action="route('employee-advances.cancel', $advance)" confirm="Kasbon dibatalkan dan jurnalnya dibalik." button="Ya, batalkan" class="text-sm font-medium text-red-600 hover:text-red-800">Batalkan</x-action-form>

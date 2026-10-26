@@ -6,13 +6,7 @@
     @foreach ($lines as $index => $line)
         @if ($index > 0)
             <div style="page-break-before: always;"></div>
-            <table class="kop">
-                <tr>
-                    <td><div class="name">{{ $company['name'] }}</div></td>
-                    <td class="doc"><div class="title">SLIP UPAH BORONGAN</div><div class="number">{{ $payroll->number }}</div></td>
-                </tr>
-            </table>
-            <div class="rule"></div>
+            @include('pdf.partials.header', ['title' => 'SLIP UPAH BORONGAN', 'number' => $payroll->number])
         @endif
 
         <table class="info">
@@ -74,7 +68,7 @@
 
         @include('pdf.partials.signatures', [
             'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($payroll->payment_date ?? today())),
-            'signatures' => [['Dibayar,', null], ['Diterima,', $line->employee->name]],
+            'signatures' => [['Dibayar,', null, 'finance'], ['Diterima,', $line->employee->name]],
         ])
     @endforeach
 @endsection

@@ -1,5 +1,6 @@
 <x-layouts.app :title="'Pencairan '.$settlement->number">
     <x-slot:actions>
+        <a href="{{ route('marketplace-settlements.pdf', $settlement) }}" target="_blank" class="btn-secondary">Cetak</a>
         @can('marketplace.settle')
             @if ($settlement->isDraft())
                 <x-action-form :action="route('marketplace-settlements.rematch', $settlement)">Cocokkan Ulang Pesanan</x-action-form>

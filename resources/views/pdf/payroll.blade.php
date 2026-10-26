@@ -48,6 +48,6 @@
 
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($payroll->payment_date ?? today())),
-        'signatures' => [['Disusun,', $payroll->creator?->name], ['Disetujui,', $payroll->approver?->name], ['Dibayar,', null]],
+        'signatures' => [['Disusun,', $payroll->creator?->name], ['Disetujui,', $payroll->approver?->name, 'director'], ['Dibayar,', null, 'finance']],
     ])
 @endsection

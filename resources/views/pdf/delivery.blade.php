@@ -57,6 +57,6 @@
 
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($delivery->delivery_date)),
-        'signatures' => [['Hormat kami (Gudang),', $delivery->creator?->name], ['Pengirim / Sopir,', $delivery->driver_name], ['Penerima,', null]],
+        'signatures' => [['Hormat kami (Gudang),', $delivery->creator?->name, 'warehouse'], ['Pengirim / Sopir,', $delivery->driver_name], ['Penerima,', null]],
     ])
 @endsection

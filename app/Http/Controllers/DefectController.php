@@ -8,6 +8,7 @@ use App\Models\DefectHandling;
 use App\Models\ProductVariant;
 use App\Models\Warehouse;
 use App\Services\DefectService;
+use App\Support\DocumentPdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -21,7 +22,7 @@ class DefectController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('can:stock.view', only: ['index', 'show']),
+            new Middleware('can:stock.view', only: ['index', 'show', 'pdf']),
             new Middleware('can:defects.manage', only: ['create', 'store', 'cancel']),
         ];
     }
@@ -87,6 +88,13 @@ class DefectController extends Controller implements HasMiddleware
         $defect->load(['items.variant.product.unit', 'cashAccount', 'creator', 'activities.user']);
 
         return view('defects.show', ['handling' => $defect]);
+    }
+
+    public function pdf(DefectHandling $defect)
+    {
+        $defect->load(['items.variant.product.unit', 'warehouse', 'creator']);
+
+        return DocumentPdf::stream('pdf.defect', ['handling' => $defect], $defect->number);
     }
 
     public function cancel(Request $request, DefectHandling $defect, DefectService $service)

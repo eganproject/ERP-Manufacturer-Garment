@@ -9,7 +9,7 @@
 
 @section('content')
     @if ($transaction->isCancelled())
-        <div style="text-align:center; color:#dc2626; font-weight:bold; font-size:14px; border:2px solid #dc2626; padding:4px; margin-bottom:8px;">DIBATALKAN</div>
+        <div class="stamp stamp-red">DIBATALKAN</div>
     @endif
 
     <table class="kv" style="font-size:11px;">
@@ -49,7 +49,7 @@
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($transaction->date)),
         'signatures' => $isIn
-            ? [['Penyetor,', $transaction->party_name], ['Diterima oleh,', $transaction->creator?->name], ['Mengetahui,', null]]
-            : [['Dibuat oleh,', $transaction->creator?->name], ['Disetujui oleh,', null], [$isTransfer ? 'Mengetahui,' : 'Penerima,', $isTransfer ? null : $transaction->party_name]],
+            ? [['Penyetor,', $transaction->party_name], ['Diterima oleh,', $transaction->creator?->name], ['Mengetahui,', null, 'finance']]
+            : [['Dibuat oleh,', $transaction->creator?->name], ['Disetujui oleh,', null, 'finance'], [$isTransfer ? 'Mengetahui,' : 'Penerima,', $isTransfer ? null : $transaction->party_name]],
     ])
 @endsection

@@ -4,9 +4,9 @@
 
 @section('content')
     @if ($invoice->status === \App\Enums\InvoiceStatus::Cancelled)
-        <div style="text-align:center; color:#dc2626; font-weight:bold; font-size:14px; border:2px solid #dc2626; padding:4px; margin-bottom:8px;">DIBATALKAN</div>
+        <div class="stamp stamp-red">DIBATALKAN</div>
     @elseif ($invoice->status === \App\Enums\InvoiceStatus::Paid)
-        <div style="text-align:center; color:#059669; font-weight:bold; font-size:14px; border:2px solid #059669; padding:4px; margin-bottom:8px;">LUNAS</div>
+        <div class="stamp stamp-green">LUNAS</div>
     @endif
 
     <table class="info">
@@ -79,12 +79,7 @@
     <table style="margin-top:10px;">
         <tr>
             <td style="width:55%; vertical-align:top; padding-right:10px;">
-                @if ($settings['bank_info'])
-                    <div class="box">
-                        <div class="label">Pembayaran ditransfer ke</div>
-                        <div>{!! nl2br(e($settings['bank_info'])) !!}</div>
-                    </div>
-                @endif
+                @include('pdf.partials.bank')
             </td>
             <td style="vertical-align:top;">
                 @if ($invoice->notes)<div><span class="bold">Catatan:</span> {{ $invoice->notes }}</div>@endif
@@ -95,6 +90,6 @@
 
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($invoice->invoice_date)),
-        'signatures' => [['Penerima,', null], ['Hormat kami,', $invoice->creator?->name]],
+        'signatures' => [['Penerima,', null], ['Hormat kami,', $invoice->creator?->name, 'finance']],
     ])
 @endsection

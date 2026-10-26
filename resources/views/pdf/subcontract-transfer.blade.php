@@ -64,7 +64,7 @@
     @include('pdf.partials.signatures', [
         'place' => trim(($company['city'] ? $company['city'].', ' : '').tanggal($transfer->date)),
         'signatures' => $isDispatch
-            ? [['Hormat kami (Gudang),', $transfer->creator?->name], ['Pengirim / Sopir,', $transfer->driver_name], ['Diterima Vendor,', $order->supplier->contact_person]]
+            ? [['Hormat kami (Gudang),', $transfer->creator?->name, 'warehouse'], ['Pengirim / Sopir,', $transfer->driver_name], ['Diterima Vendor,', $order->supplier->contact_person]]
             : [['Diserahkan Vendor,', $order->supplier->contact_person], ['Pengantar,', $transfer->driver_name], ['Diterima Gudang,', $transfer->creator?->name]],
     ])
 @endsection

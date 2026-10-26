@@ -25,12 +25,14 @@ class DocumentPdf
     /**
      * Profil perusahaan + logo dalam bentuk data URI agar tidak perlu akses file dari dompdf.
      *
-     * @return array<string, string|null>
+     * @return array<string, mixed>
      */
     public static function company(): array
     {
         $company = Setting::company();
         $company['logo_data'] = null;
+        $company['signers'] = Setting::signers();
+        $company['bank_info'] = Setting::invoice()['bank_info'];
 
         if ($company['logo'] && Storage::disk('public')->exists($company['logo'])) {
             $mime = Storage::disk('public')->mimeType($company['logo']);
