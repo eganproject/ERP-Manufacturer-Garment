@@ -146,3 +146,5 @@ Kartu stok produk menandai mutasi stok cacat dengan label *Stok Cacat*. Nilai pe
 - Setiap dokumen punya **Riwayat Aktivitas** dan tautan ke dokumen asal/turunannya (SO ↔ SPK ↔ surat jalan ↔ invoice ↔ retur ↔ jurnal).
 - Pembatalan dokumen bernilai tidak menghapus jurnal, tetapi membuat jurnal pembalik.
 - Kelompok menu di sidebar bisa diciutkan dengan mengklik judulnya; pilihan disimpan di browser.
+- Tekan **Ctrl + K** (⌘ + K di Mac) atau klik **Cari menu…** di sidebar untuk melompat ke menu mana pun atau langsung membuat dokumen baru (SO, PO, SPK, pembayaran, jurnal, dll.). Gunakan panah ↑/↓ lalu Enter.
+- Semua kolom pilihan bisa diketik untuk mencari; kolom tanggal & bulan membuka kalender. Angka rupiah otomatis diberi titik ribuan.

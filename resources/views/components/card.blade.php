@@ -1,9 +1,12 @@
-@props(['title' => null, 'padding' => true])
+@props(['title' => null, 'subtitle' => null, 'padding' => true])
 
-<div {{ $attributes->merge(['class' => 'rounded-xl border border-gray-200 bg-white shadow-sm']) }}>
+<div {{ $attributes->merge(['class' => 'card']) }}>
     @if ($title || isset($header))
-        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-5 py-3">
-            <h2 class="text-sm font-semibold text-gray-800">{{ $title }}</h2>
+        <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-gray-100 px-5 py-3.5">
+            <div class="min-w-0">
+                <h2 class="text-sm font-semibold text-gray-900">{{ $title }}</h2>
+                @if ($subtitle)<p class="mt-0.5 text-xs text-gray-500">{{ $subtitle }}</p>@endif
+            </div>
             {{ $header ?? '' }}
         </div>
     @endif

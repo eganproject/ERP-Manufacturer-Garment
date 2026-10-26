@@ -6,6 +6,7 @@
 - Logika bisnis transaksi ada di `app/Services` (Purchase/Sales/Production); controller hanya validasi + memanggil service.
 - Status dokumen memakai enum di `app/Enums` (label & warna badge ada di enum).
 - Nomor dokumen: `App\Services\DocumentNumber::generate()`.
+- Tampilan: sistem desain di `resources/css/app.css` — palet `gray-*` dipetakan ke netral (zinc) dan `indigo-*`/`blue-*` ke satu warna aksen; jangan menambah warna baru selain semantik (emerald/amber/red). Komponen: `.card`, `.btn-primary/secondary/danger/ghost` (+ `.btn-sm`, `.btn-icon`), `.table-base`, `<x-badge>` (bertitik), `<x-card subtitle>`; judul & aksi halaman dirender layout (`title`, `subtitle`, slot `actions`). `<x-form.select>` otomatis Tom Select (`:native="true"` untuk select biasa), `input[type=month]` otomatis flatpickr bulan. Dialog: `Swal.fire` sudah bertema (jangan set `confirmButtonColor`), notifikasi `ERP.toast.fire({ icon, title })`. Pencarian menu Ctrl+K memakai `$menu` di layout + daftar aksi cepat di sana.
 - Gunakan class `form-control` (bukan `form-input`, bentrok dengan plugin @tailwindcss/forms) dan atribut `data-select`, `data-date`, `data-money` untuk plugin form.
 - Jalankan `php artisan test` dan `./vendor/bin/pint` sebelum commit.
 - Keuangan: invoice (AR) dibuat dari barang terkirim (`InvoiceService`), tagihan supplier (AP) dari barang diterima (`BillService`), pembayaran lewat `PaymentService` (alokasi ke banyak dokumen). Jangan ubah `paid_amount`/status invoice langsung; panggil `refreshPaymentStatus()` (trait `Payable`).

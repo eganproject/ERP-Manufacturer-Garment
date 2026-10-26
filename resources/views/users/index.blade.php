@@ -33,7 +33,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="p-4">{{ $users->links() }}</div>
+        <div class="border-t border-gray-100 px-4 py-3 empty:hidden">{{ $users->links() }}</div>
     </x-card>
 
     <x-card title="Hak Akses per Peran" class="mt-6" :padding="false">

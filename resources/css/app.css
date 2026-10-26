@@ -1,62 +1,214 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 
+@import '@fontsource-variable/inter';
 @import 'tom-select/dist/css/tom-select.css';
 @import 'flatpickr/dist/flatpickr.min.css';
+@import 'flatpickr/dist/plugins/monthSelect/style.css';
 @import 'sweetalert2/dist/sweetalert2.min.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../js/**/*.js';
+@source '../../app/Enums/**/*.php';
 
+/*
+ * Sistem desain: dominan netral (abu "zinc") + satu warna aksen (biru tinta).
+ * Seluruh view memakai kelas gray-* / indigo-* / blue-*, jadi palet itu dipetakan
+ * ulang di sini agar semua modul ikut berubah dari satu tempat.
+ */
 @theme {
-    --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+
+    /* Netral */
+    --color-gray-50: oklch(0.985 0.001 286);
+    --color-gray-100: oklch(0.967 0.002 286);
+    --color-gray-200: oklch(0.925 0.004 286);
+    --color-gray-300: oklch(0.871 0.006 286);
+    --color-gray-400: oklch(0.705 0.012 286);
+    --color-gray-500: oklch(0.552 0.014 286);
+    --color-gray-600: oklch(0.442 0.015 286);
+    --color-gray-700: oklch(0.37 0.013 286);
+    --color-gray-800: oklch(0.274 0.008 286);
+    --color-gray-900: oklch(0.21 0.007 286);
+    --color-gray-950: oklch(0.141 0.005 286);
+
+    /* Aksen tunggal: indigo & blue sama-sama memakai warna ini */
+    --color-indigo-50: oklch(0.97 0.014 266);
+    --color-indigo-100: oklch(0.94 0.03 266);
+    --color-indigo-200: oklch(0.885 0.058 266);
+    --color-indigo-300: oklch(0.8 0.1 266);
+    --color-indigo-400: oklch(0.68 0.15 266);
+    --color-indigo-500: oklch(0.585 0.19 266);
+    --color-indigo-600: oklch(0.515 0.2 266);
+    --color-indigo-700: oklch(0.455 0.18 266);
+    --color-indigo-800: oklch(0.385 0.145 266);
+    --color-indigo-900: oklch(0.33 0.11 266);
+    --color-indigo-950: oklch(0.24 0.08 266);
+    --color-blue-50: var(--color-indigo-50);
+    --color-blue-100: var(--color-indigo-100);
+    --color-blue-200: var(--color-indigo-200);
+    --color-blue-300: var(--color-indigo-300);
+    --color-blue-400: var(--color-indigo-400);
+    --color-blue-500: var(--color-indigo-500);
+    --color-blue-600: var(--color-indigo-600);
+    --color-blue-700: var(--color-indigo-700);
+    --color-blue-800: var(--color-indigo-800);
+    --color-blue-900: var(--color-indigo-900);
+    --color-slate-50: var(--color-gray-50);
+    --color-slate-100: var(--color-gray-100);
+    --color-slate-200: var(--color-gray-200);
+    --color-slate-300: var(--color-gray-300);
+    --color-slate-400: var(--color-gray-400);
+    --color-slate-500: var(--color-gray-500);
+    --color-slate-600: var(--color-gray-600);
+    --color-slate-700: var(--color-gray-700);
+    --color-slate-800: var(--color-gray-800);
+    --color-slate-900: var(--color-gray-900);
+    --color-green-50: var(--color-emerald-50);
+    --color-green-100: var(--color-emerald-100);
+    --color-green-600: var(--color-emerald-600);
+    --color-green-700: var(--color-emerald-700);
+    --color-green-800: var(--color-emerald-800);
+
+    --shadow-xs: 0 1px 2px 0 rgb(24 24 27 / 0.04);
+    --shadow-card: 0 1px 2px 0 rgb(24 24 27 / 0.04), 0 1px 3px 0 rgb(24 24 27 / 0.03);
+    --shadow-pop: 0 12px 32px -8px rgb(24 24 27 / 0.18), 0 4px 8px -4px rgb(24 24 27 / 0.06);
 }
 
 [x-cloak] {
     display: none !important;
 }
 
+@layer base {
+    html {
+        font-feature-settings: 'cv11', 'ss01', 'ss03';
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-gray-50 text-gray-800;
+    }
+
+    ::selection {
+        @apply bg-indigo-100 text-indigo-900;
+    }
+
+    table {
+        font-variant-numeric: tabular-nums;
+    }
+
+    a,
+    button {
+        @apply outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-1;
+    }
+
+    input[type='checkbox'],
+    input[type='radio'] {
+        @apply h-4 w-4 border-gray-300 text-indigo-600 shadow-xs focus:ring-2 focus:ring-indigo-500/30 focus:ring-offset-0;
+    }
+
+    input[type='checkbox'] {
+        @apply rounded-[5px];
+    }
+
+    /* Scrollbar tipis */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-gray-300) transparent;
+    }
+}
+
 @layer components {
+    /* ---------- Form ---------- */
     .form-control {
-        @apply block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100;
+        @apply block w-full rounded-lg border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs transition-[border-color,box-shadow] duration-150 placeholder:text-gray-400 hover:border-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/12 focus:outline-none disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 read-only:bg-gray-50;
+        min-height: 2.375rem;
+    }
+
+    select.form-control {
+        @apply pr-9;
+        background-position: right 0.6rem center;
+    }
+
+    textarea.form-control {
+        @apply leading-relaxed;
+    }
+
+    .form-control[type='file'] {
+        @apply cursor-pointer p-1 text-gray-600 file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200;
     }
 
     .form-label {
-        @apply mb-1 block text-sm font-medium text-gray-700;
+        @apply mb-1.5 block text-[13px] font-medium text-gray-700;
     }
 
+    .form-help {
+        @apply mt-1.5 text-xs text-gray-500;
+    }
+
+    .form-error {
+        @apply mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600;
+    }
+
+    .form-section {
+        @apply text-sm font-semibold text-gray-900;
+    }
+
+    /* ---------- Tombol ---------- */
     .btn,
     .btn-primary,
     .btn-secondary,
     .btn-danger,
+    .btn-success,
+    .btn-ghost {
+        @apply inline-flex h-[38px] shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3.5 text-sm font-medium whitespace-nowrap transition-[background-color,border-color,color,box-shadow] duration-150 select-none focus:outline-none focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-50;
+    }
+
+    .btn-primary,
     .btn-success {
-        @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50;
+        @apply bg-indigo-600 text-white shadow-xs hover:bg-indigo-700 focus-visible:ring-indigo-500/25;
+        box-shadow:
+            inset 0 1px 0 0 rgb(255 255 255 / 0.12),
+            0 1px 2px 0 rgb(24 24 27 / 0.08);
     }
 
-    .btn-primary {
-        @apply bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500;
-    }
-
-    .btn-secondary {
-        @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-indigo-500;
+    .btn-secondary,
+    .btn {
+        @apply border border-gray-300 bg-white text-gray-700 shadow-xs hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900 focus-visible:ring-gray-400/20;
     }
 
     .btn-danger {
-        @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+        @apply bg-red-600 text-white shadow-xs hover:bg-red-700 focus-visible:ring-red-500/25;
     }
 
-    .btn-success {
-        @apply bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500;
+    .btn-ghost {
+        @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-gray-400/20;
     }
 
+    .btn-sm {
+        @apply h-8 rounded-md px-2.5 text-[13px];
+    }
+
+    .btn-icon {
+        @apply h-[38px] w-[38px] px-0;
+    }
+
+    /* ---------- Tabel ---------- */
     .table-base {
-        @apply min-w-full divide-y divide-gray-200 text-sm;
+        @apply min-w-full text-sm;
     }
 
     .table-base thead th {
-        @apply bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase;
+        @apply border-b border-gray-200 bg-gray-50/80 px-4 py-2.5 text-left text-[11px] font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase;
+    }
+
+    .table-base thead th.text-right {
+        @apply text-right;
+    }
+
+    .table-base thead th.text-center {
+        @apply text-center;
     }
 
     .table-base tbody td {
@@ -64,34 +216,381 @@
     }
 
     .table-base tbody tr {
-        @apply hover:bg-gray-50;
+        @apply transition-colors hover:bg-gray-50/70;
+    }
+
+    .table-base tbody + tbody {
+        @apply border-t border-gray-200;
+    }
+
+    .table-base tfoot {
+        @apply border-t border-gray-200 bg-gray-50/60 text-gray-800;
+    }
+
+    .table-base tfoot td,
+    .table-base tfoot th {
+        @apply px-4 py-2.5;
+    }
+
+    .table-base a.text-indigo-600 {
+        @apply font-medium whitespace-nowrap;
+    }
+
+    /* Kolom pertama (nama/nomor) tidak terlalu sempit; di HP tabel digeser ke samping */
+    .table-base tbody td:first-child:not(:has(input[type='checkbox'])) {
+        @apply min-w-40;
+    }
+
+    @media (width < 48rem) {
+        .table-base th,
+        .table-base td {
+            @apply whitespace-nowrap;
+        }
+    }
+
+    /* ---------- Lain-lain ---------- */
+    .card {
+        @apply rounded-xl border border-gray-200 bg-white shadow-card;
+    }
+
+    .kbd {
+        @apply inline-flex h-5 min-w-5 items-center justify-center rounded border border-gray-200 bg-white px-1 font-sans text-[11px] font-medium text-gray-500 shadow-xs;
+    }
+
+    .link {
+        @apply font-medium text-indigo-600 hover:text-indigo-700 hover:underline;
+    }
+
+    /* Daftar keterangan (dl) di kartu informasi */
+    .card dl dt {
+        @apply text-xs font-medium text-gray-500;
     }
 }
 
-/* Selaraskan Tom Select dengan gaya input Tailwind */
-.ts-wrapper.single .ts-control,
-.ts-wrapper.multi .ts-control {
-    @apply min-h-[38px] rounded-lg border-gray-300 py-2 text-sm shadow-sm;
+/* ---------- Tom Select (dropdown dengan pencarian) ---------- */
+.ts-wrapper.form-control {
+    @apply min-h-0 border-0 bg-transparent p-0 shadow-none ring-0 hover:border-0 focus:ring-0;
 }
 
-.ts-wrapper.focus .ts-control {
-    @apply border-indigo-500 ring-1 ring-indigo-500;
+.ts-wrapper .ts-control,
+.ts-wrapper.single .ts-control,
+.ts-wrapper.single.input-active .ts-control {
+    @apply min-h-[38px] cursor-pointer rounded-lg border border-gray-300 bg-white py-[7px] pr-9 pl-3 text-sm text-gray-900 shadow-xs transition-[border-color,box-shadow] duration-150;
+    background-image: none;
+}
+
+.ts-wrapper.multi .ts-control {
+    @apply gap-1 py-1.5 pl-1.5;
+}
+
+.ts-wrapper:not(.disabled):hover .ts-control {
+    @apply border-gray-400;
+}
+
+.ts-wrapper.focus .ts-control,
+.ts-wrapper.dropdown-active .ts-control {
+    @apply border-indigo-500 ring-4 ring-indigo-500/12;
+}
+
+.ts-wrapper .ts-control > input {
+    @apply text-sm placeholder:text-gray-400;
+}
+
+.ts-wrapper.single .ts-control::after {
+    content: '';
+    @apply absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 border-0 transition-transform duration-150;
+    margin: 0;
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2371717a' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.6' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")
+        center / 16px no-repeat;
+}
+
+.ts-wrapper.single.dropdown-active .ts-control::after {
+    @apply rotate-180;
+    margin: 0;
+}
+
+.ts-wrapper.disabled .ts-control {
+    @apply cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500 opacity-100;
+}
+
+.ts-wrapper.multi .ts-control > .item {
+    @apply m-0 rounded-md border-0 bg-gray-100 px-2 py-0.5 text-[13px] font-medium text-gray-700;
+}
+
+.ts-wrapper.multi .ts-control > .item.active {
+    @apply bg-indigo-50 text-indigo-700;
+}
+
+.ts-wrapper.plugin-remove_button .item .remove {
+    @apply ml-1 rounded border-0 px-1 text-gray-400 hover:bg-transparent hover:text-gray-700;
 }
 
 .ts-dropdown {
-    @apply z-50 rounded-lg text-sm shadow-lg;
+    @apply z-[70] mt-1.5 overflow-hidden rounded-xl border border-gray-200 bg-white p-1 text-sm text-gray-700 shadow-pop;
 }
 
-.ts-dropdown .active {
-    @apply bg-indigo-50 text-indigo-700;
+.ts-dropdown .ts-dropdown-content {
+    @apply max-h-72;
+}
+
+.ts-dropdown .option,
+.ts-dropdown .no-results,
+.ts-dropdown .create {
+    @apply rounded-lg px-2.5 py-2;
+}
+
+.ts-dropdown .option[data-value=''],
+.ts-wrapper .ts-control > .item[data-value=''] {
+    @apply text-gray-400;
+}
+
+.ts-dropdown .option.selected {
+    @apply font-medium text-gray-900;
+}
+
+.ts-dropdown .option.selected:not([data-value=''])::after {
+    content: '✓';
+    @apply float-right ml-2 text-indigo-600;
+}
+
+.ts-dropdown .active,
+.ts-dropdown .option.active,
+.ts-dropdown .create.active {
+    @apply bg-gray-100 text-gray-900;
+}
+
+.ts-dropdown .highlight {
+    @apply rounded-sm bg-indigo-100 text-indigo-900;
+}
+
+.ts-dropdown .optgroup-header {
+    @apply px-2.5 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-gray-400 uppercase;
+}
+
+.ts-dropdown .dropdown-input-wrap {
+    @apply p-1;
 }
 
 .is-invalid,
 .is-invalid + .ts-wrapper .ts-control {
-    @apply border-red-500;
+    @apply border-red-400 focus:border-red-500 focus:ring-red-500/12;
 }
 
-/* Tom Select menyalin class dari <select>, jadi netralkan gaya input di wrapper-nya */
-.ts-wrapper.form-control {
-    @apply border-0 p-0 shadow-none;
+/* Input kecil di dalam tabel baris */
+td > .ts-wrapper .ts-control,
+td .ts-wrapper .ts-control {
+    @apply min-w-48;
+}
+
+/* ---------- flatpickr ---------- */
+.flatpickr-calendar {
+    @apply mt-1.5 w-[296px] rounded-xl border border-gray-200 bg-white p-2 font-sans shadow-pop;
+}
+
+.flatpickr-calendar.arrowTop::before,
+.flatpickr-calendar.arrowTop::after,
+.flatpickr-calendar.arrowBottom::before,
+.flatpickr-calendar.arrowBottom::after {
+    @apply hidden;
+}
+
+.flatpickr-months {
+    @apply mb-1 items-center;
+}
+
+.flatpickr-months .flatpickr-month {
+    @apply h-9 text-gray-900;
+}
+
+.flatpickr-current-month {
+    @apply pt-2 text-sm font-semibold;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    @apply rounded-md font-semibold;
+}
+
+.flatpickr-current-month input.cur-year {
+    @apply font-semibold;
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    @apply top-2 flex h-8 w-8 items-center justify-center rounded-lg p-0 text-gray-500 hover:bg-gray-100;
+}
+
+.flatpickr-months .flatpickr-prev-month svg,
+.flatpickr-months .flatpickr-next-month svg {
+    @apply h-3 w-3;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: var(--color-gray-900);
+}
+
+.flatpickr-innerContainer,
+.flatpickr-rContainer,
+.flatpickr-days,
+.dayContainer {
+    @apply w-full max-w-none min-w-0;
+}
+
+span.flatpickr-weekday {
+    @apply text-[11px] font-semibold text-gray-400;
+}
+
+.flatpickr-day {
+    @apply h-9 max-w-none rounded-lg border-0 text-[13px] leading-9 text-gray-700 hover:bg-gray-100;
+    flex-basis: 14.2857%;
+}
+
+.flatpickr-day.today {
+    @apply font-semibold text-indigo-600 ring-1 ring-indigo-200 ring-inset hover:bg-indigo-50 hover:text-indigo-700;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    @apply bg-indigo-600 font-semibold text-white ring-0 hover:bg-indigo-700;
+}
+
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    @apply text-gray-300;
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    @apply bg-transparent text-gray-300;
+}
+
+.flatpickr-monthSelect-months {
+    @apply m-1 gap-1;
+}
+
+.flatpickr-monthSelect-month {
+    @apply m-0 rounded-lg border-0 py-2 text-[13px] text-gray-700 hover:bg-gray-100;
+    width: calc(33.33% - 0.25rem);
+}
+
+.flatpickr-monthSelect-month.selected,
+.flatpickr-monthSelect-month.selected:hover {
+    @apply bg-indigo-600 font-semibold text-white;
+}
+
+.flatpickr-monthSelect-month.flatpickr-disabled {
+    @apply text-gray-300;
+}
+
+.erp-date.form-control {
+    @apply pr-9;
+    background: #fff
+        url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa' stroke-width='1.6'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3e%3c/svg%3e")
+        no-repeat right 0.7rem center / 16px;
+}
+
+.erp-date.form-control:disabled {
+    @apply bg-gray-50;
+}
+
+/* ---------- SweetAlert2: dialog & toast ---------- */
+.swal2-container {
+    @apply z-[80];
+}
+
+.swal2-container.swal2-backdrop-show {
+    background: rgb(24 24 27 / 0.4) !important;
+    backdrop-filter: blur(2px);
+}
+
+.swal2-popup.erp-swal {
+    @apply w-[26rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-200 p-6 font-sans shadow-pop;
+}
+
+.erp-swal .swal2-icon {
+    @apply mx-auto mt-0 mb-4 h-12 w-12 border-0 text-[0px];
+}
+
+.erp-swal .swal2-icon .swal2-icon-content {
+    @apply text-2xl;
+}
+
+.erp-swal .swal2-title {
+    @apply p-0 text-lg font-semibold text-gray-900;
+}
+
+.erp-swal .swal2-html-container {
+    @apply m-0 mt-2 p-0 text-sm leading-relaxed text-gray-600;
+}
+
+.erp-swal .swal2-html-container ul {
+    @apply mx-auto max-w-sm space-y-1 rounded-lg bg-red-50 p-3 text-[13px] text-red-700;
+}
+
+.erp-swal .swal2-input {
+    @apply mx-0 mt-4 mb-0 h-10 w-full max-w-none rounded-lg border border-gray-300 px-3 text-sm shadow-xs focus:border-indigo-500 focus:shadow-none focus:ring-4 focus:ring-indigo-500/12;
+}
+
+.erp-swal .swal2-validation-message {
+    @apply mx-0 mt-2 justify-start bg-transparent p-0 text-xs font-medium text-red-600 before:hidden;
+}
+
+.erp-swal .swal2-actions {
+    @apply mt-6 w-full flex-nowrap gap-2;
+}
+
+.erp-swal .swal2-actions > button {
+    @apply m-0 flex-1;
+}
+
+.erp-swal.swal2-icon-warning .erp-swal-confirm,
+.erp-swal.swal2-icon-error .erp-swal-confirm {
+    @apply bg-red-600 hover:bg-red-700 focus-visible:ring-red-500/25;
+}
+
+/* Ikon dialog: lingkaran lembut + ikon garis (lihat ICONS di app.js) */
+.erp-swal .swal2-icon {
+    @apply flex items-center justify-center rounded-full;
+}
+
+.erp-swal .swal2-icon .swal2-icon-content svg {
+    @apply h-6 w-6;
+}
+
+.erp-swal .swal2-icon.swal2-warning,
+.erp-swal .swal2-icon.swal2-error {
+    @apply bg-red-50 text-red-600;
+}
+
+.erp-swal .swal2-icon.swal2-question,
+.erp-swal .swal2-icon.swal2-info {
+    @apply bg-indigo-50 text-indigo-600;
+}
+
+.erp-swal .swal2-icon.swal2-success {
+    @apply bg-emerald-50 text-emerald-600;
+}
+
+/* ---------- Toast ---------- */
+.erp-toaster {
+    @apply pointer-events-none fixed top-4 right-4 z-[90] flex w-[22rem] max-w-[calc(100vw-2rem)] flex-col gap-2;
+}
+
+.erp-toast {
+    @apply pointer-events-auto flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-3.5 pr-3 text-sm shadow-pop transition duration-300;
+}
+
+.erp-toast[data-state='enter'],
+.erp-toast[data-state='leave'] {
+    @apply translate-x-4 opacity-0;
+}
+
+.erp-toast-icon {
+    @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-full;
+}
+
+.erp-toast-icon svg {
+    @apply h-3.5 w-3.5;
 }

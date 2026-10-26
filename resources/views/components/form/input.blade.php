@@ -14,9 +14,9 @@
            @if ($required) required @endif
            {{ $attributes->except('class')->class(['form-control', 'is-invalid' => $errors->has($key)]) }}>
     @if ($help)
-        <p class="mt-1 text-xs text-gray-500">{{ $help }}</p>
+        <p class="form-help">{{ $help }}</p>
     @endif
     @error($key)
-        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+        <p class="form-error"><svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>{{ $message }}</p>
     @enderror
 </div>

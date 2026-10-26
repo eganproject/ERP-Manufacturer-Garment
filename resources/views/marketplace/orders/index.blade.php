@@ -14,17 +14,17 @@
 
     <div class="mb-4 flex flex-wrap gap-2 text-sm">
         @php $base = request()->except(['status', 'page']); @endphp
-        <a href="{{ route('marketplace-orders.index', $base) }}" @class(['rounded-full px-3 py-1 border', 'bg-indigo-600 text-white border-indigo-600' => ! request('status'), 'bg-white border-gray-200' => request('status')])>Semua</a>
+        <a href="{{ route('marketplace-orders.index', $base) }}" @class(['rounded-full px-3 py-1 border font-medium transition', 'bg-gray-900 text-white border-gray-900' => ! request('status'), 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900' => request('status')])>Semua</a>
         @foreach (MarketplaceOrderStatus::cases() as $status)
-            <a href="{{ route('marketplace-orders.index', $base + ['status' => $status->value]) }}" @class(['rounded-full px-3 py-1 border', 'bg-indigo-600 text-white border-indigo-600' => request('status') === $status->value, 'bg-white border-gray-200' => request('status') !== $status->value])>
+            <a href="{{ route('marketplace-orders.index', $base + ['status' => $status->value]) }}" @class(['rounded-full px-3 py-1 border font-medium transition', 'bg-gray-900 text-white border-gray-900' => request('status') === $status->value, 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900' => request('status') !== $status->value])>
                 {{ $status->label() }} <span class="opacity-70">{{ $counts[$status->value] ?? 0 }}</span>
             </a>
         @endforeach
-        <a href="{{ route('marketplace-orders.index', $base + ['status' => 'unmapped']) }}" @class(['rounded-full px-3 py-1 border', 'bg-indigo-600 text-white border-indigo-600' => request('status') === 'unmapped', 'bg-white border-gray-200' => request('status') !== 'unmapped'])>SKU belum dipetakan</a>
+        <a href="{{ route('marketplace-orders.index', $base + ['status' => 'unmapped']) }}" @class(['rounded-full px-3 py-1 border font-medium transition', 'bg-gray-900 text-white border-gray-900' => request('status') === 'unmapped', 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900' => request('status') !== 'unmapped'])>SKU belum dipetakan</a>
         @foreach (['claimable' => 'Retur bermasalah', 'claim_open' => 'Banding diproses'] as $key => $label)
-            <a href="{{ route('marketplace-orders.index', $base + ['status' => $key]) }}" @class(['rounded-full px-3 py-1 border', 'bg-indigo-600 text-white border-indigo-600' => request('status') === $key, 'bg-white border-gray-200' => request('status') !== $key])>{{ $label }}</a>
+            <a href="{{ route('marketplace-orders.index', $base + ['status' => $key]) }}" @class(['rounded-full px-3 py-1 border font-medium transition', 'bg-gray-900 text-white border-gray-900' => request('status') === $key, 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900' => request('status') !== $key])>{{ $label }}</a>
         @endforeach
-        <a href="{{ route('marketplace-orders.index', $base + ['status' => 'unsettled']) }}" @class(['rounded-full px-3 py-1 border', 'bg-indigo-600 text-white border-indigo-600' => request('status') === 'unsettled', 'bg-white border-gray-200' => request('status') !== 'unsettled'])>Belum cair</a>
+        <a href="{{ route('marketplace-orders.index', $base + ['status' => 'unsettled']) }}" @class(['rounded-full px-3 py-1 border font-medium transition', 'bg-gray-900 text-white border-gray-900' => request('status') === 'unsettled', 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900' => request('status') !== 'unsettled'])>Belum cair</a>
     </div>
 
     <form method="POST" action="{{ route('marketplace-orders.ship-many') }}" id="ship-many" data-confirm="Pesanan yang dipilih dikirim: stok keluar dari gudang toko & penjualan dicatat." data-confirm-button="Ya, kirim">@csrf</form>

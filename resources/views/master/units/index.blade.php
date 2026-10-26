@@ -22,6 +22,6 @@
                 </tbody>
             </table>
         </div>
-        <div class="p-4">{{ $units->links() }}</div>
+        <div class="border-t border-gray-100 px-4 py-3 empty:hidden">{{ $units->links() }}</div>
     </x-card>
 </x-layouts.app>

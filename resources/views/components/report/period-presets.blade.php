@@ -8,9 +8,10 @@
     ];
 @endphp
 <div class="flex flex-wrap items-center gap-1 text-xs">
-    <span class="text-gray-500">Periode cepat:</span>
+    <span class="mr-1 text-gray-400">Periode cepat</span>
     @foreach ($presets as $label => [$start, $end])
+        @php $on = request('from') === $start->format('Y-m-d') && request('to') === $end->format('Y-m-d'); @endphp
         <a href="{{ request()->fullUrlWithQuery(['from' => $start->format('Y-m-d'), 'to' => $end->format('Y-m-d'), 'export' => null]) }}"
-           class="rounded-full border border-gray-200 px-2.5 py-0.5 text-gray-600 hover:border-indigo-300 hover:text-indigo-600">{{ $label }}</a>
+           @class(['rounded-full border px-2.5 py-1 font-medium transition', 'border-gray-900 bg-gray-900 text-white' => $on, 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900' => ! $on])>{{ $label }}</a>
     @endforeach
 </div>
