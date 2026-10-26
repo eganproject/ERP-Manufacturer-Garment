@@ -1,4 +1,4 @@
-@props(['name', 'label' => null, 'options' => [], 'value' => null, 'required' => false, 'placeholder' => 'Pilih...', 'help' => null, 'native' => false])
+@props(['name', 'label' => null, 'options' => [], 'value' => null, 'required' => false, 'placeholder' => 'Pilih...', 'help' => null, 'tip' => null, 'native' => false])
 
 @php
     $key = str_replace(['[', ']'], ['.', ''], $name);
@@ -10,7 +10,7 @@
 
 <div {{ $attributes->only('class') }}>
     @if ($label)
-        <label for="{{ $id }}" class="form-label">{{ $label }} @if ($required)<span class="text-red-500">*</span>@endif</label>
+        <x-form.label :for="$id" :label="$label" :required="$required" :tip="$tip" />
     @endif
     <select id="{{ $id }}" name="{{ $name }}" @if ($required) required @endif @if ($enhance) data-select @endif
             {{ $attributes->except('class')->class(['form-control', 'is-invalid' => $errors->has($key)]) }}>

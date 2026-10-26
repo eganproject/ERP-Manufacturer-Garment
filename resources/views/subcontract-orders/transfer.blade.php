@@ -3,6 +3,7 @@
     $isDispatch = $type === SubcontractTransferType::Dispatch;
 @endphp
 <x-layouts.app :title="$type->label().' - '.$order->number">
+    <x-guide title="Kirim / retur bahan maklon" :steps="['**Kirim bahan**: stok gudang berkurang dan bahan tercatat sebagai titipan di vendor (saldo di vendor bertambah).', '**Retur sisa bahan**: bahan yang tidak terpakai kembali ke gudang dan saldo di vendor berkurang.', 'Cetak surat jalan bahan sebagai bukti serah terima dengan vendor.']"></x-guide>
     <form method="POST" action="{{ route('subcontract-orders.transfer.store', [$order, $type->value]) }}" class="space-y-6"
           data-confirm="{{ $isDispatch ? 'Stok gudang berkurang dan bahan tercatat sebagai titipan di vendor.' : 'Stok gudang bertambah dan saldo bahan di vendor berkurang.' }}" data-confirm-icon="question" data-confirm-button="Ya, simpan">
         @csrf
@@ -13,8 +14,8 @@
                     <p class="py-2 text-sm font-medium">{{ $order->supplier->name }}</p>
                     <p class="text-xs text-gray-500">{{ $order->number }} · SPK {{ $order->productionOrder->number }}</p>
                 </div>
-                <x-form.input name="date" label="Tanggal" :value="now()" required data-date />
-                <x-form.warehouse :label="$isDispatch ? 'Dari Gudang' : 'Masuk ke Gudang'" />
+                <x-form.input name="date" label="Tanggal" :value="now()" tip="Tanggal bahan diserahkan ke/diterima dari vendor. Tercatat di kartu stok." required data-date />
+                <x-form.warehouse :label="$isDispatch ? 'Dari Gudang' : 'Masuk ke Gudang'" :tip="$isDispatch ? 'Gudang asal bahan yang dikirim ke vendor. Stok gudang ini berkurang.' : 'Gudang yang menerima sisa bahan dari vendor. Stok gudang ini bertambah.'" />
                 <x-form.input name="vehicle_number" label="No. Kendaraan" />
                 <x-form.input name="driver_name" label="Sopir / Pengantar" />
                 <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-4" />
@@ -29,7 +30,7 @@
                 <table class="table-base">
                     <thead>
                         <tr>
-                            <th>Bahan</th><th class="text-right">Rencana</th><th class="text-right">Sudah Dikirim</th><th class="text-right">Diretur</th><th class="text-right">Saldo di Vendor</th>
+                            <th>Bahan</th><th class="text-right">Rencana</th><th class="text-right">Sudah Dikirim</th><th class="text-right">Diretur</th><th class="text-right">Saldo di Vendor <x-tip title="Saldo di vendor" text="Bahan milik kita yang masih dititipkan di vendor: dikirim − diretur − terpakai." /></th>
                             @if ($isDispatch)<th class="text-right">Stok Gudang</th>@endif
                             <th class="w-44">{{ $isDispatch ? 'Kirim Sekarang' : 'Retur Sekarang' }}</th>
                         </tr>

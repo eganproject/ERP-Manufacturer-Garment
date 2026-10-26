@@ -154,6 +154,8 @@ Kartu stok produk menandai mutasi stok cacat dengan label *Stok Cacat*. Nilai pe
 
 ## Tips
 
+- Ikon **?** di samping nama kolom menjelaskan fungsi kolom itu dan pengaruhnya ke alur. Di komputer cukup arahkan kursor; di HP ketuk ikonnya (ketuk di luar untuk menutup).
+- Form utama punya kotak **panduan singkat** berisi langkah-langkah alur. Klik judulnya untuk menyembunyikan/menampilkan; pilihan diingat per halaman.
 - Setiap dokumen punya **Riwayat Aktivitas** dan tautan ke dokumen asal/turunannya (SO ↔ SPK ↔ surat jalan ↔ invoice ↔ retur ↔ jurnal).
 - Pembatalan dokumen bernilai tidak menghapus jurnal, tetapi membuat jurnal pembalik.
 - Kelompok menu di sidebar bisa diciutkan dengan mengklik judulnya; pilihan disimpan di browser.

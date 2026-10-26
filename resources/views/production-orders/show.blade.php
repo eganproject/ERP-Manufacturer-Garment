@@ -51,7 +51,7 @@
                 $shortfall -= $cut;
             }
         @endphp
-        <x-card title="Rincian per Ukuran" :padding="false" class="lg:col-span-2">
+        <x-card title="Rincian per Ukuran" :padding="false" class="lg:col-span-2" tip="Jumlah rencana per varian. Saat menyelesaikan produksi, isi jumlah jadi per varian; barang jadi masuk stok dengan HPP aktual SPK.">
             <form method="POST" action="{{ route('production-orders.complete', $order) }}" data-confirm="Barang jadi akan dimasukkan ke stok dan SPK ditutup." data-confirm-icon="question" data-confirm-button="Ya, selesaikan">
                 @csrf
                 <table class="table-base">
@@ -81,7 +81,7 @@
                         @if ($lastStage && (float) $lastStage->output_quantity > 0)
                             <p class="mr-auto self-center text-sm text-gray-600">Output tahap {{ $lastStage->stage->label() }}: <span class="font-semibold">{{ qty($lastStage->output_quantity) }} pcs</span>. Total jadi per ukuran tidak boleh melebihi angka ini.</p>
                         @endif
-                        <div class="w-40"><x-form.input name="reject_quantity" type="number" min="0" step="1" label="Total Reject" :value="$order->stages->sum('reject_quantity')" /></div>
+                        <div class="w-40"><x-form.input name="reject_quantity" type="number" min="0" step="1" label="Total Reject" tip="Total pcs gagal dari seluruh tahap. Dicatat di SPK untuk laporan produksi; biayanya ikut menjadi HPP barang jadi yang bagus." :value="$order->stages->sum('reject_quantity')" /></div>
                         <button type="submit" class="btn-success">Selesaikan Produksi</button>
                     </div>
                 @elseif ($inProgress)
@@ -173,7 +173,7 @@
             </x-card>
         @endif
 
-        <x-card title="Tahapan Produksi" class="lg:col-span-3">
+        <x-card title="Tahapan Produksi" class="lg:col-span-3" tip="Catat progres tiap tahap (output bagus & reject). Semua tahap harus Selesai sebelum produksi bisa diselesaikan. Tahap yang dimaklonkan diperbarui otomatis dari penerimaan hasil maklon.">
             <ol class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
                 @foreach ($order->stages as $stage)
                     <li class="rounded-lg border border-gray-200 p-4" x-data="{ edit: false }">
@@ -198,12 +198,15 @@
                             <form x-cloak x-show="edit" method="POST" action="{{ route('production-orders.stages.update', [$order, $stage]) }}" class="mt-3 space-y-2">
                                 @csrf
                                 @method('PUT')
+                                <x-form.label label="Status" tip="Menunggu → Dikerjakan → Selesai. Tahap berikutnya sebaiknya dimulai setelah tahap sebelumnya selesai." />
                                 <select name="status" class="form-control py-1.5">
                                     @foreach ($stageStatuses as $status)
                                         <option value="{{ $status->value }}" @selected($stage->status === $status)>{{ $status->label() }}</option>
                                     @endforeach
                                 </select>
-                                <input type="number" min="0" step="1" name="output_quantity" value="{{ (float) ($stage->output_quantity ?: $order->quantity) }}" class="form-control py-1.5" placeholder="Output">
+                                <x-form.label label="Output (pcs)" tip="Jumlah pcs yang lolos dari tahap ini. Output tahap terakhir (Packing) menjadi batas jumlah barang jadi." />
+                                <input type="number" min="0" step="1" name="output_quantity" value="{{ (float) ($stage->output_quantity ?: $order->quantity) }}" class="form-control py-1.5" placeholder="Output" aria-label="Output">
+                                <x-form.label label="Reject (pcs)" tip="Jumlah pcs gagal/cacat di tahap ini." />
                                 <input type="number" min="0" step="1" name="reject_quantity" value="{{ (float) $stage->reject_quantity }}" class="form-control py-1.5" placeholder="Reject">
                                 <input type="text" name="pic" value="{{ $stage->pic }}" class="form-control py-1.5" placeholder="PIC / Operator">
                                 <textarea name="notes" rows="2" class="form-control py-1.5" placeholder="Catatan">{{ $stage->notes }}</textarea>
@@ -298,7 +301,7 @@
                     <form method="POST" action="{{ route('production-orders.costs.store', $order) }}" class="grid grid-cols-1 gap-3 border-t border-gray-200 p-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
                         @csrf
                         <x-form.input name="date" label="Tanggal" :value="now()->toDateString()" required data-date class="lg:col-span-1" />
-                        <x-form.select name="type" label="Jenis Biaya" :options="$costTypes" :value="old('type', 'cmt')" :placeholder="false" required class="lg:col-span-1" />
+                        <x-form.select name="type" label="Jenis Biaya" tip="Jasa CMT/maklon: ongkos jahit di luar. Upah tenaga kerja: upah karyawan. Overhead pabrik: listrik, sewa, dll. Biaya lain: selain itu. Semua menambah HPP SPK." :options="$costTypes" :value="old('type', 'cmt')" :placeholder="false" required class="lg:col-span-1" />
                         <x-form.input name="description" label="Keterangan" required placeholder="mis. Ongkos jahit CMT Bu Ani" class="lg:col-span-2" />
                         <x-form.input name="amount" label="Jumlah (Rp)" required data-money inputmode="numeric" class="lg:col-span-1" />
                         <button type="submit" class="btn-primary lg:col-span-1">+ Catat Biaya</button>

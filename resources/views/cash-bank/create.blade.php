@@ -20,22 +20,22 @@
         <x-card :title="$type->label()">
             <p class="mb-4 text-sm text-gray-500">{{ $type->hint() }}</p>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <x-form.input name="date" label="Tanggal" :value="today()" required data-date />
-                <x-form.select name="cash_account_id" :label="$isTransfer ? 'Dari Rekening' : ($isIn ? 'Masuk ke Rekening' : 'Keluar dari Rekening')" :options="$cashAccounts" :value="$defaultAccount" required data-select />
+                <x-form.input name="date" label="Tanggal" :value="today()" required data-date tip="Tanggal uang masuk/keluar sesuai mutasi rekening atau kuitansi." />
+                <x-form.select name="cash_account_id" :label="$isTransfer ? 'Dari Rekening' : ($isIn ? 'Masuk ke Rekening' : 'Keluar dari Rekening')" :options="$cashAccounts" :value="$defaultAccount" required data-select tip="Rekening kas/bank yang saldonya berubah. Rekening baru ditambahkan di Bagan Akun (centang Rekening kas / bank)." />
                 @if ($isTransfer)
-                    <x-form.select name="to_account_id" label="Ke Rekening" :options="$cashAccounts" required data-select />
+                    <x-form.select name="to_account_id" label="Ke Rekening" tip="Rekening tujuan transfer, mis. tarik tunai dari bank ke kas kecil atau setor kas ke bank. Total kas perusahaan tidak berubah." :options="$cashAccounts" required data-select />
                     <x-form.input name="amount" label="Jumlah (Rp)" required data-money inputmode="numeric" />
                 @else
-                    <x-form.input name="party_name" :label="$isIn ? 'Diterima dari' : 'Dibayar ke'" placeholder="Opsional, mis. PLN, Bank BRI, pemilik" />
+                    <x-form.input name="party_name" tip="Nama orang/instansi pemberi atau penerima uang. Dicetak di bukti kas (opsional)." :label="$isIn ? 'Diterima dari' : 'Dibayar ke'" placeholder="Opsional, mis. PLN, Bank BRI, pemilik" />
                 @endif
-                <x-form.input name="reference" label="No. Referensi" placeholder="No. kuitansi / transfer / cek" />
+                <x-form.input name="reference" label="No. Referensi" placeholder="No. kuitansi / transfer / cek" tip="Nomor bukti dari luar (kuitansi, struk, bukti transfer) untuk memudahkan pencocokan." />
                 <x-form.input name="description" label="Keterangan" required :class="$isTransfer ? 'md:col-span-1' : 'md:col-span-2'"
                               :placeholder="$isTransfer ? 'Mis. Setor tunai ke BCA' : ($isIn ? 'Mis. Setoran modal pemilik' : 'Mis. Bayar listrik pabrik Oktober')" />
             </div>
         </x-card>
 
         @unless ($isTransfer)
-            <x-card :title="$isIn ? 'Sumber Penerimaan (akun kredit)' : 'Penggunaan Dana (akun debit)'" :padding="false">
+            <x-card :title="$isIn ? 'Sumber Penerimaan (akun kredit)' : 'Penggunaan Dana (akun debit)'" :padding="false" :tip="$isIn ? 'Pilih akun yang menjelaskan asal uang, mis. Pendapatan Lain-lain, Modal Pemilik, Pinjaman Bank. Boleh lebih dari satu baris.' : 'Pilih akun biaya atau tujuan uang, mis. Beban Listrik, Beban Sewa, Hutang PPN. Boleh lebih dari satu baris bila satu kuitansi untuk beberapa keperluan.'">
                 <x-slot:header><button type="button" class="btn-secondary py-1.5" @click="add()">+ Baris</button></x-slot:header>
                 <div class="overflow-x-auto">
                     <table class="table-base">

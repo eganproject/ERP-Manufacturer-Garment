@@ -4,14 +4,14 @@
             @csrf
             @if ($warehouse->exists) @method('PUT') @endif
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <x-form.input name="code" label="Kode" :value="$warehouse->code" required placeholder="mis. GJ" />
+                <x-form.input name="code" label="Kode" :value="$warehouse->code" tip="Singkatan gudang yang tampil di dokumen dan kartu stok, mis. GB (gudang bahan), GJ (gudang barang jadi)." required placeholder="mis. GJ" />
                 <x-form.input name="name" label="Nama Gudang" :value="$warehouse->name" required placeholder="mis. Gudang Barang Jadi" class="sm:col-span-2" />
             </div>
             <x-form.textarea name="address" label="Alamat / Lokasi" :value="$warehouse->address" rows="2" />
             <x-form.textarea name="notes" label="Catatan" :value="$warehouse->notes" rows="2" />
             <div class="flex flex-wrap gap-6">
-                <x-form.checkbox name="is_active" label="Aktif" :checked="$warehouse->is_active" />
-                <x-form.checkbox name="is_default" label="Jadikan gudang default" :checked="$warehouse->is_default" />
+                <x-form.checkbox name="is_active" label="Aktif" :checked="$warehouse->is_active" tip="Gudang nonaktif tidak bisa dipilih di transaksi baru. Pastikan stoknya sudah dipindah atau dikosongkan." />
+                <x-form.checkbox name="is_default" label="Jadikan gudang default" :checked="$warehouse->is_default" tip="Gudang yang otomatis dipakai bila dokumen tidak memilih gudang. Hanya boleh ada satu gudang default." />
             </div>
             <x-form.actions :cancel="route('warehouses.index')" />
         </form>

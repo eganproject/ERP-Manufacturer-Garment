@@ -1,4 +1,4 @@
-@props(['name', 'label' => null, 'type' => 'text', 'value' => null, 'required' => false, 'help' => null])
+@props(['name', 'label' => null, 'type' => 'text', 'value' => null, 'required' => false, 'help' => null, 'tip' => null])
 
 @php
     $key = str_replace(['[', ']'], ['.', ''], $name);
@@ -8,7 +8,7 @@
 
 <div {{ $attributes->only('class')->merge(['class' => '']) }}>
     @if ($label)
-        <label for="{{ $id }}" class="form-label">{{ $label }} @if ($required)<span class="text-red-500">*</span>@endif</label>
+        <x-form.label :for="$id" :label="$label" :required="$required" :tip="$tip" />
     @endif
     <input type="{{ $type }}" id="{{ $id }}" name="{{ $name }}" value="{{ $current }}"
            @if ($required) required @endif

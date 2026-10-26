@@ -18,13 +18,13 @@
         <x-card :title="$type->label()">
             <p class="mb-4 text-sm text-gray-500">{{ $type->hint() }}</p>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <x-form.input name="date" label="Tanggal" :value="today()" required data-date />
+                <x-form.input name="date" label="Tanggal" :value="today()" tip="Tanggal penanganan barang cacat. Tercatat di kartu stok dan jurnal." required data-date />
                 <x-form.warehouse />
                 <x-form.input name="notes" label="Catatan" class="md:col-span-2"
                               :placeholder="match ($type) { DefectHandlingType::Rework => 'Mis. jahit ulang kerah, ganti kancing', DefectHandlingType::Scrap => 'Mis. noda permanen, sobek', DefectHandlingType::Quarantine => 'Mis. temuan QC gudang', default => 'Mis. hasil cek ulang layak jual' }" />
                 @if ($type === DefectHandlingType::Rework)
-                    <x-form.input name="extra_cost" label="Biaya Perbaikan (Rp)" data-money inputmode="numeric" help="Opsional. Dibagi rata per pcs dan menambah HPP barang." />
-                    <x-form.select name="cash_account_id" label="Dibayar dari Rekening" :options="$cashAccounts" data-select help="Wajib bila ada biaya perbaikan." />
+                    <x-form.input name="extra_cost" label="Biaya Perbaikan (Rp)" data-money inputmode="numeric" help="Opsional. Dibagi rata per pcs dan menambah HPP barang." tip="Biaya tunai untuk memperbaiki barang (mis. ongkos jahit ulang). Dibagi rata ke semua pcs dan menambah harga pokok barang tersebut." />
+                    <x-form.select name="cash_account_id" label="Dibayar dari Rekening" tip="Rekening kas/bank yang dipakai membayar biaya perbaikan. Saldonya akan berkurang." :options="$cashAccounts" data-select help="Wajib bila ada biaya perbaikan." />
                 @endif
             </div>
         </x-card>

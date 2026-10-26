@@ -1,9 +1,10 @@
 <x-layouts.app title="Penyesuaian Stok">
+    <x-guide title="Kapan memakai penyesuaian stok?" :steps="['Untuk koreksi cepat satu barang: barang hilang, rusak, salah input, atau **saldo awal** saat pertama memakai sistem.', 'Untuk hitung fisik banyak barang sekaligus, lebih baik pakai menu **Stock Opname**.', 'Selisih nilai otomatis dijurnal ke akun Selisih Persediaan (penyesuaian pertama dianggap saldo awal).']"></x-guide>
     <x-card class="max-w-2xl" title="Koreksi stok hasil stock opname, barang rusak, dll.">
         <form method="POST" action="{{ route('stock.adjustment.store') }}" class="space-y-4"
               data-confirm="Stok akan diubah dan tercatat di kartu stok." data-confirm-icon="question" data-confirm-button="Ya, simpan">
             @csrf
-            <x-form.select name="item" label="Barang" required data-select data-placeholder="Cari bahan / SKU...">
+            <x-form.select name="item" label="Barang" required tip="Bahan baku atau varian barang jadi yang stoknya dikoreksi. Ketik kode/SKU untuk mencari." data-select data-placeholder="Cari bahan / SKU...">
                 <optgroup label="Bahan Baku">
                     @foreach ($materials as $m)
                         <option value="material:{{ $m->id }}" @selected(old('item') === 'material:'.$m->id)>{{ $m->display_name }} — stok {{ qty($m->stock) }} {{ $m->unit->code }}</option>
@@ -18,10 +19,10 @@
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <x-form.input name="date" label="Tanggal" :value="now()" required data-date />
                 <x-form.warehouse />
-                <x-form.select name="mode" label="Jenis" :options="['in' => 'Tambah (+)', 'out' => 'Kurangi (−)', 'set' => 'Set stok fisik (opname)']" value="set" required :placeholder="false" />
-                <x-form.input name="quantity" type="number" step="0.01" min="0" label="Jumlah" required />
+                <x-form.select name="mode" label="Jenis" tip="Tambah: stok naik sebesar jumlah. Kurangi: stok turun sebesar jumlah. Set stok fisik: stok diganti menjadi angka hasil hitung (sistem menghitung selisihnya)." :options="['in' => 'Tambah (+)', 'out' => 'Kurangi (−)', 'set' => 'Set stok fisik (opname)']" value="set" required :placeholder="false" />
+                <x-form.input name="quantity" type="number" step="0.01" min="0" label="Jumlah" required tip="Untuk Tambah/Kurangi: besar perubahan. Untuk Set stok fisik: jumlah hasil hitung di gudang." />
             </div>
-            <x-form.input name="notes" label="Alasan" required placeholder="mis. Hasil stock opname Oktober" />
+            <x-form.input name="notes" label="Alasan" required tip="Wajib diisi agar koreksi stok bisa dipertanggungjawabkan. Tampil di kartu stok dan riwayat aktivitas." placeholder="mis. Hasil stock opname Oktober" />
             <x-form.actions :cancel="route('stock.materials')" />
         </form>
     </x-card>

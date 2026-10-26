@@ -1,11 +1,12 @@
 <x-layouts.app title="Susun Penggajian Borongan">
+    <x-guide title="Alur penggajian borongan" :steps="['Tentukan periode (default mingguan). Semua hasil kerja yang **belum dibayar** sampai akhir periode otomatis ikut terambil.', 'Setelah disusun, isi bonus, potongan kasbon dan potongan lain per karyawan, lalu simpan.', 'Keuangan **Menyetujui**, lalu **Tandai Dibayar** dengan memilih rekening kas/bank. Slip upah bisa dicetak per karyawan.']"></x-guide>
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <x-card title="Periode">
             <form method="POST" action="{{ route('payrolls.store') }}">
                 @csrf
                 <div class="space-y-4">
-                    <x-form.input name="period_start" label="Awal Periode" :value="old('period_start', $start->toDateString())" required data-date />
-                    <x-form.input name="period_end" label="Akhir Periode" :value="old('period_end', $end->toDateString())" required data-date />
+                    <x-form.input name="period_start" label="Awal Periode" tip="Tanggal awal minggu/periode gajian. Hanya sebagai keterangan di slip; hasil kerja lama yang belum dibayar tetap ikut." :value="old('period_start', $start->toDateString())" required data-date />
+                    <x-form.input name="period_end" label="Akhir Periode" tip="Hasil kerja sampai tanggal ini yang belum dibayar akan dimasukkan ke penggajian." :value="old('period_end', $end->toDateString())" required data-date />
                     <x-form.textarea name="notes" label="Catatan" :value="old('notes')" rows="2" />
                 </div>
                 <p class="mt-3 text-xs text-gray-500">Semua hasil kerja yang belum dibayar sampai akhir periode ikut dihitung, termasuk input susulan dari periode sebelumnya. Siklus default diatur di Pengaturan Perusahaan.</p>

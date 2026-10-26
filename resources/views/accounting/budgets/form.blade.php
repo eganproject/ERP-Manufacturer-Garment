@@ -6,13 +6,14 @@
     }
 @endphp
 <x-layouts.app :title="$budget->exists ? 'Ubah Anggaran '.$budget->name : 'Anggaran Baru'">
+    <x-guide title="Cara menyusun anggaran" :steps="['Pilih akun pendapatan/beban yang ingin dianggarkan, lalu isi nilai **Setahun** (dibagi rata ke 12 bulan) atau isi per bulan.', 'Isi angka positif sesuai sifat akun: pendapatan = target pendapatan, beban = batas biaya.', 'Realisasi dan selisihnya bisa dipantau di laporan **Anggaran vs Realisasi**.', 'Untuk tahun berikutnya, gunakan **Salin dari anggaran** dengan persentase kenaikan/penurunan.']"></x-guide>
     @unless ($budget->exists)
         @if ($budgets->isNotEmpty())
             <x-card class="mb-6">
                 <form method="GET" action="{{ route('budgets.create') }}" class="flex flex-wrap items-end gap-2">
-                    <div class="w-72"><x-form.select name="copy" label="Salin dari anggaran" :options="$budgets->mapWithKeys(fn ($b) => [$b->id => $b->year.' · '.$b->name])" data-select /></div>
+                    <div class="w-72"><x-form.select name="copy" label="Salin dari anggaran" tip="Ambil semua akun & nilai dari anggaran lain sebagai titik awal, lalu ubah seperlunya." :options="$budgets->mapWithKeys(fn ($b) => [$b->id => $b->year.' · '.$b->name])" data-select /></div>
                     <div class="w-28"><x-form.input name="year" label="Untuk tahun" type="number" :value="$budget->year" /></div>
-                    <div class="w-32"><x-form.input name="growth" label="Naik/turun %" type="number" step="0.1" value="0" /></div>
+                    <div class="w-32"><x-form.input name="growth" label="Naik/turun %" tip="Semua nilai salinan dikalikan persentase ini. Mis. 10 = naik 10%, -5 = turun 5%." type="number" step="0.1" value="0" /></div>
                     <button type="submit" class="btn-secondary">Salin</button>
                 </form>
             </x-card>
@@ -45,7 +46,7 @@
                     <thead>
                         <tr>
                             <th class="sticky left-0 z-10 min-w-72 bg-gray-50">Akun</th>
-                            <th class="min-w-44">Setahun</th>
+                            <th class="min-w-44">Setahun <x-tip title="Setahun" text="Isi total setahun untuk membaginya rata ke 12 bulan secara otomatis." /></th>
                             @foreach ($monthNames as $m)<th class="min-w-28">{{ $m }}</th>@endforeach
                             <th class="w-10"></th>
                         </tr>

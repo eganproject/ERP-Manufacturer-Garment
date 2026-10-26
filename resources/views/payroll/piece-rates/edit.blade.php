@@ -5,6 +5,7 @@
     ])->values()->all());
 @endphp
 <x-layouts.app :title="'Tarif Borongan '.$product->name">
+    <x-guide title="Mengatur tarif upah borongan" :steps="['Isi daftar **operasi/segmen** (mis. potong, pasang lengan, obras) beserta tarif per pcs dan tahap SPK-nya.', 'Isi **tarif per pcs jadi** untuk karyawan yang mengerjakan satu baju dari awal sampai jadi.', 'Upah = jumlah bagus × tarif. Artikel yang punya tarif borongan tidak lagi dibebani upah standar BOM.']"></x-guide>
     <x-slot:actions>
         <a href="{{ route('piece-rates.index') }}" class="btn-secondary">Semua Artikel</a>
     </x-slot:actions>
@@ -23,7 +24,7 @@
             <x-card title="Operasi / Segmen (tarif per pcs)" :padding="false" class="lg:col-span-2">
                 <div class="overflow-x-auto">
                     <table class="table-base">
-                        <thead><tr><th class="w-10">#</th><th>Nama Operasi</th><th class="w-48">Tahap SPK</th><th class="w-40 text-right">Tarif / pcs (Rp)</th><th class="w-20 text-center">Aktif</th><th class="w-12"></th></tr></thead>
+                        <thead><tr><th class="w-10">#</th><th>Nama Operasi</th><th class="w-48">Tahap SPK <x-tip title="Tahap SPK" text="Tahap produksi tempat operasi ini dikerjakan. Bila tahap itu dimaklonkan, operasi ini tidak bisa dicatat untuk qty yang dimaklonkan." /></th><th class="w-40 text-right">Tarif / pcs (Rp)</th><th class="w-20 text-center">Aktif <x-tip title="Aktif" text="Matikan operasi yang tidak dipakai lagi. Operasi yang sudah punya hasil kerja tidak bisa dihapus, cukup dinonaktifkan." /></th><th class="w-12"></th></tr></thead>
                         <tbody class="divide-y divide-gray-100">
                             <template x-for="(row, i) in rows" :key="i">
                                 <tr>
@@ -64,7 +65,7 @@
 
             <div class="space-y-6">
                 <x-card title="Tarif pcs Jadi (Komplit)">
-                    <label class="form-label" for="f_full">Tarif per pcs jadi (Rp)</label>
+                    <x-form.label for="f_full" label="Tarif per pcs jadi (Rp)" tip="Upah untuk satu baju yang dikerjakan komplit oleh satu orang. 1 pcs jadi dihitung menyelesaikan semua operasi." />
                     <input id="f_full" type="number" min="0" step="1" name="full_garment_rate" x-model="full" class="form-control text-right">
                     <p class="mt-2 text-xs text-gray-500">Untuk karyawan yang mengerjakan satu baju dari potong sampai jadi. Total tarif operasi saat ini <span class="font-medium" x-text="fmt(total)"></span>. Isi 0 bila artikel ini tidak dikerjakan komplit.</p>
                 </x-card>

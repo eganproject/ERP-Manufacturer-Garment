@@ -1,4 +1,5 @@
 <x-layouts.app :title="'Kirim Barang - '.$order->number">
+    <x-guide title="Mengirim barang ke pelanggan" :steps="['Klik tombol isi otomatis atau ketik jumlah di kolom **Kirim Sekarang**. Jumlah tidak boleh melebihi sisa pesanan maupun stok gudang.', 'Simpan untuk membuat **surat jalan (SJ-)**: stok barang jadi berkurang dan HPP penjualan tercatat.', 'Cetak surat jalan untuk dibawa sopir. Sisa pesanan bisa dikirim berikutnya.']"></x-guide>
     <form method="POST" action="{{ route('sales-orders.deliver.store', $order) }}" class="space-y-6"
           data-confirm="Surat jalan akan dibuat dan stok barang jadi berkurang sesuai jumlah kirim." data-confirm-icon="question" data-confirm-button="Ya, kirim">
         @csrf
@@ -8,11 +9,11 @@
                     <span class="form-label">Pelanggan</span>
                     <p class="py-2 text-sm font-medium">{{ $order->customer->name }}</p>
                 </div>
-                <x-form.input name="delivery_date" label="Tanggal Kirim" :value="now()" required data-date />
-                <x-form.warehouse label="Dikirim dari Gudang" />
-                <x-form.input name="vehicle_number" label="No. Kendaraan" placeholder="D 1234 AB" />
+                <x-form.input name="delivery_date" label="Tanggal Kirim" tip="Tanggal barang keluar dari gudang. Tercatat di surat jalan, kartu stok dan jurnal HPP." :value="now()" required data-date />
+                <x-form.warehouse label="Dikirim dari Gudang" tip="Gudang asal barang. Stok dicek dan dikurangi dari gudang ini saja, walau gudang lain masih punya stok." />
+                <x-form.input name="vehicle_number" label="No. Kendaraan" tip="Nomor polisi kendaraan pengirim. Dicetak di surat jalan (opsional)." placeholder="D 1234 AB" />
                 <x-form.input name="driver_name" label="Nama Sopir / Ekspedisi" />
-                <x-form.textarea name="shipping_address" label="Alamat Kirim" :value="$order->customer->address" rows="2" class="md:col-span-2" />
+                <x-form.textarea name="shipping_address" label="Alamat Kirim" tip="Alamat tujuan yang dicetak di surat jalan. Terisi dari alamat pelanggan; ubah bila dikirim ke lokasi lain." :value="$order->customer->address" rows="2" class="md:col-span-2" />
                 <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-3" />
             </div>
         </x-card>
@@ -23,7 +24,7 @@
             </x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">
-                    <thead><tr><th>Produk</th><th class="text-right">Dipesan</th><th class="text-right">Sudah Dikirim</th><th class="text-right">Sisa</th><th class="text-right">Stok</th><th class="w-44">Kirim Sekarang</th></tr></thead>
+                    <thead><tr><th>Produk</th><th class="text-right">Dipesan</th><th class="text-right">Sudah Dikirim</th><th class="text-right">Sisa</th><th class="text-right">Stok <x-tip title="Stok" text="Stok jual yang tersedia (tidak termasuk stok cacat). Barang hanya bisa dikirim sebanyak stok ini." /></th><th class="w-44">Kirim Sekarang <x-tip title="Kirim sekarang" text="Jumlah pcs yang dikirim pada surat jalan ini. Kosongkan/0 untuk varian yang belum dikirim." /></th></tr></thead>
                     <tbody class="divide-y divide-gray-100">
                         @foreach ($order->items as $item)
                             <tr>

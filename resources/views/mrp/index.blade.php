@@ -10,11 +10,12 @@
     ]);
 @endphp
 <x-layouts.app title="MRP / Kebutuhan Bahan">
+    <x-guide title="Cara kerja MRP" :steps="['MRP menghitung **barang jadi** yang masih kurang dari Sales Order terbuka, lalu menghitung **bahan** yang dibutuhkan lewat BOM.', 'Kebutuhan dibandingkan dengan stok, PO yang sedang berjalan dan (opsional) stok minimum.', 'Centang bahan yang kurang lalu klik **Buat PO Draft**: PO otomatis dikelompokkan per supplier utama bahan.']"></x-guide>
     <x-card class="mb-6">
         <form method="GET" class="flex flex-wrap items-end gap-3">
             <input type="hidden" name="filtered" value="1">
             <div class="min-w-72 flex-1">
-                <label class="form-label" for="f_sales_order_ids">Sales Order</label>
+                <x-form.label for="f_sales_order_ids" label="Sales Order" tip="Batasi perhitungan ke SO tertentu. Kosongkan untuk menghitung semua SO terbuka (dikonfirmasi/terkirim sebagian) dan SPK draft." />
                 <select id="f_sales_order_ids" name="sales_order_ids[]" multiple data-select data-placeholder="Semua SO terbuka" class="form-control">
                     @foreach ($salesOrders as $so)
                         <option value="{{ $so->id }}" @selected(in_array($so->id, $selectedSalesOrders, true))>{{ $so->number }} · {{ $so->customer->name }} ({{ tanggal($so->delivery_date ?? $so->order_date) }})</option>
@@ -25,6 +26,7 @@
                 <input type="checkbox" name="safety" value="1" @checked($includeSafety) class="rounded border-gray-300 text-indigo-600">
                 Jaga stok minimum
             </label>
+            <x-tip title="Jaga stok minimum" text="Bila dicentang, kebutuhan ditambah agar stok setelah produksi tidak turun di bawah stok minimum bahan." class="mb-2.5 -ml-1" />
             <button type="submit" class="btn-secondary">Hitung Ulang</button>
             @if (request()->has('filtered') || request()->has('sales_order_ids'))
                 <a href="{{ route('mrp.index') }}" class="pb-2 text-sm text-gray-500 hover:text-gray-700">Reset</a>

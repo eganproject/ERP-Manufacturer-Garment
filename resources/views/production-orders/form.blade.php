@@ -18,6 +18,7 @@
 @endphp
 
 <x-layouts.app :title="$order->exists ? 'Ubah SPK '.$order->number : 'Buat SPK Produksi'">
+    <x-guide title="Alur SPK Produksi" :steps="['Pilih produk (harus punya **BOM aktif**) dan isi jumlah per ukuran. Bila dari Sales Order, jumlah terisi otomatis dari sisa SO.', 'Bila ada tahap yang dikerjakan vendor luar, buat **Order Maklon** dari halaman SPK sebelum mulai.', 'Klik **Mulai Produksi**: bahan keluar dari gudang sesuai BOM dan biaya mulai tercatat ke HPP SPK.', 'Perbarui tahapan (Cutting → Sewing → Finishing → QC → Packing), lalu **Selesaikan Produksi**: barang jadi masuk stok dengan HPP aktual.']"></x-guide>
     <form method="POST" action="{{ $order->exists ? route('production-orders.update', $order) : route('production-orders.store') }}"
           x-data="productionForm(@js($productData), @js($soData), @js((object) $initialQty))"
           x-init="productId = @js((string) old('product_id', $order->product_id ?? '')); soId = @js((string) old('sales_order_id', $order->sales_order_id ?? '')); if (soId && !Object.keys(qty).length) fillFromSo()"
@@ -28,17 +29,17 @@
         <x-card title="Informasi SPK">
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <x-form.select name="product_id" label="Produk" :options="$products->mapWithKeys(fn ($p) => [$p->id => $p->code.' - '.$p->name])" :value="$order->product_id" required data-select
-                               help="Hanya produk yang memiliki BOM aktif." x-on:change="productId = $event.target.value; fillFromSo()" />
-                <x-form.select name="sales_order_id" label="Untuk Sales Order (opsional)" :options="$salesOrders->mapWithKeys(fn ($so) => [$so->id => $so->number.' - '.$so->customer->name])" :value="$order->sales_order_id" data-select
+                               help="Hanya produk yang memiliki BOM aktif." tip="Produk yang akan dijahit. Kebutuhan bahan dihitung dari BOM aktif produk ini." x-on:change="productId = $event.target.value; fillFromSo()" />
+                <x-form.select name="sales_order_id" label="Untuk Sales Order (opsional)" tip="Hubungkan SPK dengan pesanan pelanggan agar jumlah per ukuran terisi otomatis dan progres pesanan bisa dipantau. Kosongkan bila produksi untuk stok." :options="$salesOrders->mapWithKeys(fn ($so) => [$so->id => $so->number.' - '.$so->customer->name])" :value="$order->sales_order_id" data-select
                                placeholder="-- Stok / tanpa SO --" x-on:change="soId = $event.target.value; fillFromSo()" />
-                <x-form.input name="start_date" label="Tanggal Mulai" :value="$order->start_date" required data-date />
-                <x-form.warehouse label="Gudang Bahan & Hasil" :value="$order->warehouse_id" help="Bahan diambil dari & barang jadi masuk ke gudang ini." />
-                <x-form.input name="due_date" label="Target Selesai" :value="$order->due_date" data-date />
+                <x-form.input name="start_date" label="Tanggal Mulai" tip="Rencana tanggal produksi dimulai." :value="$order->start_date" required data-date />
+                <x-form.warehouse label="Gudang Bahan & Hasil" :value="$order->warehouse_id" help="Bahan diambil dari & barang jadi masuk ke gudang ini." tip="Bahan untuk SPK dikeluarkan dari gudang ini, dan hasil produksi nanti masuk ke gudang yang sama." />
+                <x-form.input name="due_date" label="Target Selesai" tip="Tanggal produksi harus selesai. SPK yang lewat target ditandai terlambat di dashboard." :value="$order->due_date" data-date />
                 <x-form.textarea name="notes" label="Catatan" :value="$order->notes" rows="2" class="md:col-span-2" />
             </div>
         </x-card>
 
-        <x-card title="Jumlah per Ukuran / Varian" :padding="false">
+        <x-card title="Jumlah per Ukuran / Varian" :padding="false" tip="Isi jumlah pcs yang akan diproduksi per varian. Varian yang dikosongkan tidak ikut diproduksi.">
             <template x-if="!product">
                 <p class="p-6 text-center text-sm text-gray-500">Pilih produk terlebih dahulu.</p>
             </template>
@@ -62,7 +63,7 @@
             </template>
         </x-card>
 
-        <x-card title="Perkiraan Kebutuhan Bahan" :padding="false" x-show="product && totalQty > 0">
+        <x-card title="Perkiraan Kebutuhan Bahan" :padding="false" x-show="product && totalQty > 0" tip="Hitungan otomatis: qty BOM per pcs × total pcs (+ waste), dibandingkan dengan stok gudang. Bila stok kurang, beli dulu lewat PO/MRP sebelum mulai produksi.">
             <x-slot:header><span class="text-xs text-gray-500" x-text="product ? 'Berdasarkan ' + product.bom : ''"></span></x-slot:header>
             <table class="table-base">
                 <thead><tr><th>Bahan</th><th class="text-right">Kebutuhan</th><th class="text-right">Stok Gudang</th></tr></thead>

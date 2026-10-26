@@ -12,7 +12,7 @@
             <x-card :title="$group">
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                     @foreach ($items as $role => [$label])
-                        <x-form.select :name="'roles['.$role.']'" :label="$label" :options="$options" :value="$current[$role]" required :placeholder="false" data-select />
+                        <x-form.select :name="'roles['.$role.']'" :label="$label" :options="$options" :value="$current[$role]" :tip="\App\Support\LedgerAccounts::HINTS[$role] ?? null" required :placeholder="false" data-select />
                     @endforeach
                 </div>
             </x-card>

@@ -1,4 +1,5 @@
 <x-layouts.app title="Impor Pesanan Marketplace">
+    <x-guide title="Cara impor pesanan" :steps="['Unduh file ekspor pesanan dari Seller Center (lihat panel **Cara mengambil file**).', 'Pilih toko dan unggah file. Pesanan yang sudah ada tidak digandakan; statusnya saja yang diperbarui, jadi aman diimpor ulang.', 'Pesanan berstatus **Dikirim/Selesai** otomatis mengurangi stok dan mencatat penjualan. SKU yang belum dipetakan akan ditampilkan sebagai peringatan.']"></x-guide>
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <x-card title="Unggah File Pesanan" class="lg:col-span-2">
             @if (empty($stores))
@@ -6,9 +7,9 @@
             @else
                 <form method="POST" action="{{ route('marketplace-orders.import.store') }}" enctype="multipart/form-data" class="space-y-4">
                     @csrf
-                    <x-form.select name="marketplace_store_id" label="Toko" :options="$stores" :value="request('store_id')" required />
+                    <x-form.select name="marketplace_store_id" label="Toko" :options="$stores" :value="request('store_id')" required tip="Toko asal file. Stok dikurangi dari gudang sumber toko ini." />
                     <div>
-                        <label class="form-label">File ekspor pesanan (.xlsx / .csv) <span class="text-red-500">*</span></label>
+                        <x-form.label label="File ekspor pesanan (.xlsx / .csv)" :required="true" tip="File asli hasil ekspor Seller Center, jangan diubah susunan kolomnya. Bisa juga memakai template CSV." />
                         <input type="file" name="file" accept=".xlsx,.csv,.txt" required class="block w-full text-sm">
                         @error('file')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                     </div>

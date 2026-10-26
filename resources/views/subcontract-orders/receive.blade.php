@@ -1,4 +1,5 @@
 <x-layouts.app :title="'Terima Hasil Maklon - '.$order->number">
+    <x-guide title="Menerima hasil maklon" :steps="['Hitung hasil dari vendor dan pisahkan yang **bagus** dan **reject**.', 'Ongkos jasa dihitung otomatis = hasil bagus × tarif, dan langsung menambah HPP SPK.', 'Progres tahap yang dimaklonkan di SPK ikut bertambah. Penerimaan boleh bertahap.']"></x-guide>
     @if ($pendingStages)
         <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             Tahap <strong>{{ $pendingStages }}</strong> di SPK
@@ -22,10 +23,10 @@
                     <p class="py-2 text-sm font-semibold">{{ qty($order->outstandingQuantity()) }} pcs</p>
                     <p class="text-xs text-gray-500">dari {{ qty($order->quantity) }} pcs order</p>
                 </div>
-                <x-form.input name="date" label="Tanggal Terima" :value="now()" required data-date />
-                <x-form.input name="vendor_reference" label="No. Surat Jalan Vendor" />
-                <x-form.input name="good_quantity" type="number" min="0" step="1" label="Hasil Bagus (pcs)" required x-model.number="good" />
-                <x-form.input name="reject_quantity" type="number" min="0" step="1" label="Reject (pcs)" :value="0" />
+                <x-form.input name="date" label="Tanggal Terima" tip="Tanggal hasil jahitan diterima dari vendor." :value="now()" required data-date />
+                <x-form.input name="vendor_reference" label="No. Surat Jalan Vendor" tip="Nomor surat jalan dari vendor sebagai bukti serah terima (opsional)." />
+                <x-form.input name="good_quantity" type="number" min="0" step="1" label="Hasil Bagus (pcs)" tip="Jumlah pcs yang lolos pengecekan. Hanya hasil bagus yang dibayar ke vendor dan dihitung sebagai output tahap." required x-model.number="good" />
+                <x-form.input name="reject_quantity" type="number" min="0" step="1" label="Reject (pcs)" tip="Jumlah pcs cacat/tidak sesuai dari vendor. Tidak dibayar dan dicatat sebagai reject tahap." :value="0" />
                 <div>
                     <span class="form-label">Ongkos jasa</span>
                     <p class="py-2 text-sm font-semibold" x-text="'Rp ' + ERP.formatNumber((good || 0) * rate)"></p>

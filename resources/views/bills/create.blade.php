@@ -1,5 +1,6 @@
 <x-layouts.app title="Catat Tagihan Supplier">
-    <x-card title="1. Pilih Purchase Order" class="mb-6">
+    <x-guide title="Cara mencatat tagihan supplier" :steps="['Pilih PO yang barangnya **sudah diterima** gudang, atau order maklon yang hasilnya sudah diterima.', 'Salin nomor faktur, tanggal, harga, diskon dan PPN sesuai nota/faktur dari supplier.', 'Setelah disimpan, hutang supplier tercatat dan bisa dibayar lewat **Pembayaran Supplier** sebelum jatuh tempo.']"></x-guide>
+    <x-card title="1. Pilih Purchase Order" class="mb-6" tip="Tagihan dibuat dari barang yang sudah diterima, supaya kita hanya membayar barang yang benar-benar datang.">
         <form method="GET" action="{{ route('bills.create') }}" class="flex flex-wrap items-end gap-2">
             <div class="w-full sm:w-[28rem]">
                 <x-form.select name="purchase_order_id" :value="$order?->id" placeholder="Pilih PO yang barangnya sudah diterima..." data-select
@@ -45,10 +46,10 @@
                         <p class="py-2 text-sm font-medium">{{ $order->supplier->name }}</p>
                         <p class="text-xs text-gray-500">Termin {{ $order->supplier->payment_terms }} hari</p>
                     </div>
-                    <x-form.input name="supplier_invoice_number" label="No. Faktur Supplier" placeholder="Nomor di invoice supplier" />
-                    <x-form.input name="bill_date" label="Tanggal Faktur" :value="now()" required data-date />
-                    <x-form.input name="due_date" label="Jatuh Tempo" :value="now()->addDays($order->supplier->payment_terms)" data-date help="Default: tanggal faktur + termin supplier." />
-                    <x-form.input name="tax_invoice_number" label="No. Faktur Pajak" placeholder="Bila tagihan ber-PPN" help="Dipakai di laporan PPN masukan." />
+                    <x-form.input name="supplier_invoice_number" label="No. Faktur Supplier" tip="Nomor invoice/nota yang tertulis di dokumen supplier. Dipakai untuk mencocokkan saat membayar dan mencegah tagihan tercatat dua kali." placeholder="Nomor di invoice supplier" />
+                    <x-form.input name="bill_date" label="Tanggal Faktur" tip="Tanggal yang tertera di faktur supplier. Hutang diakui pada tanggal ini." :value="now()" required data-date />
+                    <x-form.input name="due_date" label="Jatuh Tempo" :value="now()->addDays($order->supplier->payment_terms)" data-date help="Default: tanggal faktur + termin supplier." tip="Batas waktu kita harus membayar. Tagihan yang lewat tanggal ini tampil terlambat di laporan umur hutang dan dashboard." />
+                    <x-form.input name="tax_invoice_number" label="No. Faktur Pajak" placeholder="Bila tagihan ber-PPN" help="Dipakai di laporan PPN masukan." tip="Nomor faktur pajak dari supplier/vendor (13–20 digit, mis. 010.000-26.00000001). Wajib diisi agar PPN tagihan ini bisa dikreditkan sebagai PPN masukan di Laporan PPN." />
                     <x-form.input name="tax_invoice_date" label="Tgl Faktur Pajak" data-date help="Kosong = tanggal tagihan." />
                     <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-2" />
                 </div>
@@ -57,7 +58,7 @@
             <x-card title="3. Barang yang Ditagih" :padding="false">
                 <div class="overflow-x-auto">
                     <table class="table-base">
-                        <thead><tr><th>Bahan</th><th class="text-right">Dipesan</th><th class="text-right">Diterima</th><th class="text-right">Sudah Ditagih</th><th class="text-right">Bisa Ditagih</th><th class="w-36">Qty Tagih</th><th class="w-44">Harga Faktur</th><th class="text-right">Subtotal</th></tr></thead>
+                        <thead><tr><th>Bahan</th><th class="text-right">Dipesan</th><th class="text-right">Diterima</th><th class="text-right">Sudah Ditagih</th><th class="text-right">Bisa Ditagih</th><th class="w-36">Qty Tagih <x-tip title="Qty tagih" text="Jumlah yang ditagih supplier di faktur ini, maksimal sebesar kolom Bisa Ditagih." /></th><th class="w-44">Harga Faktur <x-tip title="Harga faktur" text="Harga per satuan sesuai faktur supplier. Bila berbeda dengan harga PO, selisihnya otomatis dijurnal ke akun Selisih Harga Pembelian." /></th><th class="text-right">Subtotal</th></tr></thead>
                         <tbody class="divide-y divide-gray-100">
                             @foreach ($order->items->filter(fn ($i) => $i->unbilledQuantity() > 0)->values() as $idx => $item)
                                 <tr>
@@ -75,11 +76,11 @@
                         <tfoot class="bg-gray-50">
                             <tr><td colspan="7" class="px-4 py-2 text-right">Subtotal</td><td class="px-4 py-2 text-right whitespace-nowrap" x-text="'Rp ' + ERP.formatNumber(subtotal)"></td></tr>
                             <tr>
-                                <td colspan="7" class="px-4 py-2 text-right">Diskon (Rp)</td>
+                                <td colspan="7" class="px-4 py-2 text-right">Diskon (Rp) <x-tip title="Diskon" text="Potongan harga dari supplier untuk seluruh faktur, dalam rupiah." /></td>
                                 <td class="px-4 py-2"><input type="number" step="any" min="0" name="discount" x-model.number="discount" class="form-control text-right"></td>
                             </tr>
                             <tr>
-                                <td colspan="7" class="px-4 py-2 text-right">PPN (%)</td>
+                                <td colspan="7" class="px-4 py-2 text-right">PPN (%) <x-tip title="PPN" text="Tarif PPN di faktur supplier (mis. 11). Isi 0 bila supplier tidak memungut PPN." /></td>
                                 <td class="px-4 py-2"><input type="number" step="0.01" min="0" max="100" name="tax_rate" x-model.number="tax" class="form-control text-right"></td>
                             </tr>
                             <tr><td colspan="7" class="px-4 py-2 text-right">Nilai PPN</td><td class="px-4 py-2 text-right whitespace-nowrap" x-text="'Rp ' + ERP.formatNumber(taxAmount)"></td></tr>

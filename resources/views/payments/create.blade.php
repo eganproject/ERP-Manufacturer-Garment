@@ -9,6 +9,7 @@
     ])->values();
 @endphp
 <x-layouts.app :title="$isReceipt ? 'Catat Penerimaan Pelanggan' : 'Catat Pembayaran Supplier'">
+    <x-guide title="Cara mencatat pembayaran" :steps="['Pilih pihak yang membayar/dibayar, lalu klik **Tampilkan Tagihan** untuk melihat dokumen yang belum lunas.', 'Isi tanggal, metode dan rekening kas/bank tempat uang masuk atau keluar.', 'Isi **Dibayar Sekarang** per dokumen. Satu pembayaran boleh melunasi beberapa dokumen sekaligus atau hanya sebagian.', 'Status dokumen otomatis menjadi Sebagian/Lunas dan saldo kas/bank ikut berubah.']"></x-guide>
     <x-card :title="'1. Pilih '.$type->partyLabel()" class="mb-6">
         <form method="GET" action="{{ route($createRoute) }}" class="flex flex-wrap items-end gap-2">
             <div class="w-full sm:w-96">
@@ -32,10 +33,10 @@
 
                 <x-card title="2. Detail Pembayaran">
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
-                        <x-form.input name="payment_date" label="Tanggal Bayar" :value="now()" required data-date />
-                        <x-form.select name="method" label="Metode" :options="$methods" value="transfer" :placeholder="false" required />
+                        <x-form.input name="payment_date" label="Tanggal Bayar" tip="Tanggal uang benar-benar diterima/dikeluarkan (sesuai mutasi rekening). Dipakai di laporan kas dan jurnal." :value="now()" required data-date />
+                        <x-form.select name="method" label="Metode" :options="$methods" tip="Cara pembayaran. Bila rekening kas/bank dikosongkan, Tunai dicatat ke Kas dan metode lain ke Bank." value="transfer" :placeholder="false" required />
                         <x-form.cash-account />
-                        <x-form.input name="reference" label="No. Referensi" placeholder="No. transfer / giro / cek" />
+                        <x-form.input name="reference" label="No. Referensi" tip="Nomor bukti transfer, giro atau cek agar mudah dilacak saat rekonsiliasi bank (opsional)." placeholder="No. transfer / giro / cek" />
                         <div>
                             <span class="form-label">Total Dibayar</span>
                             <p class="py-2 text-lg font-semibold text-gray-900" x-text="'Rp ' + ERP.formatNumber(total)"></p>
@@ -50,7 +51,7 @@
                     </x-slot:header>
                     <div class="overflow-x-auto">
                         <table class="table-base">
-                            <thead><tr><th>No. Dokumen</th><th>Tanggal</th><th>Jatuh Tempo</th><th class="text-right">Total</th><th class="text-right">Sisa</th><th class="w-52">Dibayar Sekarang</th></tr></thead>
+                            <thead><tr><th>No. Dokumen</th><th>Tanggal</th><th>Jatuh Tempo</th><th class="text-right">Total</th><th class="text-right">Sisa</th><th class="w-52">Dibayar Sekarang <x-tip title="Dibayar sekarang" text="Nominal yang dialokasikan ke dokumen ini. Maksimal sebesar sisa tagihan. Kosongkan untuk dokumen yang belum dibayar." /></th></tr></thead>
                             <tbody class="divide-y divide-gray-100">
                                 @foreach ($documents as $idx => $doc)
                                     <tr>

@@ -58,6 +58,52 @@ class LedgerAccounts
         'opening_equity' => ['Ekuitas saldo awal (stok awal)', '3901', 'Ekuitas'],
     ];
 
+    /** Penjelasan kapan akun peran dipakai (tooltip di halaman Pemetaan Akun) */
+    public const HINTS = [
+        'cash' => 'Dipakai saat pembayaran/penerimaan bermetode Tunai dan rekening kas tidak dipilih.',
+        'bank' => 'Dipakai saat pembayaran/penerimaan bermetode transfer, giro atau cek dan rekening tidak dipilih.',
+        'receivable' => 'Bertambah saat invoice dibuat, berkurang saat pelanggan membayar atau ada nota kredit.',
+        'sales' => 'Pendapatan dari invoice penjualan (nilai sebelum PPN).',
+        'sales_discount' => 'Diskon yang diberikan di Sales Order/invoice.',
+        'sales_returns' => 'Nilai barang yang dikembalikan pelanggan setelah ditagih (nota kredit).',
+        'vat_out' => 'PPN yang ditagihkan ke pelanggan di invoice. Disetor ke negara saat tutup masa PPN.',
+        'customer_credit' => 'Sisa nota kredit retur yang belum terpakai untuk memotong invoice pelanggan.',
+        'cogs' => 'Harga pokok barang yang dikirim ke pelanggan (dicatat saat surat jalan dibuat).',
+        'payable' => 'Bertambah saat tagihan supplier dicatat, berkurang saat dibayar.',
+        'unbilled_payable' => 'Barang/jasa yang sudah diterima tetapi tagihannya belum dicatat. Dinolkan saat tagihan supplier masuk.',
+        'vat_in' => 'PPN dari tagihan supplier & aset. Mengurangi PPN yang harus disetor saat tutup masa.',
+        'vat_payable' => 'PPN kurang bayar hasil tutup masa (keluaran > masukan) yang harus disetor.',
+        'vat_overpaid' => 'PPN lebih bayar hasil tutup masa (masukan > keluaran), dikompensasikan ke masa berikutnya.',
+        'supplier_debit' => 'Nota debit retur pembelian yang belum terpakai memotong tagihan supplier.',
+        'purchase_variance' => 'Selisih antara harga di PO (saat barang diterima) dan harga di faktur supplier.',
+        'raw_material' => 'Nilai stok bahan baku di gudang. Bertambah saat penerimaan PO, berkurang saat bahan dipakai produksi.',
+        'wip' => 'Biaya produksi yang sedang berjalan (bahan, upah, overhead) per SPK, sampai SPK selesai.',
+        'finished_goods' => 'Nilai stok barang jadi siap jual.',
+        'material_at_vendor' => 'Bahan milik kita yang sedang dititipkan di vendor maklon.',
+        'wages_payable' => 'Upah produksi yang sudah dibebankan ke SPK tetapi belum dibayar.',
+        'overhead_applied' => 'Lawan pembebanan overhead standar BOM ke SPK.',
+        'accrued_expense' => 'Biaya produksi lain yang dibebankan ke SPK tetapi belum dibayar.',
+        'production_variance' => 'Selisih antara biaya aktual SPK dan nilai barang jadi saat SPK/maklon ditutup.',
+        'stock_adjustment' => 'Selisih nilai hasil stock opname atau penyesuaian stok manual.',
+        'defect_inventory' => 'Nilai barang cacat di karantina (dari retur atau temuan QC).',
+        'defect_writeoff' => 'Nilai barang cacat yang dimusnahkan.',
+        'employee_advance' => 'Kasbon karyawan; berkurang saat dipotong dari upah.',
+        'wage_allowance' => 'Bonus atau tunjangan yang ditambahkan di slip penggajian borongan.',
+        'payroll_other_income' => 'Potongan lain di slip upah (mis. denda) yang menjadi pendapatan perusahaan.',
+        'marketplace_sales' => 'Penjualan dari pesanan TikTok Shop/Shopee yang sudah dikirim.',
+        'marketplace_receivable' => 'Dana pesanan marketplace yang belum dicairkan platform.',
+        'marketplace_balance' => 'Saldo penjual di aplikasi marketplace setelah pencairan, sebelum ditarik ke bank.',
+        'marketplace_voucher' => 'Voucher/promo yang ditanggung penjual (mengurangi penjualan).',
+        'marketplace_fee' => 'Komisi, biaya admin, layanan dan transaksi yang dipotong platform.',
+        'marketplace_shipping' => 'Ongkos kirim yang ditanggung penjual.',
+        'marketplace_adjustment' => 'Selisih antara dana cair dan piutang pesanan yang tidak terjelaskan.',
+        'marketplace_loss' => 'Kerugian dari retur yang barangnya tidak kembali, tertukar, atau klaim ditolak.',
+        'asset_gain' => 'Keuntungan saat aset dijual di atas nilai bukunya.',
+        'asset_loss' => 'Kerugian saat aset dijual di bawah nilai buku atau dihapus.',
+        'retained_earnings' => 'Akumulasi laba rugi tahun-tahun sebelumnya (otomatis, tanpa jurnal penutup).',
+        'opening_equity' => 'Lawan saldo awal: stok awal, aset lama dan saldo pembukaan lainnya.',
+    ];
+
     /** @var array<string, Account> */
     private array $resolved = [];
 

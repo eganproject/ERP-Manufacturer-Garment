@@ -5,6 +5,7 @@
 @endphp
 
 <x-layouts.app :title="$order->exists ? 'Ubah SO '.$order->number : 'Buat Sales Order'">
+    <x-guide title="Alur Sales Order (SO)" :steps="['Pilih pelanggan dan isi produk per ukuran/varian, qty dan harga, lalu simpan (status Draft).', 'Periksa lalu klik **Konfirmasi**: SO terkunci, masuk perhitungan MRP dan bisa dibuatkan **SPK produksi**.', 'Setelah barang siap, Gudang klik **Kirim Barang** untuk membuat surat jalan (boleh bertahap).', 'Keuangan membuat **Invoice** dari barang yang sudah dikirim, lalu mencatat pembayaran pelanggan.']"></x-guide>
     <form method="POST" action="{{ $order->exists ? route('sales-orders.update', $order) : route('sales-orders.store') }}"
           x-data="lineItems(@js(array_values($initialItems)), { product_variant_id: '', quantity: '', price: '' }, @js($variants->mapWithKeys(fn ($v) => [$v->id => $v->selling_price])))"
           x-init="discount = @js((float) old('discount', $order->discount))"
@@ -14,9 +15,9 @@
 
         <x-card title="Informasi SO">
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <x-form.select name="customer_id" label="Pelanggan" :options="$customers->mapWithKeys(fn ($c) => [$c->id => $c->code.' - '.$c->name])" :value="$order->customer_id" required data-select />
-                <x-form.input name="order_date" label="Tanggal Order" :value="$order->order_date" required data-date />
-                <x-form.input name="delivery_date" label="Target Kirim" :value="$order->delivery_date" data-date />
+                <x-form.select name="customer_id" label="Pelanggan" tip="Pembeli pesanan ini. Termin pembayaran pelanggan menentukan jatuh tempo invoice." :options="$customers->mapWithKeys(fn ($c) => [$c->id => $c->code.' - '.$c->name])" :value="$order->customer_id" required data-select />
+                <x-form.input name="order_date" label="Tanggal Order" tip="Tanggal pesanan diterima dari pelanggan. Dipakai di laporan penjualan." :value="$order->order_date" required data-date />
+                <x-form.input name="delivery_date" label="Target Kirim" tip="Tanggal yang dijanjikan ke pelanggan. Dipakai sebagai patokan target selesai SPK dan untuk menandai pesanan yang terlambat." :value="$order->delivery_date" data-date />
                 <x-form.textarea name="notes" label="Catatan" :value="$order->notes" rows="2" class="md:col-span-3" />
             </div>
         </x-card>
@@ -25,7 +26,7 @@
             <x-slot:header><button type="button" class="btn-secondary py-1.5" @click="add()">+ Produk</button></x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">
-                    <thead><tr><th class="min-w-80">Produk / Varian</th><th class="w-32">Qty</th><th class="w-44">Harga (Rp)</th><th class="w-44 text-right">Subtotal</th><th class="w-12"></th></tr></thead>
+                    <thead><tr><th class="min-w-80">Produk / Varian</th><th class="w-32">Qty <x-tip title="Qty" text="Jumlah pcs yang dipesan untuk varian ini." /></th><th class="w-44">Harga (Rp) <x-tip title="Harga" text="Harga jual per pcs. Terisi dari harga jual produk/varian dan boleh diubah sesuai kesepakatan." /></th><th class="w-44 text-right">Subtotal</th><th class="w-12"></th></tr></thead>
                     <tbody class="divide-y divide-gray-100">
                         <template x-for="(row, index) in rows" :key="row.key">
                             <tr>
