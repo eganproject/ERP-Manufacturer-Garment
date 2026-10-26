@@ -1,5 +1,6 @@
 <x-layouts.app title="Buat Invoice Penjualan">
-    <x-card title="1. Pilih Sales Order" class="mb-6">
+    <x-guide title="Cara membuat invoice" :steps="['Pilih Sales Order yang barangnya **sudah dikirim** (sudah ada surat jalan). Invoice hanya bisa menagih barang yang terkirim.', 'Periksa tanggal, jatuh tempo dan PPN, lalu isi jumlah di kolom **Tagih Sekarang** (boleh sebagian).', 'Setelah disimpan, piutang pelanggan tercatat dan invoice bisa dicetak. Pembayaran dicatat lewat **Catat Penerimaan**.']"></x-guide>
+    <x-card title="1. Pilih Sales Order" class="mb-6" tip="Hanya SO yang punya barang terkirim tetapi belum ditagih yang muncul di sini.">
         <form method="GET" action="{{ route('invoices.create') }}" class="flex flex-wrap items-end gap-2">
             <div class="w-full sm:w-[28rem]">
                 <x-form.select name="sales_order_id" :value="$order?->id" placeholder="Pilih SO yang sudah dikirim..." data-select
@@ -25,9 +26,9 @@
                         <p class="py-2 text-sm font-medium">{{ $order->customer->name }}</p>
                         <p class="text-xs text-gray-500">Termin {{ $order->customer->payment_terms }} hari</p>
                     </div>
-                    <x-form.input name="invoice_date" label="Tanggal Invoice" :value="now()" required data-date />
-                    <x-form.input name="due_date" label="Jatuh Tempo" :value="now()->addDays($order->customer->payment_terms)" data-date help="Default: tanggal invoice + termin pelanggan." />
-                    <x-form.input name="tax_rate" type="number" step="0.01" min="0" max="100" label="PPN (%)" :value="$defaultTaxRate" />
+                    <x-form.input name="invoice_date" label="Tanggal Invoice" tip="Tanggal penagihan. Penjualan & piutang diakui pada tanggal ini di laporan dan jurnal." :value="now()" required data-date />
+                    <x-form.input name="due_date" label="Jatuh Tempo" :value="now()->addDays($order->customer->payment_terms)" data-date help="Default: tanggal invoice + termin pelanggan." tip="Batas waktu pelanggan membayar. Invoice yang lewat tanggal ini masuk kolom terlambat di laporan umur piutang." />
+                    <x-form.input name="tax_rate" type="number" step="0.01" min="0" max="100" label="PPN (%)" :value="$defaultTaxRate" tip="Tarif PPN yang ditagihkan ke pelanggan (mis. 11). Isi 0 bila perusahaan bukan PKP atau transaksi bebas PPN. Nilainya masuk PPN keluaran di Laporan PPN." />
                     <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-4" />
                 </div>
             </x-card>
@@ -38,7 +39,7 @@
                 </x-slot:header>
                 <div class="overflow-x-auto">
                     <table class="table-base">
-                        <thead><tr><th>Produk</th><th class="text-right">Dipesan</th><th class="text-right">Terkirim</th><th class="text-right">Sudah Ditagih</th><th class="text-right">Bisa Ditagih</th><th class="text-right">Harga</th><th class="w-40">Tagih Sekarang</th></tr></thead>
+                        <thead><tr><th>Produk</th><th class="text-right">Dipesan</th><th class="text-right">Terkirim</th><th class="text-right">Sudah Ditagih</th><th class="text-right">Bisa Ditagih <x-tip title="Bisa ditagih" text="Barang terkirim dikurangi yang sudah ditagih dan yang diretur. Ini batas maksimal jumlah yang bisa ditagih sekarang." /></th><th class="text-right">Harga</th><th class="w-40">Tagih Sekarang <x-tip title="Tagih sekarang" text="Jumlah pcs yang dimasukkan ke invoice ini. Sisanya bisa ditagih di invoice berikutnya." /></th></tr></thead>
                         <tbody class="divide-y divide-gray-100">
                             @foreach ($order->items as $item)
                                 <tr>

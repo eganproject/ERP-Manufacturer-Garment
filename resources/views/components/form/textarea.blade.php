@@ -1,4 +1,4 @@
-@props(['name', 'label' => null, 'value' => null, 'rows' => 3, 'required' => false, 'help' => null])
+@props(['name', 'label' => null, 'value' => null, 'rows' => 3, 'required' => false, 'help' => null, 'tip' => null])
 
 @php
     $key = str_replace(['[', ']'], ['.', ''], $name);
@@ -7,7 +7,7 @@
 
 <div {{ $attributes->only('class') }}>
     @if ($label)
-        <label for="{{ $id }}" class="form-label">{{ $label }} @if ($required)<span class="text-red-500">*</span>@endif</label>
+        <x-form.label :for="$id" :label="$label" :required="$required" :tip="$tip" />
     @endif
     <textarea id="{{ $id }}" name="{{ $name }}" rows="{{ $rows }}" @if ($required) required @endif
               {{ $attributes->except('class')->class(['form-control', 'is-invalid' => $errors->has($key)]) }}>{{ old($key, $value) }}</textarea>

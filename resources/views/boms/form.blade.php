@@ -5,6 +5,7 @@
 @endphp
 
 <x-layouts.app :title="$bom->exists ? 'Ubah BOM' : 'Buat BOM'">
+    <x-guide title="Apa itu BOM?" :steps="['BOM (Bill of Materials) adalah **resep produksi**: bahan apa saja dan berapa banyak untuk membuat **1 pcs** produk.', 'SPK memakai BOM aktif untuk menghitung bahan yang dikeluarkan dari gudang saat **Mulai Produksi**.', 'MRP memakai BOM untuk menghitung kekurangan bahan dari Sales Order yang masih terbuka.', 'Upah & overhead per pcs ikut dibebankan ke HPP SPK, sehingga harga pokok produk bisa dihitung.']"></x-guide>
     <form method="POST" action="{{ $bom->exists ? route('boms.update', $bom) : route('boms.store') }}"
           x-data="lineItems(@js(array_values($initialItems)), { material_id: '', quantity: '', waste_percent: 0, notes: '' })" class="space-y-6">
         @csrf
@@ -12,20 +13,21 @@
 
         <x-card title="Informasi BOM">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <x-form.select name="product_id" label="Produk" :options="$products->mapWithKeys(fn ($p) => [$p->id => $p->code.' - '.$p->name])" :value="$bom->product_id" required data-select />
-                <x-form.input name="name" label="Nama BOM" :value="$bom->name" required placeholder="mis. BOM Standar v1" />
-                <x-form.input name="labor_cost" label="Upah Jahit / CMT per pcs (Rp)" :value="$bom->labor_cost" data-money inputmode="numeric" help="Dibebankan otomatis ke SPK saat produksi dimulai." />
-                <x-form.input name="overhead_cost" label="Overhead per pcs (Rp)" :value="$bom->overhead_cost" data-money inputmode="numeric" help="mis. listrik, penyusutan mesin, sewa per pcs." />
+                <x-form.select name="product_id" tip="Produk jadi yang dibuat dengan resep ini. Satu produk boleh punya beberapa BOM (mis. versi bahan berbeda), tapi hanya satu yang aktif." label="Produk" :options="$products->mapWithKeys(fn ($p) => [$p->id => $p->code.' - '.$p->name])" :value="$bom->product_id" required data-select />
+                <x-form.input name="name" label="Nama BOM" tip="Nama versi resep agar mudah dibedakan, mis. BOM Standar v1 atau BOM Kain Rayon." :value="$bom->name" required placeholder="mis. BOM Standar v1" />
+                <x-form.input name="labor_cost" label="Upah Jahit / CMT per pcs (Rp)" :value="$bom->labor_cost" data-money inputmode="numeric" help="Dibebankan otomatis ke SPK saat produksi dimulai." tip="Perkiraan upah jahit per pcs untuk produksi internal. Masuk ke HPP SPK saat produksi dimulai.
+Tidak dipakai bila tahap jahit dimaklonkan atau artikel memakai tarif upah borongan (upah dihitung dari hasil kerja)." />
+                <x-form.input name="overhead_cost" label="Overhead per pcs (Rp)" :value="$bom->overhead_cost" data-money inputmode="numeric" help="mis. listrik, penyusutan mesin, sewa per pcs." tip="Biaya tidak langsung yang dibebankan per pcs (listrik, sewa, penyusutan mesin). Ikut menambah HPP setiap SPK." />
                 <x-form.textarea name="notes" label="Catatan" :value="$bom->notes" class="sm:col-span-2" rows="2" />
-                <x-form.checkbox name="is_active" label="Jadikan BOM aktif (BOM lain untuk produk ini akan dinonaktifkan)" :checked="$bom->is_active" class="sm:col-span-2" />
+                <x-form.checkbox name="is_active" label="Jadikan BOM aktif (BOM lain untuk produk ini akan dinonaktifkan)" tip="Hanya BOM aktif yang dipakai SPK baru dan MRP. Produk tanpa BOM aktif tidak bisa dibuatkan SPK." :checked="$bom->is_active" class="sm:col-span-2" />
             </div>
         </x-card>
 
-        <x-card title="Kebutuhan Bahan per 1 pcs" :padding="false">
+        <x-card title="Kebutuhan Bahan per 1 pcs" :padding="false" tip="Isi pemakaian bahan untuk satu potong produk jadi. Saat SPK dibuat, angka ini dikalikan jumlah pcs (+ waste).">
             <x-slot:header><button type="button" class="btn-secondary py-1.5" @click="add()">+ Bahan</button></x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">
-                    <thead><tr><th class="min-w-72">Bahan</th><th class="w-40">Qty / pcs</th><th class="w-32">Waste %</th><th>Keterangan</th><th class="w-12"></th></tr></thead>
+                    <thead><tr><th class="min-w-72">Bahan</th><th class="w-40">Qty / pcs <x-tip title="Qty per pcs" text="Jumlah bahan untuk 1 pcs dalam satuan bahan, mis. 1,6 (meter kain) atau 7 (kancing)." /></th><th class="w-32">Waste % <x-tip title="Waste (susut)" text="Cadangan bahan yang terbuang saat potong/jahit. Mis. 5 berarti kebutuhan dinaikkan 5%: 1,6 m → 1,68 m per pcs." /></th><th>Keterangan</th><th class="w-12"></th></tr></thead>
                     <tbody class="divide-y divide-gray-100">
                         <template x-for="(row, index) in rows" :key="row.key">
                             <tr>

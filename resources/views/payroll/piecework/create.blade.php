@@ -1,8 +1,9 @@
 <x-layouts.app title="Input Hasil Kerja Borongan">
+    <x-guide title="Mencatat hasil kerja harian" :steps="['Pilih SPK yang sedang **Dalam Proses**, lalu isi tanggal kerja.', 'Per baris: pilih karyawan, operasi (atau pcs jadi komplit), jumlah **bagus** dan **reject QC**.', 'Upah = bagus × tarif; reject tidak dibayar. Upah langsung menambah HPP SPK dan menunggu dibayar di Penggajian.']"></x-guide>
     <x-card class="mb-6">
         <form method="GET" class="flex flex-wrap items-end gap-2">
             <div class="w-full sm:w-96">
-                <x-form.select name="production_order_id" label="SPK (Dalam Proses)" :value="$spk?->id" placeholder="-- Pilih SPK --" onchange="this.form.submit()"
+                <x-form.select name="production_order_id" label="SPK (Dalam Proses)" tip="Hanya SPK yang sudah Mulai Produksi dan belum selesai yang bisa dicatat hasil kerjanya." :value="$spk?->id" placeholder="-- Pilih SPK --" onchange="this.form.submit()"
                     :options="$orders->mapWithKeys(fn ($o) => [$o->id => $o->number.' · '.$o->product->name.' ('.qty($o->quantity).' pcs)'])" />
             </div>
             <noscript><button type="submit" class="btn-secondary">Pilih</button></noscript>
@@ -50,12 +51,12 @@
                     <input type="hidden" name="production_order_id" value="{{ $spk->id }}">
                     <x-card title="Hasil Kerja {{ $spk->number }}" :padding="false">
                         <div class="grid grid-cols-1 gap-4 border-b border-gray-200 p-4 sm:grid-cols-3">
-                            <x-form.input name="date" label="Tanggal Kerja" :value="old('date', now()->toDateString())" required data-date />
+                            <x-form.input name="date" label="Tanggal Kerja" tip="Tanggal pekerjaan dilakukan. Menentukan periode penggajian yang akan membayarnya." :value="old('date', now()->toDateString())" required data-date />
                             <x-form.input name="notes" label="Catatan" :value="old('notes')" placeholder="mis. Line 2, shift pagi" class="sm:col-span-2" />
                         </div>
                         <div class="overflow-x-auto">
                             <table class="table-base">
-                                <thead><tr><th class="w-8">#</th><th>Karyawan</th><th>Operasi / Segmen</th><th class="w-28 text-right">Bagus</th><th class="w-28 text-right">Reject QC</th><th class="w-36 text-right">Upah</th><th class="w-10"></th></tr></thead>
+                                <thead><tr><th class="w-8">#</th><th>Karyawan</th><th>Operasi / Segmen</th><th class="w-28 text-right">Bagus <x-tip title="Bagus" text="Jumlah pcs yang lolos QC. Hanya ini yang dibayar. Maksimal sebesar sisa qty operasi di SPK." /></th><th class="w-28 text-right">Reject QC <x-tip title="Reject QC" text="Jumlah pcs yang ditolak QC. Dicatat untuk evaluasi kualitas, tidak dibayar." /></th><th class="w-36 text-right">Upah</th><th class="w-10"></th></tr></thead>
                                 <tbody class="divide-y divide-gray-100">
                                     <template x-for="(row, i) in rows" :key="i">
                                         <tr>

@@ -12,17 +12,18 @@
 
         <x-card title="Informasi Produk">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <x-form.input name="code" label="Kode Produk" :value="$product->code" required placeholder="mis. KMJ-001" x-model="code" />
+                <x-form.input name="code" label="Kode Produk" tip="Kode artikel/model. Kode ini juga dipakai sebagai awalan SKU varian yang dibuat otomatis, mis. KMJ-001-HITAM-M." :value="$product->code" required placeholder="mis. KMJ-001" x-model="code" />
                 <x-form.input name="name" label="Nama Produk" :value="$product->name" required placeholder="mis. Kemeja Flanel Lengan Panjang" />
                 <x-form.select name="category_id" label="Kategori" :options="$categories->pluck('name', 'id')" :value="$product->category_id" data-select />
                 <x-form.select name="unit_id" label="Satuan" :options="$units->mapWithKeys(fn ($u) => [$u->id => $u->code.' - '.$u->name])" :value="$product->unit_id" required data-select />
-                <x-form.input name="price" label="Harga Jual Standar (Rp)" :value="$product->price" data-money inputmode="numeric" />
-                <x-form.checkbox name="is_active" label="Aktif" :checked="$product->is_active" class="sm:pt-7" />
+                <x-form.input name="price" label="Harga Jual Standar (Rp)" tip="Harga jual default per pcs. Otomatis terisi saat produk dipilih di penawaran atau Sales Order dan masih bisa diubah per transaksi." :value="$product->price" data-money inputmode="numeric" />
+                <x-form.checkbox name="is_active" label="Aktif" :checked="$product->is_active" tip="Produk nonaktif tidak muncul lagi di pilihan SO, SPK dan BOM baru." class="sm:pt-7" />
                 <x-form.textarea name="description" label="Deskripsi" :value="$product->description" class="sm:col-span-2" />
             </div>
         </x-card>
 
-        <x-card title="Varian (Ukuran / Warna)" :padding="false">
+        <x-card title="Varian (Ukuran / Warna)" :padding="false" tip="Stok, penjualan dan produksi dicatat per varian (kombinasi ukuran & warna). Setiap varian punya SKU sendiri.
+Ketik warna lalu klik Buat semua ukuran untuk membuat varian S s.d. XXL sekaligus.">
             <x-slot:header>
                 <div class="flex flex-wrap items-center gap-2">
                     <input type="text" x-model="bulkColor" placeholder="Warna (opsional)" class="form-control w-36 py-1.5">
@@ -32,7 +33,7 @@
             </x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">
-                    <thead><tr><th class="w-48">SKU</th><th class="w-36">Ukuran</th><th>Warna</th><th class="w-48">Harga Khusus (Rp)</th><th class="w-12"></th></tr></thead>
+                    <thead><tr><th class="w-48">SKU <x-tip title="SKU" text="Kode unik per varian. Terisi otomatis dari kode produk + warna + ukuran, boleh diubah. Untuk marketplace, samakan dengan SKU di Seller Center agar pesanan terhubung otomatis." /></th><th class="w-36">Ukuran</th><th>Warna</th><th class="w-48">Harga Khusus (Rp) <x-tip title="Harga khusus" text="Isi bila varian ini harganya beda dari harga produk (mis. ukuran XXL lebih mahal). Kosongkan untuk mengikuti harga jual standar." /></th><th class="w-12"></th></tr></thead>
                     <tbody class="divide-y divide-gray-100">
                         <template x-for="(row, index) in rows" :key="row.key">
                             <tr>

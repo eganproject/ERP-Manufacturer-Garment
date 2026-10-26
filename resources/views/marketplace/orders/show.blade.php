@@ -98,9 +98,9 @@
                         <form method="POST" action="{{ route('marketplace-orders.return', $order) }}" x-data="{ condition: '{{ old('condition', 'good') }}', setBack(v) { this.$root.querySelectorAll('[data-back]').forEach(i => i.value = v ? i.dataset.back : 0); this.$root.querySelectorAll('[data-defect]').forEach(i => i.value = this.condition === 'defect' ? i.dataset.defect : 0); } }" data-confirm="Penjualan bagian yang direfund dibalik dan barang yang kembali masuk {{ $order->store->warehouse->name }}. Retur hanya bisa dicatat sekali." data-confirm-button="Ya, catat retur">
                             @csrf
                             <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <x-form.select name="condition" label="Kondisi Paket Saat Dibuka" :options="MarketplaceReturnCondition::options()" :placeholder="false" required x-model="condition"
+                                <x-form.select name="condition" label="Kondisi Paket Saat Dibuka" tip="Sesuai: barang kembali ke stok. Cacat: masuk stok cacat. Bukan barang kita / kosong / tidak sampai: barang tidak masuk stok dan nilainya dicatat sebagai kerugian, lalu bisa diajukan banding." :options="MarketplaceReturnCondition::options()" :placeholder="false" required x-model="condition"
                                                x-on:change="setBack(['good', 'defect'].includes(condition))" />
-                                <x-form.input name="refund_amount" label="Nilai Refund ke Pembeli (opsional)" data-money help="Isi bila platform merefund sebagian (mis. kompensasi barang kurang). Kosong = sesuai qty direfund." />
+                                <x-form.input name="refund_amount" label="Nilai Refund ke Pembeli (opsional)" data-money help="Isi bila platform merefund sebagian (mis. kompensasi barang kurang). Kosong = sesuai qty direfund." tip="Nominal yang dikembalikan platform ke pembeli. Penjualan & PPN dibalik sebesar nilai ini." />
                             </div>
                             <div x-show="['wrong_item', 'empty', 'not_received'].includes(condition)" class="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                                 Barang kita tidak kembali: isi <strong>Kembali = 0</strong> (barang asing tidak dimasukkan ke stok). Nilai HPP barang yang hilang dicatat sebagai <em>Kerugian Retur Marketplace</em>.
@@ -109,7 +109,7 @@
                             <p class="mb-3 text-sm text-gray-500">Per baris: qty direfund ke pembeli (mengurangi penjualan & piutang), qty barang <strong>kita</strong> yang benar-benar kembali ke gudang, dan dari yang kembali berapa yang cacat (masuk stok cacat). Refund tanpa barang kembali: isi refund saja.</p>
                             <div class="overflow-x-auto">
                                 <table class="table-base">
-                                    <thead><tr><th>Barang</th><th class="text-right">Qty</th><th class="w-28">Direfund</th><th class="w-28">Kembali</th><th class="w-28">Cacat</th></tr></thead>
+                                    <thead><tr><th>Barang</th><th class="text-right">Qty</th><th class="w-28">Direfund <x-tip title="Direfund" text="Jumlah pcs yang uangnya dikembalikan ke pembeli." /></th><th class="w-28">Kembali <x-tip title="Kembali" text="Jumlah pcs barang KITA yang benar-benar diterima kembali. Isi 0 bila paket kosong atau barang asing." /></th><th class="w-28">Cacat <x-tip title="Cacat" text="Bagian dari barang kembali yang rusak. Masuk stok cacat, bukan stok jual." /></th></tr></thead>
                                     <tbody class="divide-y divide-gray-100">
                                         @foreach ($order->items as $item)
                                             <tr>
@@ -135,7 +135,7 @@
 
             @can('marketplace.manage')
                 @if ($order->canOpenClaim())
-                    <x-card title="Banding / Klaim ke Platform" class="border-red-300">
+                    <x-card title="Banding / Klaim ke Platform" class="border-red-300" tip="Ajukan banding di Seller Center dengan bukti video unboxing dan foto paket, lalu catat di sini agar bisa dipantau sampai ada keputusan.">
                         <p class="text-sm text-gray-600">Retur ini bermasalah ({{ $order->return_condition?->label() }}{{ (float) $order->returned_lost_cost ? ', HPP hilang '.rupiah($order->returned_lost_cost) : '' }}).
                             Ajukan banding di Seller Center {{ $order->store->platform->label() }} sebelum batas waktunya, lampirkan video unboxing, foto paket & label resi retur.</p>
                         <div class="mt-3"><x-reason-form :action="route('marketplace-orders.claim', $order)" title="Catat banding?" text="Tulis nomor tiket / ringkasan bukti yang diajukan." placeholder="No. tiket & bukti" button="Catat banding" :danger="false" class="btn-primary">Catat Banding Diajukan</x-reason-form></div>
@@ -144,8 +144,8 @@
                     <x-card title="Hasil Banding" class="border-amber-300">
                         <form method="POST" action="{{ route('marketplace-orders.claim.resolve', $order) }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4" x-data="{ result: 'won' }">
                             @csrf
-                            <x-form.select name="result" label="Keputusan" :options="['won' => 'Diterima (dapat kompensasi)', 'lost' => 'Ditolak']" :placeholder="false" x-model="result" />
-                            <div x-show="result === 'won'"><x-form.input name="claim_amount" label="Nilai Kompensasi" data-money :value="(float) $order->returned_total" /></div>
+                            <x-form.select name="result" label="Keputusan" tip="Diterima: kompensasi menjadi piutang marketplace dan mengurangi kerugian. Ditolak: kerugian tetap." :options="['won' => 'Diterima (dapat kompensasi)', 'lost' => 'Ditolak']" :placeholder="false" x-model="result" />
+                            <div x-show="result === 'won'"><x-form.input name="claim_amount" label="Nilai Kompensasi" tip="Nominal penggantian dari platform. Akan tertutup saat ikut dicairkan di laporan penghasilan." data-money :value="(float) $order->returned_total" /></div>
                             <x-form.input name="date" label="Tanggal Keputusan" :value="today()->toDateString()" data-date required />
                             <x-form.input name="notes" label="Catatan" />
                             <div class="sm:col-span-4 text-right"><button type="submit" class="btn-primary">Simpan Hasil Banding</button></div>

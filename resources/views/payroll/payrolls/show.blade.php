@@ -45,7 +45,7 @@
             <form method="POST" action="{{ route('payrolls.pay', $payroll) }}" class="flex flex-wrap items-end gap-3" data-confirm="Upah {{ rupiah($payroll->total_net) }} ditandai dibayar dan dijurnal." data-confirm-icon="question" data-confirm-button="Ya, bayar">
                 @csrf
                 <div class="w-44"><x-form.input name="payment_date" label="Tanggal Bayar" :value="now()->toDateString()" required data-date /></div>
-                <div class="w-48"><x-form.select name="payment_method" label="Cara Bayar" :options="$methods" value="cash" :placeholder="false" required /></div>
+                <div class="w-48"><x-form.select name="payment_method" label="Cara Bayar" tip="Tunai atau transfer. Menentukan rekening default bila rekening tidak dipilih." :options="$methods" value="cash" :placeholder="false" required /></div>
                 <div class="w-64"><x-form.cash-account label="Dari Rekening" /></div>
                 <button type="submit" class="btn-success">Tandai Dibayar</button>
             </form>
@@ -61,7 +61,7 @@
                     <thead>
                         <tr>
                             <th>Karyawan</th><th class="text-right">Pcs / Operasi</th><th class="text-right">Upah</th>
-                            <th class="text-right">Bonus / Tunjangan</th><th class="text-right">Potong Kasbon</th><th class="text-right">Potongan Lain</th>
+                            <th class="text-right">Bonus / Tunjangan <x-tip title="Bonus / tunjangan" text="Tambahan di luar upah borongan, mis. bonus target atau uang makan. Dicatat sebagai beban bonus upah produksi." /></th><th class="text-right">Potong Kasbon <x-tip title="Potong kasbon" text="Bagian kasbon karyawan yang dilunasi dari upah periode ini. Maksimal sebesar sisa kasbon." /></th><th class="text-right">Potongan Lain <x-tip title="Potongan lain" text="Potongan selain kasbon, mis. denda atau ganti rugi bahan rusak." /></th>
                             <th class="text-right">Diterima</th><th>Catatan</th><th></th>
                         </tr>
                     </thead>

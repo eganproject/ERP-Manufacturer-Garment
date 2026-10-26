@@ -210,7 +210,143 @@ export function setMoney(el, value) {
     }
 }
 
-window.ERP = { initPlugins, setMoney, formatNumber, toast };
+/**
+ * Tooltip penjelasan untuk <x-tip> (tombol .tip-trigger[data-tip]).
+ * Satu elemen tooltip dipakai bersama; posisi otomatis di atas/bawah dan tidak keluar layar.
+ * Mouse: muncul saat hover. Keyboard: saat fokus, Esc menutup. Sentuh: ketuk untuk buka/tutup.
+ */
+const tips = (() => {
+    let el;
+    let current = null;
+    let pinned = false;
+    let hideTimer;
+    let showTimer;
+
+    const ensure = () => {
+        if (el) return el;
+        el = document.createElement('div');
+        el.className = 'erp-tip';
+        el.id = 'erp-tip';
+        el.setAttribute('role', 'tooltip');
+        el.dataset.state = 'hidden';
+        el.innerHTML = '<span class="erp-tip-title"></span><span class="erp-tip-body"></span><span class="erp-tip-arrow" aria-hidden="true"></span>';
+        el.addEventListener('pointerenter', () => clearTimeout(hideTimer));
+        el.addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && !pinned && hide(120));
+        document.body.appendChild(el);
+        return el;
+    };
+
+    const place = () => {
+        if (!current || !el) return;
+        const gap = 10;
+        const margin = 12;
+        const r = current.getBoundingClientRect();
+        const vw = document.documentElement.clientWidth;
+        const vh = window.innerHeight;
+        const w = el.offsetWidth;
+        const h = el.offsetHeight;
+        const side = r.top - h - gap >= margin || r.bottom + h + gap > vh - margin ? 'top' : 'bottom';
+        const center = r.left + r.width / 2;
+        const left = Math.min(Math.max(center - w / 2, margin), vw - w - margin);
+        const top = side === 'top' ? Math.max(r.top - h - gap, margin) : r.bottom + gap;
+
+        el.dataset.side = side;
+        el.style.left = `${Math.round(left)}px`;
+        el.style.top = `${Math.round(top)}px`;
+        el.querySelector('.erp-tip-arrow').style.left = `${Math.round(Math.min(Math.max(center - left - 5, 10), w - 20))}px`;
+    };
+
+    const show = (trigger) => {
+        clearTimeout(hideTimer);
+        clearTimeout(showTimer);
+        ensure();
+
+        if (current && current !== trigger) current.setAttribute('aria-expanded', 'false');
+        current = trigger;
+
+        const title = trigger.dataset.tipTitle || '';
+        el.querySelector('.erp-tip-title').textContent = title;
+        el.querySelector('.erp-tip-title').hidden = !title;
+        el.querySelector('.erp-tip-body').textContent = trigger.dataset.tip;
+        trigger.setAttribute('aria-expanded', 'true');
+        trigger.setAttribute('aria-describedby', 'erp-tip');
+        place();
+        el.dataset.state = 'shown';
+    };
+
+    const hide = (delay = 0) => {
+        clearTimeout(showTimer);
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => {
+            if (!el) return;
+            el.dataset.state = 'hidden';
+            current?.setAttribute('aria-expanded', 'false');
+            current?.removeAttribute('aria-describedby');
+            current = null;
+            pinned = false;
+        }, delay);
+    };
+
+    const triggerOf = (target) => (target instanceof Element ? target.closest('.tip-trigger[data-tip]') : null);
+
+    document.addEventListener('pointerover', (e) => {
+        const t = triggerOf(e.target);
+        if (!t || e.pointerType !== 'mouse' || pinned) return;
+        clearTimeout(hideTimer);
+        clearTimeout(showTimer);
+        showTimer = setTimeout(() => show(t), current ? 0 : 120);
+    });
+
+    document.addEventListener('pointerout', (e) => {
+        const t = triggerOf(e.target);
+        if (!t || e.pointerType !== 'mouse' || pinned) return;
+        if (el && e.relatedTarget instanceof Node && el.contains(e.relatedTarget)) return;
+        hide(150);
+    });
+
+    document.addEventListener('click', (e) => {
+        const t = triggerOf(e.target);
+
+        if (t) {
+            // Tombol ini sering ada di dalam <label>/<form>: jangan memicu aksi lain
+            e.preventDefault();
+            e.stopPropagation();
+            if (current === t && pinned) {
+                hide();
+            } else {
+                show(t);
+                pinned = true;
+            }
+            return;
+        }
+
+        if (current && !(el && el.contains(e.target))) hide();
+    }, true);
+
+    document.addEventListener('focusin', (e) => {
+        const t = triggerOf(e.target);
+        if (t && t.matches(':focus-visible')) show(t);
+    });
+
+    document.addEventListener('focusout', (e) => {
+        if (triggerOf(e.target) && !pinned) hide(100);
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && current) {
+            const t = current;
+            hide();
+            t.focus({ preventScroll: true });
+        }
+    });
+
+    window.addEventListener('resize', () => current && place());
+    window.addEventListener('scroll', () => current && place(), { capture: true, passive: true });
+
+    return { show, hide };
+})();
+
+window.ERP = { initPlugins, setMoney, formatNumber, toast, tips };
 
 document.addEventListener('submit', async (event) => {
     const form = event.target;

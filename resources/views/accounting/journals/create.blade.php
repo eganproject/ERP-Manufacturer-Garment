@@ -5,6 +5,7 @@
     ]);
 @endphp
 <x-layouts.app title="Jurnal Manual">
+    <x-guide title="Kapan membuat jurnal manual?" :steps="['Hanya untuk koreksi atau transaksi yang tidak punya menu sendiri, mis. **saldo awal**, koreksi salah akun, atau akrual biaya.', 'Transaksi harian (penjualan, pembelian, pembayaran, kas) sudah dijurnal otomatis, jadi jangan dicatat ulang di sini.', 'Total **Debit harus sama dengan Kredit** sebelum bisa disimpan. Tanggal di periode yang sudah ditutup akan ditolak.']"></x-guide>
     <form method="POST" action="{{ route('journals.store') }}" x-data="journalLines(@js(array_values($initial)))" class="space-y-6">
         @csrf
 
@@ -12,7 +13,7 @@
             <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                 <x-form.input name="date" label="Tanggal" :value="today()" required data-date
                               :help="$lockedUntil ? 'Buku ditutup s.d. '.tanggal($lockedUntil) : null" />
-                <x-form.input name="reference" label="No. Bukti / Referensi" help="Opsional, mis. no. kuitansi" />
+                <x-form.input name="reference" label="No. Bukti / Referensi" tip="Nomor dokumen pendukung (kuitansi, memo) agar jurnal mudah ditelusuri saat audit." help="Opsional, mis. no. kuitansi" />
                 <x-form.input name="description" label="Keterangan" :value="$description" required class="md:col-span-2"
                               placeholder="Mis. Saldo awal, biaya listrik Oktober, penyusutan mesin" />
             </div>
@@ -22,7 +23,7 @@
             <x-slot:header><button type="button" class="btn-secondary py-1.5" @click="add()">+ Baris</button></x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">
-                    <thead><tr><th class="min-w-72">Akun</th><th class="min-w-48">Keterangan baris</th><th class="w-44">Debit (Rp)</th><th class="w-44">Kredit (Rp)</th><th class="w-12"></th></tr></thead>
+                    <thead><tr><th class="min-w-72">Akun</th><th class="min-w-48">Keterangan baris</th><th class="w-44">Debit (Rp) <x-tip title="Debit" text="Menambah aset & beban, atau mengurangi kewajiban, ekuitas & pendapatan." /></th><th class="w-44">Kredit (Rp) <x-tip title="Kredit" text="Menambah kewajiban, ekuitas & pendapatan, atau mengurangi aset & beban." /></th><th class="w-12"></th></tr></thead>
                     <tbody class="divide-y divide-gray-100">
                         <template x-for="(row, index) in rows" :key="row.key">
                             <tr>

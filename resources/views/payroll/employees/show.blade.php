@@ -25,7 +25,7 @@
             </dl>
         </x-card>
 
-        <x-card title="Kasbon" :padding="false" class="lg:col-span-2">
+        <x-card title="Kasbon" :padding="false" class="lg:col-span-2" tip="Pinjaman/uang muka upah untuk karyawan. Kasbon yang belum lunas bisa dipotong dari upah saat menyusun penggajian.">
             <div class="overflow-x-auto">
                 <table class="table-base">
                     <thead><tr><th>No.</th><th>Tanggal</th><th>Keterangan</th><th class="text-right">Jumlah</th><th>Status</th><th></th></tr></thead>
@@ -58,8 +58,8 @@
                 <form method="POST" action="{{ route('employees.advances.store', $employee) }}" class="grid grid-cols-1 gap-3 border-t border-gray-200 p-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
                     @csrf
                     <x-form.input name="date" label="Tanggal" :value="now()->toDateString()" required data-date />
-                    <x-form.input name="amount" label="Jumlah (Rp)" required data-money inputmode="numeric" />
-                    <x-form.select name="payment_method" label="Dibayar" :options="$methods" value="cash" :placeholder="false" required />
+                    <x-form.input name="amount" label="Jumlah (Rp)" required data-money tip="Nominal uang yang dipinjamkan ke karyawan." inputmode="numeric" />
+                    <x-form.select name="payment_method" label="Dibayar" :options="$methods" tip="Cara kasbon diberikan. Menentukan rekening default bila rekening tidak dipilih." value="cash" :placeholder="false" required />
                     <x-form.cash-account label="Dari Rekening" />
                     <x-form.input name="notes" label="Keterangan" placeholder="mis. keperluan sekolah anak" />
                     <button type="submit" class="btn-primary">+ Catat Kasbon</button>

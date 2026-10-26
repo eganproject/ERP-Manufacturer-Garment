@@ -18,16 +18,16 @@
                     <p class="py-2 text-sm font-medium">{{ $order->supplier->name }}</p>
                     <p class="text-xs text-gray-500">{{ $order->number }} · SPK {{ $order->productionOrder->number }} · termin {{ $order->supplier->payment_terms }} hari</p>
                 </div>
-                <x-form.input name="supplier_invoice_number" label="No. Nota / Faktur Vendor" />
-                <x-form.input name="bill_date" label="Tanggal Nota" :value="now()" required data-date />
-                <x-form.input name="due_date" label="Jatuh Tempo" :value="now()->addDays($order->supplier->payment_terms)" data-date />
-                <x-form.input name="tax_invoice_number" label="No. Faktur Pajak" placeholder="Bila tagihan ber-PPN" help="Dipakai di laporan PPN masukan." />
+                <x-form.input name="supplier_invoice_number" label="No. Nota / Faktur Vendor" tip="Nomor nota tagihan dari vendor maklon, untuk pencocokan saat pembayaran." />
+                <x-form.input name="bill_date" label="Tanggal Nota" tip="Tanggal yang tertera di nota vendor. Hutang jasa maklon diakui pada tanggal ini." :value="now()" required data-date />
+                <x-form.input name="due_date" label="Jatuh Tempo" tip="Batas waktu pembayaran ke vendor. Default = tanggal nota + termin vendor." :value="now()->addDays($order->supplier->payment_terms)" data-date />
+                <x-form.input name="tax_invoice_number" label="No. Faktur Pajak" placeholder="Bila tagihan ber-PPN" help="Dipakai di laporan PPN masukan." tip="Nomor faktur pajak dari supplier/vendor (13–20 digit, mis. 010.000-26.00000001). Wajib diisi agar PPN tagihan ini bisa dikreditkan sebagai PPN masukan di Laporan PPN." />
                     <x-form.input name="tax_invoice_date" label="Tgl Faktur Pajak" data-date help="Kosong = tanggal tagihan." />
                     <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-2" />
             </div>
         </x-card>
 
-        <x-card title="Penerimaan Hasil yang Ditagih" :padding="false">
+        <x-card title="Penerimaan Hasil yang Ditagih" :padding="false" tip="Centang penerimaan hasil (TMK-) yang ditagih vendor di nota ini. Ongkos jasa = hasil bagus × tarif per pcs; hasil reject tidak dibayar.">
             <div class="overflow-x-auto">
                 <table class="table-base">
                     <thead><tr><th class="w-10"></th><th>No. Terima</th><th>Tanggal</th><th>SJ Vendor</th><th class="text-right">Hasil Bagus</th><th class="text-right">Tarif</th><th class="text-right">Ongkos Jasa</th></tr></thead>
@@ -46,8 +46,8 @@
                     </tbody>
                     <tfoot class="bg-gray-50">
                         <tr><td colspan="6" class="px-4 py-2 text-right">Subtotal</td><td class="px-4 py-2 text-right whitespace-nowrap" x-text="'Rp ' + ERP.formatNumber(subtotal)"></td></tr>
-                        <tr><td colspan="6" class="px-4 py-2 text-right">Diskon / Potongan (Rp)</td><td class="px-4 py-2"><input type="number" step="any" min="0" name="discount" x-model.number="discount" class="form-control text-right"></td></tr>
-                        <tr><td colspan="6" class="px-4 py-2 text-right">PPN (%)</td><td class="px-4 py-2"><input type="number" step="0.01" min="0" max="100" name="tax_rate" x-model.number="tax" class="form-control text-right"></td></tr>
+                        <tr><td colspan="6" class="px-4 py-2 text-right">Diskon / Potongan (Rp) <x-tip title="Potongan" text="Potongan dari vendor atau denda yang disepakati (mis. keterlambatan), dalam rupiah." /></td><td class="px-4 py-2"><input type="number" step="any" min="0" name="discount" x-model.number="discount" class="form-control text-right"></td></tr>
+                        <tr><td colspan="6" class="px-4 py-2 text-right">PPN (%) <x-tip title="PPN" text="Tarif PPN di nota vendor. Isi 0 bila vendor tidak memungut PPN." /></td><td class="px-4 py-2"><input type="number" step="0.01" min="0" max="100" name="tax_rate" x-model.number="tax" class="form-control text-right"></td></tr>
                         <tr><td colspan="6" class="px-4 py-2 text-right">Nilai PPN</td><td class="px-4 py-2 text-right whitespace-nowrap" x-text="'Rp ' + ERP.formatNumber(taxAmount)"></td></tr>
                         <tr class="font-semibold"><td colspan="6" class="px-4 py-3 text-right">Total Tagihan</td><td class="px-4 py-3 text-right whitespace-nowrap" x-text="'Rp ' + ERP.formatNumber(total)"></td></tr>
                     </tfoot>

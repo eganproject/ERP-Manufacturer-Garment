@@ -4,15 +4,15 @@
             @csrf
             @if ($customer->exists) @method('PUT') @endif
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <x-form.input name="code" label="Kode" :value="$customer->code" required />
+                <x-form.input name="code" label="Kode" :value="$customer->code" required tip="Kode singkat dan unik untuk mencari pelanggan dengan cepat, mis. CUST-001." />
                 <x-form.input name="name" label="Nama" :value="$customer->name" required />
                 <x-form.input name="contact_person" label="Nama Kontak" :value="$customer->contact_person" />
                 <x-form.input name="phone" label="Telepon / WA" :value="$customer->phone" data-phone placeholder="08xx-xxxx-xxxx" />
                 <x-form.input name="email" type="email" label="Email" :value="$customer->email" />
-                <x-form.input name="tax_number" label="NPWP" :value="$customer->tax_number" />
-                <x-form.input name="payment_terms" type="number" min="0" max="365" label="Termin Pembayaran (hari)" :value="$customer->payment_terms ?? 30" required help="Dipakai untuk menghitung jatuh tempo invoice/tagihan. 0 = tunai." />
+                <x-form.input name="tax_number" label="NPWP" tip="Nomor pokok wajib pajak. Dicetak di dokumen dan dipakai untuk faktur pajak PPN. Kosongkan bila tidak ada." :value="$customer->tax_number" />
+                <x-form.input name="payment_terms" type="number" min="0" max="365" label="Termin Pembayaran (hari)" :value="$customer->payment_terms ?? 30" required help="Dipakai untuk menghitung jatuh tempo invoice/tagihan. 0 = tunai." tip="Lama waktu pelanggan boleh membayar setelah invoice dibuat. Mis. 30 berarti jatuh tempo 30 hari setelah tanggal invoice dan muncul di laporan umur piutang bila lewat." />
                 <x-form.textarea name="address" label="Alamat" :value="$customer->address" class="sm:col-span-2" />
-                <x-form.checkbox name="is_active" label="Aktif" :checked="$customer->is_active" />
+                <x-form.checkbox name="is_active" label="Aktif" :checked="$customer->is_active" tip="Bila dinonaktifkan, pelanggan tidak bisa dipilih di transaksi baru. Transaksi lama tetap tersimpan." />
             </div>
             <x-form.actions :cancel="route('customers.index')" />
         </form>

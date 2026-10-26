@@ -75,10 +75,10 @@
                 <form method="POST" action="{{ route('marketplace-mappings.store') }}" class="space-y-4">
                     @csrf
                     <x-form.select name="marketplace_store_id" label="Toko" :options="$stores" :value="$storeId" required />
-                    <x-form.input name="marketplace_sku" label="SKU Marketplace" required help="SKU penjual (Seller SKU / Nomor Referensi SKU)." />
+                    <x-form.input name="marketplace_sku" label="SKU Marketplace" required help="SKU penjual (Seller SKU / Nomor Referensi SKU)." tip="Kode SKU yang Anda isi di Seller Center. Harus sama persis dengan yang muncul di file pesanan." />
                     <x-form.input name="marketplace_name" label="Nama di Marketplace" />
-                    <x-form.select name="product_variant_id" label="Varian ERP" :options="$variants" required data-select />
-                    <x-form.input name="units_per_item" label="Isi per Paket (pcs)" value="1" type="number" step="0.01" min="0.01" help="Lebih dari 1 untuk paket bundling, mis. 1 SKU = 3 pcs." />
+                    <x-form.select name="product_variant_id" label="Varian ERP" tip="Varian produk di ERP yang dikirim saat SKU marketplace ini terjual. Stoknya yang akan berkurang." :options="$variants" required data-select />
+                    <x-form.input name="units_per_item" label="Isi per Paket (pcs)" value="1" type="number" step="0.01" min="0.01" help="Lebih dari 1 untuk paket bundling, mis. 1 SKU = 3 pcs." tip="Berapa pcs varian ERP dalam 1 unit SKU marketplace. Mis. paket isi 3 → setiap 1 pesanan mengurangi stok 3 pcs." />
                     <button type="submit" class="btn-primary w-full">Simpan Mapping</button>
                 </form>
             </x-card>

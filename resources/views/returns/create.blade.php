@@ -1,5 +1,6 @@
 {{-- Form retur penjualan / pembelian. $kind, $order, $orders, $lines --}}
 <x-layouts.app :title="'Catat '.$kind->title">
+    <x-guide title="Cara mencatat retur" :steps="['Pilih dokumen asal (SO untuk retur dari pelanggan, PO untuk retur ke supplier).', 'Isi tanggal, gudang dan alasan retur, lalu jumlah per barang di kolom **Retur Sekarang**.', 'Retur mengurangi barang yang **belum ditagih** lebih dulu. Bila sudah ditagih, kelebihannya otomatis menjadi nota kredit/debit yang memotong invoice atau tagihan.', 'Retur penjualan: isi **Di antaranya Cacat** untuk barang rusak agar masuk stok cacat, bukan stok jual.']"></x-guide>
     <x-card :title="'1. Pilih '.$kind->orderLabel" class="mb-6">
         <form method="GET" action="{{ route($kind->route.'.create') }}" class="flex flex-wrap items-end gap-2">
             <div class="w-full sm:w-[28rem]">
@@ -24,9 +25,9 @@
                         <span class="form-label">{{ $kind->partyLabel }}</span>
                         <p class="py-2 text-sm font-medium">{{ $order->{$kind->partyRelation}->name }}</p>
                     </div>
-                    <x-form.input name="return_date" label="Tanggal Retur" :value="now()" required data-date />
-                    <x-form.warehouse :label="$kind->isSales ? 'Masuk ke Gudang' : 'Keluar dari Gudang'" />
-                    <x-form.input name="reason" label="Alasan Retur" required class="md:col-span-2"
+                    <x-form.input name="return_date" label="Tanggal Retur" tip="Tanggal barang retur diterima/dikirim balik. Tercatat di kartu stok dan jurnal." :value="now()" required data-date />
+                    <x-form.warehouse :label="$kind->isSales ? 'Masuk ke Gudang' : 'Keluar dari Gudang'" :tip="$kind->isSales ? 'Gudang yang menerima barang kembalian pelanggan. Stok barang ini bertambah.' : 'Gudang asal bahan yang dikembalikan ke supplier. Stok gudang ini berkurang.'" />
+                    <x-form.input name="reason" label="Alasan Retur" required tip="Penyebab retur. Dicetak di dokumen retur dan berguna untuk evaluasi kualitas produk atau supplier." class="md:col-span-2"
                         :placeholder="$kind->isSales ? 'Mis. jahitan lepas, salah ukuran, warna tidak sesuai' : 'Mis. kain cacat, warna tidak sesuai, kelebihan kirim'" />
                     <x-form.textarea name="notes" label="Catatan" rows="2" class="md:col-span-4" />
                 </div>
@@ -35,7 +36,7 @@
             <x-card title="3. Barang yang Diretur" :padding="false">
                 <div class="overflow-x-auto">
                     <table class="table-base">
-                        <thead><tr><th>{{ $kind->itemLabel }}</th><th class="text-right">{{ $kind->shippedLabel }}</th><th class="text-right">Sudah Diretur</th><th class="text-right">Belum Ditagih</th>@unless ($kind->isSales)<th class="text-right">Stok</th>@endunless<th class="text-right">Harga</th><th class="w-40">Retur Sekarang</th>@if ($kind->isSales)<th class="w-40">Di antaranya Cacat</th>@endif</tr></thead>
+                        <thead><tr><th>{{ $kind->itemLabel }}</th><th class="text-right">{{ $kind->shippedLabel }}</th><th class="text-right">Sudah Diretur</th><th class="text-right">Belum Ditagih</th>@unless ($kind->isSales)<th class="text-right">Stok</th>@endunless<th class="text-right">Harga</th><th class="w-40">Retur Sekarang <x-tip title="Retur sekarang" text="Jumlah yang dikembalikan pada dokumen ini, maksimal sebesar yang sudah dikirim/diterima dikurangi retur sebelumnya." /></th>@if ($kind->isSales)<th class="w-40">Di antaranya Cacat <x-tip title="Di antaranya cacat" text="Bagian dari qty retur yang rusak. Barang ini masuk stok cacat (karantina) dan tidak ikut terkirim ke pelanggan lain sampai diperbaiki atau dimusnahkan." /></th>@endif</tr></thead>
                         <tbody class="divide-y divide-gray-100">
                             @foreach ($lines as $line)
                                 <tr>

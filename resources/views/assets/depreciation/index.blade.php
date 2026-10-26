@@ -11,7 +11,7 @@
         </p>
         <form method="GET" class="flex flex-wrap items-end gap-2">
             <div class="w-48">
-                <label class="form-label" for="f_period">Sampai Bulan</label>
+                <x-form.label for="f_period" label="Sampai Bulan" tip="Penyusutan dihitung dari bulan terakhir yang sudah diposting sampai bulan ini. Bulan yang terlewat otomatis disusulkan." />
                 <input type="month" id="f_period" name="period" value="{{ $period->format('Y-m') }}" max="{{ today()->format('Y-m') }}" class="form-control">
             </div>
             <button type="submit" class="btn-secondary">Tampilkan</button>

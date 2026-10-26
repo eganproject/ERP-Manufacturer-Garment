@@ -4,6 +4,7 @@
     $to = old('to_warehouse_id', collect($options)->keys()->first(fn ($id) => $id != $from));
 @endphp
 <x-layouts.app title="Transfer Antar Gudang">
+    <x-guide title="Memindahkan stok antar gudang" :steps="['Pilih gudang asal dan tujuan, lalu isi barang dan jumlahnya. Pilihan barang menampilkan stok di gudang asal.', 'Transfer hanya memindahkan lokasi stok; nilai persediaan dan jurnal tidak berubah.', 'Cetak surat transfer sebagai bukti serah terima antar gudang.']"></x-guide>
     @if (count($options) < 2)
         <x-card><p class="text-sm text-gray-600">Baru ada satu gudang aktif. @can('warehouses.manage')<a href="{{ route('warehouses.create') }}" class="text-indigo-600 hover:underline">Tambah gudang</a> terlebih dulu.@endcan</p></x-card>
     @else
@@ -13,9 +14,9 @@
             <x-card title="Informasi Transfer">
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <x-form.input name="date" label="Tanggal" :value="today()" required data-date />
-                    <x-form.select name="from_warehouse_id" label="Dari Gudang" :options="$options" :value="$from" :placeholder="false" required
+                    <x-form.select name="from_warehouse_id" label="Dari Gudang" tip="Gudang asal barang. Stok gudang ini berkurang; mengganti pilihan akan memuat ulang daftar stok." :options="$options" :value="$from" :placeholder="false" required
                                    onchange="window.location = '{{ route('stock-transfers.create') }}?from_warehouse_id=' + this.value" />
-                    <x-form.select name="to_warehouse_id" label="Ke Gudang" :options="$options" :value="$to" :placeholder="false" required />
+                    <x-form.select name="to_warehouse_id" label="Ke Gudang" tip="Gudang tujuan. Stok gudang ini bertambah." :options="$options" :value="$to" :placeholder="false" required />
                     <x-form.input name="notes" label="Catatan" placeholder="mis. Stok untuk pengiriman cabang" />
                 </div>
             </x-card>

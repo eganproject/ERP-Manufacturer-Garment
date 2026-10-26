@@ -77,13 +77,13 @@
                 </x-card>
             @elseif ($asset->isActive())
                 @can('assets.manage')
-                    <x-card title="Lepas Aset (Jual / Hapus)">
+                    <x-card title="Lepas Aset (Jual / Hapus)" tip="Untuk aset yang dijual, rusak atau hilang. Penyusutan harus sudah diposting sampai bulan sebelum tanggal pelepasan. Selisih harga jual dengan nilai buku dicatat sebagai laba/rugi pelepasan.">
                         <form method="POST" action="{{ route('fixed-assets.dispose', $asset) }}" class="space-y-3" x-data="{ type: 'sold' }"
                               data-confirm="Aset akan dilepas dan laba/rugi pelepasan dijurnal." data-confirm-button="Ya, lepas aset">
                             @csrf
                             <x-form.input name="disposal_date" label="Tanggal" :value="today()" required data-date />
                             <div>
-                                <label class="form-label">Jenis</label>
+                                <x-form.label label="Jenis" tip="Dijual: ada uang masuk dari pembeli. Dihapus: aset rusak/hilang tanpa penerimaan, sisa nilai buku menjadi rugi." />
                                 <select name="disposal_type" class="form-control" x-model="type">
                                     @foreach (AssetDisposalType::options() as $value => $label)
                                         <option value="{{ $value }}">{{ $label }}</option>
@@ -91,8 +91,8 @@
                                 </select>
                             </div>
                             <div x-show="type === 'sold'" class="space-y-3">
-                                <x-form.input name="disposal_proceeds" label="Harga Jual (Rp)" data-money inputmode="numeric" />
-                                <x-form.select name="disposal_account_id" label="Diterima di Rekening" :options="$cashAccounts" data-select />
+                                <x-form.input name="disposal_proceeds" label="Harga Jual (Rp)" tip="Uang yang diterima dari pembeli aset." data-money inputmode="numeric" />
+                                <x-form.select name="disposal_account_id" label="Diterima di Rekening" tip="Rekening kas/bank tempat uang hasil penjualan aset masuk." :options="$cashAccounts" data-select />
                             </div>
                             <x-form.input name="disposal_notes" label="Catatan" placeholder="Mis. dijual ke pengepul / rusak berat" />
                             <p class="text-xs text-gray-500">Penyusutan harus sudah diposting s.d. bulan sebelum tanggal pelepasan. Nilai buku saat ini {{ rupiah($asset->bookValue()) }}.</p>
