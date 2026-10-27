@@ -13,7 +13,7 @@
                     <input type="text" name="date" value="{{ today()->toDateString() }}" data-date class="form-control w-36">
                     <button type="submit" class="btn-primary">Kirim Pesanan</button>
                 </form>
-                <x-reason-form :action="route('marketplace-orders.cancel', $order)" title="Batalkan pesanan?" text="Pesanan belum dikirim, tidak ada stok/jurnal yang berubah." button="Ya, batalkan" class="btn-secondary !text-red-600">Batalkan</x-reason-form>
+                <x-reason-form :action="route('marketplace-orders.cancel', $order)" title="Batalkan pesanan?" text="Pesanan belum dikirim, tidak ada stok/jurnal yang berubah." button="Ya, batalkan" class="btn-outline-danger">Batalkan</x-reason-form>
             @endif
             @if ($order->status === MarketplaceOrderStatus::Shipped)
                 <x-action-form :action="route('marketplace-orders.complete', $order)">Tandai Selesai</x-action-form>

@@ -133,7 +133,7 @@
                             <td class="text-right">
                                 @can('tax.manage')
                                     @if (! $vat->isCancelled() && $periods->onFirstPage() && $vat->id === $periods->first(fn ($p) => ! $p->isCancelled())?->id)
-                                        <x-reason-form :action="route('vat-periods.cancel', $vat)" title="Batalkan penutupan masa PPN?" text="Jurnal penutupan dibalik; masa bisa ditutup ulang." button="Ya, batalkan" class="btn-secondary !py-1 text-xs !text-red-600">Batalkan</x-reason-form>
+                                        <x-reason-form :action="route('vat-periods.cancel', $vat)" title="Batalkan penutupan masa PPN?" text="Jurnal penutupan dibalik; masa bisa ditutup ulang." button="Ya, batalkan" class="btn-outline-danger btn-sm">Batalkan</x-reason-form>
                                     @endif
                                 @endcan
                             </td>

@@ -5,13 +5,18 @@
     $allStagesDone = $order->stages->every(fn ($s) => $s->status === StageStatus::Done);
 @endphp
 
-<x-layouts.app :title="'SPK '.$order->number">
+<x-layouts.app :title="$order->number" :subtitle="'SPK Produksi · '.$order->product->name.' · '.qty($order->quantity).' pcs'">
     <x-slot:actions>
-        <a href="{{ route('production-orders.pdf', $order) }}" target="_blank" class="btn-secondary">Cetak SPK</a>
+        <x-more-actions>
+            <a href="{{ route('production-orders.pdf', $order) }}" target="_blank" class="menu-item">Cetak SPK</a>
+            @if ($order->isEditable() && auth()->user()->can('production.manage'))
+                <a href="{{ route('production-orders.edit', $order) }}" class="menu-item">Ubah SPK</a>
+                <div class="menu-divider"></div>
+                <x-action-form :action="route('production-orders.cancel', $order)" confirm="SPK akan dibatalkan." button="Ya, batalkan" class="menu-item-danger">Batalkan SPK</x-action-form>
+                <x-delete-button :action="route('production-orders.destroy', $order)" label="Hapus SPK" class="menu-item-danger" />
+            @endif
+        </x-more-actions>
         @if ($order->isEditable() && auth()->user()->can('production.manage'))
-            <x-delete-button :action="route('production-orders.destroy', $order)" class="btn-secondary !text-red-600" />
-            <x-action-form :action="route('production-orders.cancel', $order)" confirm="SPK akan dibatalkan." button="Ya, batalkan">Batalkan</x-action-form>
-            <a href="{{ route('production-orders.edit', $order) }}" class="btn-secondary">Ubah</a>
             <x-action-form :action="route('production-orders.start', $order)" :confirm="$order->subcontractOrders->where('status', \App\Enums\SubcontractStatus::Open)->isNotEmpty() ? 'Bahan untuk internal dikeluarkan dari gudang. Bahan yang direncanakan ke vendor maklon dikirim lewat order maklon.' : 'Bahan baku akan dikeluarkan dari gudang sesuai kebutuhan BOM. Bila ada tahap yang dikerjakan vendor maklon dengan bahan dari gudang, buat order maklon dulu agar bahannya dikirim lewat order maklon.'" icon="question" button="Ya, mulai produksi" class="btn-primary">Mulai Produksi</x-action-form>
         @endif
     </x-slot:actions>
@@ -95,7 +100,7 @@
             <x-card title="Maklon (Vendor Luar)" :padding="false" class="lg:col-span-3">
                 @if ($canSubcontract)
                     <x-slot:header>
-                        <a href="{{ route('subcontract-orders.create', ['production_order_id' => $order->id]) }}" class="btn-secondary py-1.5">+ Order Maklon</a>
+                        <a href="{{ route('subcontract-orders.create', ['production_order_id' => $order->id]) }}" class="btn-secondary btn-sm">+ Order Maklon</a>
                     </x-slot:header>
                 @endif
                 <div class="overflow-x-auto">
@@ -113,7 +118,7 @@
                                     <td><x-status-badge :status="$sub->status" /></td>
                                 </tr>
                             @empty
-                                <x-empty-row colspan="7" message="Semua tahap dikerjakan internal. Buat order maklon bila sebagian / seluruh tahap dikerjakan vendor luar dengan bahan dari gudang." />
+                                <x-empty-row compact colspan="7" message="Semua tahap dikerjakan internal. Buat order maklon bila sebagian / seluruh tahap dikerjakan vendor luar dengan bahan dari gudang." />
                             @endforelse
                         </tbody>
                     </table>
@@ -129,7 +134,7 @@
             <x-card title="Upah Borongan Karyawan" :padding="false" class="lg:col-span-3">
                 @if ($canPiecework)
                     <x-slot:header>
-                        <a href="{{ route('piecework.create', ['production_order_id' => $order->id]) }}" class="btn-secondary py-1.5">+ Input Hasil Kerja</a>
+                        <a href="{{ route('piecework.create', ['production_order_id' => $order->id]) }}" class="btn-secondary btn-sm">+ Input Hasil Kerja</a>
                     </x-slot:header>
                 @endif
                 <div class="grid grid-cols-1 lg:grid-cols-2">
@@ -161,7 +166,7 @@
                                         <td class="text-right whitespace-nowrap">{{ rupiah($sheet->total_amount) }}</td>
                                     </tr>
                                 @empty
-                                    <x-empty-row colspan="4" message="Belum ada hasil kerja harian." />
+                                    <x-empty-row compact colspan="4" message="Belum ada hasil kerja harian." />
                                 @endforelse
                             </tbody>
                             @if ($order->pieceworkSheets->isNotEmpty())
@@ -210,7 +215,7 @@
                                 <input type="number" min="0" step="1" name="reject_quantity" value="{{ (float) $stage->reject_quantity }}" class="form-control py-1.5" placeholder="Reject">
                                 <input type="text" name="pic" value="{{ $stage->pic }}" class="form-control py-1.5" placeholder="PIC / Operator">
                                 <textarea name="notes" rows="2" class="form-control py-1.5" placeholder="Catatan">{{ $stage->notes }}</textarea>
-                                <button type="submit" class="btn-primary w-full py-1.5">Simpan</button>
+                                <button type="submit" class="btn-primary btn-sm w-full">Simpan</button>
                             </form>
                         @endif
                     </li>
@@ -292,7 +297,7 @@
                                     @endif
                                 </tr>
                             @empty
-                                <x-empty-row :colspan="$canCost ? 5 : 4" :message="$order->isEditable() ? ($order->product->usesPiecework() ? 'Overhead standar BOM dibebankan saat produksi dimulai; upah masuk dari hasil kerja borongan harian.' : 'Upah & overhead standar BOM dibebankan otomatis saat produksi dimulai. Biaya CMT/maklon dapat dicatat di sini.') : 'Belum ada biaya konversi.'" />
+                                <x-empty-row compact :colspan="$canCost ? 5 : 4" :message="$order->isEditable() ? ($order->product->usesPiecework() ? 'Overhead standar BOM dibebankan saat produksi dimulai; upah masuk dari hasil kerja borongan harian.' : 'Upah & overhead standar BOM dibebankan otomatis saat produksi dimulai. Biaya CMT/maklon dapat dicatat di sini.') : 'Belum ada biaya konversi.'" />
                             @endforelse
                         </tbody>
                     </table>

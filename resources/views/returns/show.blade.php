@@ -10,12 +10,7 @@
         <a href="{{ route($kind->route.'.pdf', $return) }}" target="_blank" class="btn-secondary">Cetak {{ $kind->noteLabel }}</a>
         @can($kind->manageCan)
             @if ($return->canCancel())
-                <form method="POST" action="{{ route($kind->route.'.cancel', $return) }}" class="inline" x-data x-ref="form">
-                    @csrf
-                    <input type="hidden" name="reason">
-                    <button type="button" class="btn-secondary !text-red-600"
-                            @click="Swal.fire({ title: 'Batalkan retur?', text: 'Stok dikembalikan seperti sebelum retur dan nota yang sudah dipakai dilepas dari {{ strtolower($kind->documentLabel) }}.', input: 'text', inputPlaceholder: 'Alasan pembatalan', icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, batalkan', cancelButtonText: 'Batal', confirmButtonColor: '#dc2626', reverseButtons: true, inputValidator: v => !v && 'Alasan wajib diisi' }).then(r => { if (r.isConfirmed) { $refs.form.querySelector('[name=reason]').value = r.value; $refs.form.submit(); } })">Batalkan</button>
-                </form>
+                <x-reason-form :action="route($kind->route.'.cancel', $return)" title="Batalkan retur?" :text="'Stok dikembalikan seperti sebelum retur dan nota yang sudah dipakai dilepas dari '.strtolower($kind->documentLabel).'.'" placeholder="Alasan pembatalan" button="Ya, batalkan" class="btn-outline-danger">Batalkan</x-reason-form>
             @endif
         @endcan
     </x-slot:actions>
@@ -106,7 +101,7 @@
                                 <td><x-payable-status :doc="$doc" /></td>
                             </tr>
                         @empty
-                            <x-empty-row colspan="5" :message="'Nota belum dipakai untuk '.strtolower($kind->documentLabel).'.'" />
+                            <x-empty-row compact colspan="5" :message="'Nota belum dipakai untuk '.strtolower($kind->documentLabel).'.'" />
                         @endforelse
                     </tbody>
                 </table>

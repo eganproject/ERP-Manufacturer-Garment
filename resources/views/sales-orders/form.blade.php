@@ -23,7 +23,7 @@
         </x-card>
 
         <x-card title="Produk Dipesan" :padding="false">
-            <x-slot:header><button type="button" class="btn-secondary py-1.5" @click="add()">+ Produk</button></x-slot:header>
+            <x-slot:header><button type="button" class="btn-secondary btn-sm" @click="add()">+ Produk</button></x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">
                     <thead><tr><th class="min-w-80">Produk / Varian</th><th class="w-32">Qty <x-tip title="Qty" text="Jumlah pcs yang dipesan untuk varian ini." /></th><th class="w-44">Harga (Rp) <x-tip title="Harga" text="Harga jual per pcs. Terisi dari harga jual produk/varian dan boleh diubah sesuai kesepakatan." /></th><th class="w-44 text-right">Subtotal</th><th class="w-12"></th></tr></thead>

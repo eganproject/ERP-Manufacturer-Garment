@@ -30,7 +30,7 @@
         </x-card>
 
         <x-card title="Barang" :padding="false">
-            <x-slot:header><button type="button" class="btn-secondary py-1.5" @click="add()">+ Baris</button></x-slot:header>
+            <x-slot:header><button type="button" class="btn-secondary btn-sm" @click="add()">+ Baris</button></x-slot:header>
             @if ($variants->isEmpty())
                 <p class="p-5 text-sm text-gray-500">{{ $type->fromDefect() ? 'Tidak ada stok cacat yang bisa diproses.' : 'Tidak ada stok barang jadi.' }}</p>
             @endif

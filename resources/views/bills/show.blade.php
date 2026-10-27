@@ -5,7 +5,7 @@
             @if ($bill->canCancel() && ! $bill->fixedAsset)
                 <form method="POST" action="{{ route('bills.cancel', $bill) }}" class="inline" data-confirm="Tagihan dibatalkan dan barangnya bisa ditagihkan ulang." data-confirm-button="Ya, batalkan">
                     @csrf
-                    <button type="submit" class="btn-secondary !text-red-600">Batalkan</button>
+                    <button type="submit" class="btn-outline-danger">Batalkan</button>
                 </form>
             @endif
             @if ($bill->isOpen())

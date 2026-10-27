@@ -52,7 +52,7 @@
                             <td class="text-right">@can('boms.manage')<a href="{{ route('boms.show', $bom) }}" class="text-sm text-indigo-600 hover:underline">Detail</a>@endcan</td>
                         </tr>
                     @empty
-                        <x-empty-row colspan="4" message="Produk belum memiliki BOM. Buat BOM agar bisa diproduksi." />
+                        <x-empty-row compact colspan="4" message="Produk belum memiliki BOM. Buat BOM agar bisa diproduksi." />
                     @endforelse
                 </tbody>
             </table>

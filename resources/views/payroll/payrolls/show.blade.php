@@ -9,7 +9,7 @@
         <a href="{{ route('payrolls.pdf', $payroll) }}" target="_blank" class="btn-secondary">Cetak Rekap</a>
         <a href="{{ route('payrolls.slips', $payroll) }}" target="_blank" class="btn-secondary">Cetak Semua Slip</a>
         @if ($payroll->status !== PayrollStatus::Cancelled && $user->can($isDraft ? 'payroll.manage' : 'payroll.pay'))
-            <x-action-form :action="route('payrolls.cancel', $payroll)" button="Ya, batalkan" class="btn-secondary !text-red-600"
+            <x-action-form :action="route('payrolls.cancel', $payroll)" button="Ya, batalkan" class="btn-outline-danger"
                 :confirm="$payroll->status === PayrollStatus::Paid ? 'Pembayaran dibatalkan dan jurnalnya dibalik. Hasil kerja kembali berstatus belum dibayar.' : 'Penggajian dibatalkan, hasil kerja kembali berstatus belum dibayar.'">Batalkan</x-action-form>
         @endif
         @if ($editable)

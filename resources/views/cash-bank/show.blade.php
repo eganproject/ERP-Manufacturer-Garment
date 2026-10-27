@@ -5,12 +5,7 @@
         <a href="{{ route('cash-transactions.pdf', $transaction) }}" target="_blank" class="btn-secondary">Cetak Bukti</a>
         @can('cashbank.manage')
             @unless ($transaction->isCancelled())
-                <form method="POST" action="{{ route('cash-transactions.cancel', $transaction) }}" class="inline" x-data x-ref="form">
-                    @csrf
-                    <input type="hidden" name="reason">
-                    <button type="button" class="btn-secondary !text-red-600"
-                            @click="Swal.fire({ title: 'Batalkan bukti kas?', text: 'Jurnalnya akan dibalik.', input: 'text', inputPlaceholder: 'Alasan pembatalan', icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, batalkan', cancelButtonText: 'Batal', confirmButtonColor: '#dc2626', reverseButtons: true, inputValidator: v => !v && 'Alasan wajib diisi' }).then(r => { if (r.isConfirmed) { $refs.form.querySelector('[name=reason]').value = r.value; $refs.form.submit(); } })">Batalkan</button>
-                </form>
+                <x-reason-form :action="route('cash-transactions.cancel', $transaction)" title="Batalkan bukti kas?" text="Jurnalnya akan dibalik." placeholder="Alasan pembatalan" button="Ya, batalkan" class="btn-outline-danger">Batalkan</x-reason-form>
             @endunless
         @endcan
     </x-slot:actions>

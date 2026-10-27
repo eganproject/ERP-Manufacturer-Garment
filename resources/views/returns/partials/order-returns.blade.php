@@ -15,7 +15,7 @@
                         <td><x-badge :color="$status['color']">{{ $status['label'] }}</x-badge></td>
                     </tr>
                 @empty
-                    <x-empty-row colspan="6" message="Belum ada retur." />
+                    <x-empty-row compact colspan="6" message="Belum ada retur." />
                 @endforelse
             </tbody>
         </table>

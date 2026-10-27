@@ -8,7 +8,7 @@
     <x-slot:actions>
         <a href="{{ route('stock-opnames.pdf', $opname) }}" target="_blank" class="btn-secondary">{{ $opname->isDraft() ? 'Cetak Lembar Hitung' : 'Cetak Berita Acara' }}</a>
         @if ($editable)
-            <x-reason-form :action="route('stock-opnames.cancel', $opname)" title="Batalkan stock opname?" text="Lembar hitung dibatalkan, stok tidak berubah." button="Ya, batalkan" class="btn-secondary !text-red-600">Batalkan</x-reason-form>
+            <x-reason-form :action="route('stock-opnames.cancel', $opname)" title="Batalkan stock opname?" text="Lembar hitung dibatalkan, stok tidak berubah." button="Ya, batalkan" class="btn-outline-danger">Batalkan</x-reason-form>
         @endif
     </x-slot:actions>
 

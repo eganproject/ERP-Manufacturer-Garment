@@ -20,12 +20,6 @@
                 'tone' => $grossProfit['gross_profit'] < 0 ? 'red' : ($grossProfit['previous_margin'] !== null && $grossProfit['dpp'] > 0 ? ($grossProfit['margin'] >= $grossProfit['previous_margin'] ? 'green' : 'amber') : null),
                 'link' => route('reports.sales', ['group' => 'item']), 'icon' => 'M12 8c-1.66 0-3 .9-3 2s1.34 2 3 2 3 .9 3 2-1.34 2-3 2m0-8c1.11 0 2.08.4 2.6 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.4-2.6-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
             ] : null,
-            $pendingApprovals !== null ? [
-                'label' => 'PO menunggu persetujuan', 'value' => $pendingApprovals['count'],
-                'hint' => $pendingApprovals['count'] > 0 ? 'Senilai '.rupiah($pendingApprovals['total']) : 'Tidak ada PO yang perlu disetujui',
-                'tone' => $pendingApprovals['count'] > 0 ? 'amber' : null,
-                'link' => route('purchase-orders.index', ['status' => \App\Enums\PurchaseOrderStatus::PendingApproval->value]), 'icon' => 'M9 12l2 2 4-4m5.62-4.02A11.96 11.96 0 0112 2.94a11.96 11.96 0 01-8.62 3.04A12 12 0 003 9c0 5.59 3.82 10.29 9 11.62 5.18-1.33 9-6.03 9-11.62 0-1.04-.13-2.05-.38-3.02z',
-            ] : null,
             auth()->user()->can('sales.view') ? [
                 'label' => 'Pesanan (SO) bulan ini', 'value' => rupiah($stats['sales_this_month']),
                 'hint' => $stats['open_sales'].' SO menunggu dikirim', 'link' => route('sales-orders.index'), 'icon' => 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z',
@@ -51,8 +45,16 @@
                 'link' => route('reports.stock-valuation'), 'icon' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
             ] : null,
             auth()->user()->can('purchase.view') ? [
-                'label' => 'PO belum diterima', 'value' => $stats['open_purchases'],
-                'hint' => 'PO dipesan / diterima sebagian', 'link' => route('purchase-orders.index'), 'icon' => 'M9 17a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0h2m-2 0H9m10 0h1a1 1 0 001-1v-3.65a1 1 0 00-.22-.62l-3.48-4.35A1 1 0 0016.52 7H13',
+                // Satu kartu pembelian: PO yang masih ditunggu barangnya + yang menunggu persetujuan
+                'label' => 'PO belum diterima', 'value' => $stats['open_purchases'].' PO',
+                'hint' => ($pendingApprovals['count'] ?? 0) > 0
+                    ? $pendingApprovals['count'].' PO menunggu persetujuan ('.rupiah($pendingApprovals['total']).')'
+                    : 'PO dipesan / diterima sebagian',
+                'tone' => ($pendingApprovals['count'] ?? 0) > 0 ? 'amber' : null,
+                'link' => ($pendingApprovals['count'] ?? 0) > 0
+                    ? route('purchase-orders.index', ['status' => \App\Enums\PurchaseOrderStatus::PendingApproval->value])
+                    : route('purchase-orders.index', ['status' => 'open']),
+                'icon' => 'M9 17a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0h2m-2 0H9m10 0h1a1 1 0 001-1v-3.65a1 1 0 00-.22-.62l-3.48-4.35A1 1 0 0016.52 7H13',
             ] : null,
         ]);
         $maxTrend = max(1, (float) $trend->max('sales'), (float) $trend->max('purchases'));

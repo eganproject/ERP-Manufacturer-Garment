@@ -34,7 +34,7 @@
                                 <td class="text-right whitespace-nowrap">{{ rupiah($line->book_value) }}</td>
                             </tr>
                         @empty
-                            <x-empty-row colspan="5" message="Rincian dihapus karena posting dibatalkan." />
+                            <x-empty-row compact colspan="5" message="Rincian dihapus karena posting dibatalkan." />
                         @endforelse
                     </tbody>
                 </table>

@@ -1,25 +1,32 @@
 @php [$statusLabel, $statusColor] = $quotation->displayStatus(); @endphp
-<x-layouts.app :title="'Penawaran '.$quotation->number">
+<x-layouts.app :title="$quotation->number" :subtitle="'Penawaran Harga · '.$quotation->customer->name">
     <x-slot:actions>
-        <a href="{{ route('quotations.pdf', $quotation) }}" target="_blank" class="btn-secondary">Cetak Penawaran</a>
-        @can('sales.manage')
-            @if ($quotation->isEditable())
-                @if ($quotation->revisions->isEmpty())
-                    <x-delete-button :action="route('quotations.destroy', $quotation)" class="btn-secondary !text-red-600" />
+        <x-more-actions>
+            <a href="{{ route('quotations.pdf', $quotation) }}" target="_blank" class="menu-item">Cetak Penawaran</a>
+            @can('sales.manage')
+                @if ($quotation->isEditable())
+                    <a href="{{ route('quotations.edit', $quotation) }}" class="menu-item">Ubah Penawaran</a>
                 @endif
-                <a href="{{ route('quotations.edit', $quotation) }}" class="btn-secondary">Ubah</a>
-            @endif
-            @if ($quotation->isOpen())
-                <x-reason-form :action="route('quotations.cancel', $quotation)" title="Batalkan penawaran?" text="Penawaran tidak dilanjutkan (bukan ditolak pelanggan)." placeholder="Alasan pembatalan" button="Ya, batalkan" class="btn-secondary !text-red-600">Batalkan</x-reason-form>
-            @endif
-            @if ($quotation->canRevise())
-                <x-action-form :action="route('quotations.revise', $quotation)" confirm="Penawaran disalin menjadi revisi baru (draft) dengan masa berlaku baru." icon="question" button="Ya, buat revisi">Buat Revisi</x-action-form>
+                @if ($quotation->canRevise())
+                    <x-action-form :action="route('quotations.revise', $quotation)" confirm="Penawaran disalin menjadi revisi baru (draft) dengan masa berlaku baru." icon="question" button="Ya, buat revisi" class="menu-item">Buat Revisi</x-action-form>
+                @endif
+                @if ($quotation->isOpen() || ($quotation->isEditable() && $quotation->revisions->isEmpty()))
+                    <div class="menu-divider"></div>
+                @endif
+                @if ($quotation->isOpen())
+                    <x-reason-form :action="route('quotations.cancel', $quotation)" title="Batalkan penawaran?" text="Penawaran tidak dilanjutkan (bukan ditolak pelanggan)." placeholder="Alasan pembatalan" button="Ya, batalkan" class="menu-item-danger">Batalkan Penawaran</x-reason-form>
+                @endif
+                @if ($quotation->isEditable() && $quotation->revisions->isEmpty())
+                    <x-delete-button :action="route('quotations.destroy', $quotation)" label="Hapus Penawaran" class="menu-item-danger" />
+                @endif
+            @endcan
+        </x-more-actions>
+        @can('sales.manage')
+            @if ($quotation->status === \App\Enums\QuotationStatus::Sent && ! $quotation->isExpired())
+                <x-reason-form :action="route('quotations.reject', $quotation)" title="Pelanggan menolak penawaran?" placeholder="Alasan, mis. harga terlalu tinggi" button="Ya, ditolak">Ditolak Pelanggan</x-reason-form>
             @endif
             @if ($quotation->canSend())
                 <x-action-form :action="route('quotations.send', $quotation)" confirm="Tandai penawaran sudah dikirim ke pelanggan? Setelah ini isi penawaran terkunci." icon="question" button="Ya, tandai terkirim" class="btn-primary">Tandai Terkirim</x-action-form>
-            @endif
-            @if ($quotation->status === \App\Enums\QuotationStatus::Sent && ! $quotation->isExpired())
-                <x-reason-form :action="route('quotations.reject', $quotation)" title="Pelanggan menolak penawaran?" placeholder="Alasan, mis. harga terlalu tinggi" button="Ya, ditolak">Ditolak Pelanggan</x-reason-form>
             @endif
         @endcan
     </x-slot:actions>

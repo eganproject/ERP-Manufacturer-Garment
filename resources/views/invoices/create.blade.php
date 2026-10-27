@@ -35,7 +35,7 @@
 
             <x-card title="3. Barang yang Ditagih" :padding="false" x-data>
                 <x-slot:header>
-                    <button type="button" class="btn-secondary py-1.5" @click="document.querySelectorAll('[data-uninvoiced]').forEach(el => el.value = el.dataset.uninvoiced)">Isi semua barang terkirim</button>
+                    <button type="button" class="btn-secondary btn-sm" @click="document.querySelectorAll('[data-uninvoiced]').forEach(el => el.value = el.dataset.uninvoiced)">Isi semua barang terkirim</button>
                 </x-slot:header>
                 <div class="overflow-x-auto">
                     <table class="table-base">

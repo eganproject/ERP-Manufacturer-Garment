@@ -5,9 +5,9 @@
             @if ($settlement->isDraft())
                 <x-action-form :action="route('marketplace-settlements.rematch', $settlement)">Cocokkan Ulang Pesanan</x-action-form>
                 <x-action-form :action="route('marketplace-settlements.post', $settlement)" class="btn-primary" confirm="Piutang marketplace pesanan ditutup, biaya platform & dana masuk dijurnal." button="Ya, posting">Posting</x-action-form>
-                <x-delete-button :action="route('marketplace-settlements.destroy', $settlement)" class="btn-secondary !text-red-600" label="Hapus Draft" />
+                <x-delete-button :action="route('marketplace-settlements.destroy', $settlement)" class="btn-outline-danger" label="Hapus Draft" />
             @elseif ($settlement->isPosted())
-                <x-reason-form :action="route('marketplace-settlements.cancel', $settlement)" title="Batalkan pencairan?" text="Jurnal dibalik dan piutang pesanan dibuka kembali." button="Ya, batalkan" class="btn-secondary !text-red-600">Batalkan</x-reason-form>
+                <x-reason-form :action="route('marketplace-settlements.cancel', $settlement)" title="Batalkan pencairan?" text="Jurnal dibalik dan piutang pesanan dibuka kembali." button="Ya, batalkan" class="btn-outline-danger">Batalkan</x-reason-form>
             @endif
         @endcan
     </x-slot:actions>

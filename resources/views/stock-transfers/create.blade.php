@@ -22,7 +22,7 @@
             </x-card>
 
             <x-card title="Barang" :padding="false">
-                <x-slot:header><button type="button" class="btn-secondary py-1.5" @click="add()">+ Baris</button></x-slot:header>
+                <x-slot:header><button type="button" class="btn-secondary btn-sm" @click="add()">+ Baris</button></x-slot:header>
                 <div class="overflow-x-auto">
                     <table class="table-base">
                         <thead><tr><th class="min-w-96">Barang (stok di gudang asal)</th><th class="w-48">Jumlah</th><th class="w-12"></th></tr></thead>

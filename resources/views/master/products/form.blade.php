@@ -27,8 +27,8 @@ Ketik warna lalu klik Buat semua ukuran untuk membuat varian S s.d. XXL sekaligu
             <x-slot:header>
                 <div class="flex flex-wrap items-center gap-2">
                     <input type="text" x-model="bulkColor" placeholder="Warna (opsional)" class="form-control w-36 py-1.5">
-                    <button type="button" class="btn-secondary py-1.5" @click="generateSizes()">Buat semua ukuran</button>
-                    <button type="button" class="btn-secondary py-1.5" @click="addRow()">+ Varian</button>
+                    <button type="button" class="btn-secondary btn-sm" @click="generateSizes()">Buat semua ukuran</button>
+                    <button type="button" class="btn-secondary btn-sm" @click="addRow()">+ Varian</button>
                 </div>
             </x-slot:header>
             <div class="overflow-x-auto">

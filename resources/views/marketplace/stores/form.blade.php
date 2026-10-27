@@ -39,6 +39,6 @@
     </form>
 
     @if ($store->exists)
-        <div class="mt-4 max-w-3xl"><x-delete-button :action="route('marketplace-stores.destroy', $store)" class="btn-secondary !text-red-600" label="Hapus Toko" /></div>
+        <div class="mt-4 max-w-3xl"><x-delete-button :action="route('marketplace-stores.destroy', $store)" class="btn-outline-danger" label="Hapus Toko" /></div>
     @endif
 </x-layouts.app>

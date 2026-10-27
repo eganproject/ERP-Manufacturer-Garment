@@ -90,7 +90,7 @@
                             <td class="text-xs text-gray-600">{{ $pct($group['actual'], $group['budget']) }}</td>
                         </tr>
                     @empty
-                        <x-empty-row colspan="6" message="Belum ada akun anggaran." />
+                        <x-empty-row compact colspan="6" message="Belum ada akun anggaran." />
                     @endforelse
                 </tbody>
                 <tfoot class="font-semibold">

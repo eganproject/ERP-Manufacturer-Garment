@@ -27,7 +27,7 @@
                             <td class="text-right"><a href="{{ route($type === 'materials' ? 'stock.materials.card' : 'stock.products.card', [$item, 'warehouse_id' => $warehouse->id]) }}" class="text-sm text-indigo-600 hover:underline">Kartu Stok</a></td>
                         </tr>
                     @empty
-                        <x-empty-row :colspan="$type === 'products' ? 5 : 4" message="Belum ada stok di gudang ini." />
+                        <x-empty-row compact :colspan="$type === 'products' ? 5 : 4" message="Belum ada stok di gudang ini." />
                     @endforelse
                 </tbody>
             </table>

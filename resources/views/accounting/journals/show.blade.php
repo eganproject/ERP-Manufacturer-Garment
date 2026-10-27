@@ -5,7 +5,7 @@
             @can('accounting.manage')
                 <a href="{{ route('journals.create', ['copy' => $entry->id]) }}" class="btn-secondary">Salin Jurnal</a>
                 <div x-data="{ open: false }" class="relative">
-                    <button type="button" class="btn-secondary !text-red-600" @click="open = !open">Batalkan (Jurnal Pembalik)</button>
+                    <button type="button" class="btn-outline-danger" @click="open = !open">Batalkan (Jurnal Pembalik)</button>
                     <div x-cloak x-show="open" @click.outside="open = false" class="absolute right-0 z-10 mt-2 w-80 rounded-lg border border-gray-200 bg-white p-4 shadow-lg">
                         <form method="POST" action="{{ route('journals.reverse', $entry) }}" class="space-y-3">
                             @csrf

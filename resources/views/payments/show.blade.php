@@ -7,12 +7,7 @@
         <a href="{{ route('payments.pdf', $payment) }}" target="_blank" class="btn-secondary">{{ $isReceipt ? 'Cetak Kwitansi' : 'Cetak Bukti Bayar' }}</a>
         @can($payment->type->manageAbility())
             @unless ($payment->isCancelled())
-                <form method="POST" action="{{ route('payments.cancel', $payment) }}" class="inline" x-data x-ref="form">
-                    @csrf
-                    <input type="hidden" name="reason">
-                    <button type="button" class="btn-secondary !text-red-600"
-                            @click="Swal.fire({ title: 'Batalkan pembayaran?', text: 'Sisa tagihan pada dokumen terkait akan dikembalikan.', input: 'text', inputPlaceholder: 'Alasan pembatalan', icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, batalkan', cancelButtonText: 'Batal', confirmButtonColor: '#dc2626', reverseButtons: true, inputValidator: v => !v && 'Alasan wajib diisi' }).then(r => { if (r.isConfirmed) { $refs.form.querySelector('[name=reason]').value = r.value; $refs.form.submit(); } })">Batalkan</button>
-                </form>
+                <x-reason-form :action="route('payments.cancel', $payment)" title="Batalkan pembayaran?" text="Sisa tagihan pada dokumen terkait akan dikembalikan." placeholder="Alasan pembatalan" button="Ya, batalkan" class="btn-outline-danger">Batalkan</x-reason-form>
             @endunless
         @endcan
     </x-slot:actions>
