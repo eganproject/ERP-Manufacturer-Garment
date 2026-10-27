@@ -2,7 +2,7 @@
     <x-slot:actions>
         <a href="{{ route('reports.subcontract') }}" class="btn-secondary">Saldo Bahan di Vendor</a>
         @can('subcontract.manage')
-            <a href="{{ route('production-orders.index', ['status' => 'in_progress']) }}" class="btn-primary">+ Order Maklon dari SPK</a>
+            <a href="{{ route('subcontract-orders.create') }}" class="btn-primary">+ Buat Order Maklon</a>
         @endcan
     </x-slot:actions>
 

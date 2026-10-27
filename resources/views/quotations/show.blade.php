@@ -31,6 +31,13 @@
         @endcan
     </x-slot:actions>
 
+    {{-- Petunjuk langkah berikutnya sesuai status penawaran --}}
+    @if ($quotation->canSend())
+        <x-next-step>Kirim penawaran ke pelanggan (menu Lainnya → Cetak Penawaran), lalu klik <strong>Tandai Terkirim</strong>.</x-next-step>
+    @elseif ($quotation->canConvert())
+        <x-next-step>Tunggu jawaban pelanggan. Bila setuju, isi tanggal di kartu <strong>Pelanggan Setuju?</strong> lalu klik <strong>Jadikan Sales Order</strong>. Bila menolak, klik <strong>Ditolak Pelanggan</strong>; bila minta ubah harga, pakai <strong>Buat Revisi</strong>.</x-next-step>
+    @endif
+
     @if ($quotation->isExpired())
         <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             Penawaran ini sudah lewat masa berlaku ({{ tanggal($quotation->valid_until) }}). Buat revisi dengan harga & masa berlaku baru sebelum dijadikan SO.

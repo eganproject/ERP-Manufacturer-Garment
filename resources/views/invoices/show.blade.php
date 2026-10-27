@@ -14,6 +14,13 @@
         @endcan
     </x-slot:actions>
 
+    {{-- Petunjuk langkah berikutnya --}}
+    @if ($invoice->isOpen())
+        <x-next-step>Kirim invoice ke pelanggan (Cetak Invoice). Saat pelanggan membayar, klik <strong>Catat Penerimaan</strong>; sisa tagihan saat ini <strong>{{ rupiah($invoice->outstanding()) }}</strong>.</x-next-step>
+    @elseif ($invoice->status === \App\Enums\InvoiceStatus::Paid)
+        <x-next-step tone="green" title="Invoice lunas">Pembayaran sudah diterima penuh.</x-next-step>
+    @endif
+
     @include('invoices.partials.document', ['doc' => $invoice, 'party' => $invoice->customer, 'source' => $invoice->salesOrder, 'sourceRoute' => 'sales-orders.show', 'sourceLabel' => 'Sales Order', 'sourceCan' => 'sales.view'])
 
     <x-journal-entries :sources="$invoice" class="mt-6" />

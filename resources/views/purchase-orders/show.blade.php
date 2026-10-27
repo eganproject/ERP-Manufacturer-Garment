@@ -46,6 +46,17 @@
         @endif
     </x-slot:actions>
 
+    {{-- Petunjuk langkah berikutnya sesuai status PO --}}
+    @if ($order->isEditable())
+        <x-next-step>@if ($needsApproval) Nilai PO melewati batas persetujuan. Klik <strong>Ajukan Persetujuan</strong>; setelah disetujui, PO baru boleh dikirim ke supplier. @else Kirim PO ke supplier (menu Lainnya → Cetak PO), lalu klik <strong>Tandai Dipesan</strong> agar PO terkunci dan barangnya ditunggu. @endif</x-next-step>
+    @elseif ($order->canReceive())
+        <x-next-step>Saat barang datang, klik <strong>Terima Barang</strong> dan isi qty yang benar-benar diterima (boleh bertahap). Stok bahan bertambah otomatis.@if ($order->canBill()) Barang yang sudah diterima bisa dicatat tagihannya lewat <strong>Catat Tagihan</strong>.@endif @if ($order->canClose()) Bila sisa barang tidak akan dikirim supplier, tutup lewat <strong>Lainnya → Tutup Sisa PO</strong>.@endif</x-next-step>
+    @elseif ($order->canBill())
+        <x-next-step>Semua barang sudah diterima. Saat faktur supplier datang, klik <strong>Catat Tagihan</strong>.</x-next-step>
+    @elseif (in_array($order->status, [PurchaseOrderStatus::Received, PurchaseOrderStatus::Closed], true))
+        <x-next-step tone="green" title="PO selesai">Barang sudah diterima dan ditagih. Pembayarannya dipantau di menu Tagihan Supplier.</x-next-step>
+    @endif
+
     @if ($order->isPendingApproval())
         <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
             <p class="text-sm font-semibold text-indigo-900">Menunggu persetujuan</p>

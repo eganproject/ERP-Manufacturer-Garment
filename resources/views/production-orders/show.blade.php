@@ -21,6 +21,15 @@
         @endif
     </x-slot:actions>
 
+    {{-- Petunjuk langkah berikutnya sesuai status SPK --}}
+    @if ($order->status === ProductionOrderStatus::Draft)
+        <x-next-step>Periksa kebutuhan bahan di bawah. Bila ada tahap yang dikerjakan vendor luar, buat <strong>Order Maklon</strong> dulu. Lalu klik <strong>Mulai Produksi</strong>: bahan dikeluarkan dari gudang dan dibebankan ke SPK.</x-next-step>
+    @elseif ($order->status === ProductionOrderStatus::InProgress)
+        <x-next-step>Catat <strong>hasil kerja borongan</strong> harian karyawan (untuk upah) dan klik <strong>Perbarui</strong> di tiap kartu tahapan saat tahap itu selesai (untuk progres SPK). Setelah semua tahap selesai (dan order maklon ditutup), isi jumlah jadi per ukuran lalu klik <strong>Selesaikan Produksi</strong> agar barang jadi masuk stok.</x-next-step>
+    @elseif ($order->status === ProductionOrderStatus::Completed)
+        <x-next-step tone="green" title="Produksi selesai">Hasil produksi sudah masuk stok barang jadi dengan HPP per pcs seperti di kartu Biaya Produksi.</x-next-step>
+    @endif
+
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <x-card title="Informasi">
             <dl class="space-y-3 text-sm">
@@ -148,7 +157,12 @@
                                         <td>{{ $row['name'] }}@if ($row['stage'])<span class="text-xs text-gray-500"> · {{ $row['stage'] }}</span>@endif</td>
                                         <td class="text-right">{{ qty($row['good']) }} <span class="text-xs text-gray-500">/ {{ qty($row['capacity']) }}</span></td>
                                         <td class="text-right">{{ qty($row['reject']) }}</td>
-                                        <td @class(['text-right font-medium', 'text-emerald-600' => $row['remaining'] <= 0])>{{ qty($row['remaining']) }}</td>
+                                        @if ($key === 'full' && $row['remaining'] <= 0 && $row['used'] < $row['capacity'])
+                                            {{-- Pcs jadi butuh semua operasi; bila sebagian operasi sudah dikerjakan per operasi, sisanya tidak bisa lagi dicatat sebagai pcs jadi --}}
+                                            <td class="text-right text-gray-400"><x-tip title="Tidak tersedia" text="Pcs jadi (komplit) hanya bisa dicatat selama SEMUA operasi masih tersisa. Sebagian operasi sudah dicatat per operasi, jadi lanjutkan pencatatan per operasi." />–</td>
+                                        @else
+                                            <td @class(['text-right font-medium', 'text-emerald-600' => $row['remaining'] <= 0])>{{ qty($row['remaining']) }}</td>
+                                        @endif
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -192,7 +206,15 @@
                         @if ($stage->subcontractOrder && $stage->subcontractOrder->status !== \App\Enums\SubcontractStatus::Cancelled)
                             <a href="{{ route('subcontract-orders.show', $stage->subcontractOrder) }}" class="mt-2 inline-flex"><x-badge color="indigo">Maklon · {{ $stage->subcontractOrder->supplier->name }}</x-badge></a>
                         @endif
+                        @php
+                            // Progres dari hasil kerja borongan untuk tahap ini (pcs yang sudah melewati semua operasi tahap ini)
+                            $stageOps = collect($pieceworkProgress ?? [])->except('full')->where('stage', $stage->stage->label());
+                            $stagePiecework = $stageOps->isNotEmpty() ? (float) $stageOps->min('good') : null;
+                        @endphp
                         <dl class="mt-3 space-y-1 text-xs text-gray-600">
+                            @if ($stagePiecework !== null && ! $stage->subcontractOrder && $order->status === ProductionOrderStatus::InProgress)
+                                <div class="flex justify-between"><dt class="flex items-center gap-1">Hasil borongan <x-tip text="Pcs yang sudah dikerjakan karyawan di semua operasi tahap ini menurut lembar hasil kerja harian. Pakai angka ini sebagai acuan saat mengisi Output tahap." /></dt><dd class="font-medium">{{ qty($stagePiecework) }} / {{ qty($order->quantity) }}</dd></div>
+                            @endif
                             <div class="flex justify-between"><dt>Output</dt><dd class="font-medium">{{ qty($stage->output_quantity) }}</dd></div>
                             <div class="flex justify-between"><dt>Reject</dt><dd class="font-medium">{{ qty($stage->reject_quantity) }}</dd></div>
                             <div class="flex justify-between"><dt>PIC</dt><dd>{{ $stage->pic ?: '-' }}</dd></div>
@@ -210,7 +232,7 @@
                                     @endforeach
                                 </select>
                                 <x-form.label label="Output (pcs)" tip="Jumlah pcs yang lolos dari tahap ini. Output tahap terakhir (Packing) menjadi batas jumlah barang jadi." />
-                                <input type="number" min="0" step="1" name="output_quantity" value="{{ (float) ($stage->output_quantity ?: $order->quantity) }}" class="form-control py-1.5" placeholder="Output" aria-label="Output">
+                                <input type="number" min="0" step="1" name="output_quantity" value="{{ (float) ($stage->output_quantity ?: ($stagePiecework ?: $order->quantity)) }}" class="form-control py-1.5" placeholder="Output" aria-label="Output">
                                 <x-form.label label="Reject (pcs)" tip="Jumlah pcs gagal/cacat di tahap ini." />
                                 <input type="number" min="0" step="1" name="reject_quantity" value="{{ (float) $stage->reject_quantity }}" class="form-control py-1.5" placeholder="Reject">
                                 <input type="text" name="pic" value="{{ $stage->pic }}" class="form-control py-1.5" placeholder="PIC / Operator">

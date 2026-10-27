@@ -14,6 +14,13 @@
         @endcan
     </x-slot:actions>
 
+    {{-- Petunjuk langkah berikutnya --}}
+    @if ($bill->isOpen())
+        <x-next-step>Bayar sebelum jatuh tempo{{ $bill->due_date ? ' ('.tanggal($bill->due_date).')' : '' }} lewat <strong>Bayar Tagihan</strong>; sisa tagihan saat ini <strong>{{ rupiah($bill->outstanding()) }}</strong>.</x-next-step>
+    @elseif ($bill->status === \App\Enums\InvoiceStatus::Paid)
+        <x-next-step tone="green" title="Tagihan lunas">Tagihan supplier ini sudah dibayar penuh.</x-next-step>
+    @endif
+
     @if ($bill->subcontractOrder)
         @include('invoices.partials.document', ['doc' => $bill, 'party' => $bill->supplier, 'source' => $bill->subcontractOrder, 'sourceRoute' => 'subcontract-orders.show', 'sourceLabel' => 'Order Maklon', 'sourceCan' => 'production.view'])
     @elseif ($bill->fixedAsset)

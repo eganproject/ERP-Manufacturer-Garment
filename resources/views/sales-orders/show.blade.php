@@ -51,6 +51,17 @@
         @endif
     </x-slot:actions>
 
+    {{-- Petunjuk langkah berikutnya sesuai status SO --}}
+    @if ($order->status === SalesOrderStatus::Draft)
+        <x-next-step>Periksa isi SO, lalu klik <strong>Konfirmasi SO</strong>. Setelah dikonfirmasi, SO terkunci, masuk hitungan MRP, dan bisa dibuatkan SPK produksi.</x-next-step>
+    @elseif ($order->canDeliver())
+        <x-next-step>Siapkan barang: bila stok belum cukup, <strong>Buat SPK</strong> produksi. Setelah barang siap, klik <strong>Kirim Barang</strong> untuk membuat surat jalan (boleh bertahap).@if ($order->canInvoice()) Barang yang sudah terkirim bisa langsung ditagih lewat <strong>Buat Invoice</strong>.@endif @if ($order->canClose()) Bila sisa pesanan tidak jadi dikirim, tutup lewat <strong>Lainnya → Tutup Sisa SO</strong>.@endif</x-next-step>
+    @elseif ($order->canInvoice())
+        <x-next-step>Semua barang sudah dikirim. Klik <strong>Buat Invoice</strong> untuk menagih barang yang belum ditagih.</x-next-step>
+    @elseif (in_array($order->status, [SalesOrderStatus::Delivered, SalesOrderStatus::Closed], true))
+        <x-next-step tone="green" title="SO selesai">Barang sudah dikirim dan ditagih. Pantau pembayarannya di menu Invoice Penjualan.</x-next-step>
+    @endif
+
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <x-card title="Informasi">
             <dl class="space-y-3 text-sm">
@@ -166,7 +177,7 @@
             </table>
         </x-card>
 
-        <x-journal-entries :sources="$order->deliveries->all()" />
         <x-activity-log :activities="$order->activities" />
+        <x-journal-entries :sources="$order->deliveries->all()" class="lg:col-span-3" />
     </div>
 </x-layouts.app>

@@ -61,6 +61,17 @@ class SubcontractOrderController extends Controller implements HasMiddleware
 
     public function create(Request $request)
     {
+        // Dibuka dari menu Maklon tanpa SPK: tampilkan daftar SPK yang bisa dimaklonkan dulu
+        if (! $request->filled('production_order_id')) {
+            $spks = ProductionOrder::with(['product', 'salesOrder.customer', 'stages'])
+                ->whereIn('status', [ProductionOrderStatus::Draft, ProductionOrderStatus::InProgress])
+                ->orderByRaw('case when status = ? then 0 else 1 end', [ProductionOrderStatus::InProgress->value])
+                ->latest('start_date')->latest('id')
+                ->get();
+
+            return view('subcontract-orders.pick-spk', compact('spks'));
+        }
+
         $spk = ProductionOrder::with(['product', 'materials.material.unit', 'stages.subcontractOrder.supplier'])
             ->findOrFail($request->integer('production_order_id'));
 

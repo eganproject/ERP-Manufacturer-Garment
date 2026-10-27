@@ -3,6 +3,7 @@
 Panduan singkat menjalankan satu siklus penuh, dari pesanan pelanggan sampai laporan keuangan.
 Setiap langkah menyebut **siapa** yang mengerjakan (peran) dan **menu** yang dipakai.
 Panel **Perlu Ditindaklanjuti** di Dashboard menampilkan pekerjaan berikutnya untuk peran Anda, jadi mulailah hari dari sana.
+Di halaman setiap dokumen (SO, PO, SPK, penawaran, invoice, tagihan) ada kotak **Langkah berikutnya** yang menjelaskan tombol apa yang perlu diklik sekarang. Tombol langkah utama selalu terlihat di kanan atas; aksi lain (Cetak, Ubah, Tutup Sisa, Batalkan, Hapus) ada di menu **Lainnya**.
 
 Data demo (`php artisan migrate --seed`) sudah berisi satu siklus lengkap ± 5 minggu terakhir.
 Masuk dengan `<peran>@erp.test` / `password` untuk melihat sudut pandang tiap peran.
@@ -16,7 +17,7 @@ Masuk dengan `<peran>@erp.test` / `password` untuk melihat sudut pandang tiap pe
 - **Catatan kaki semua dokumen** → dicetak di bawah setiap halaman. **Syarat & ketentuan PO** → dicetak di setiap Purchase Order.
 - **Rekening pembayaran** → dicetak di invoice, penawaran harga, dan sales order.
 
-Dokumen yang bisa dicetak (tombol **Cetak** di halaman dokumen): penawaran, SO, surat jalan, invoice, kwitansi/bukti bayar, PO, penerimaan barang, tagihan supplier, SPK, order/kirim/terima maklon, retur, hasil kerja borongan, kasbon, penggajian & slip upah, bukti kas/bank, jurnal, barang cacat, transfer gudang, stock opname, pencairan marketplace, dan semua laporan.
+Dokumen yang bisa dicetak (tombol **Cetak** di halaman dokumen, atau **Lainnya → Cetak**): penawaran, SO, surat jalan, invoice, kwitansi/bukti bayar, PO, penerimaan barang, tagihan supplier, SPK, order/kirim/terima maklon, retur, hasil kerja borongan, kasbon, penggajian & slip upah, bukti kas/bank, jurnal, barang cacat, transfer gudang, stock opname, pencairan marketplace, dan semua laporan.
 
 ## Gambaran alur
 
@@ -75,7 +76,7 @@ Hanya untuk dua platform: **TikTok Shop** dan **Shopee**.
 ## 3. Produksi — Produksi (PPIC)
 
 1. Dari halaman SO klik **Buat SPK**: produk & qty per ukuran terisi otomatis dari sisa SO yang belum dibuatkan SPK. Bisa juga SPK untuk stok tanpa SO.
-2. **Tahap yang dikerjakan vendor luar (maklon)**: sebelum mulai produksi, klik **+ Order Maklon** di SPK, pilih vendor, tahap (mis. Sewing + Finishing), qty, tarif per pcs, dan bahan yang akan dikirim.
+2. **Tahap yang dikerjakan vendor luar (maklon)**: sebelum mulai produksi, klik **+ Order Maklon** di SPK (atau menu **Maklon → + Buat Order Maklon**, lalu pilih SPK-nya), pilih vendor, tahap (mis. Sewing + Finishing), qty, tarif per pcs, dan bahan yang akan dikirim.
 3. Klik **Mulai Produksi**: bahan untuk pekerjaan internal keluar dari gudang; bahan untuk vendor tetap di gudang sampai dikirim lewat order maklon.
 4. Maklon:
    - **Gudang** → order maklon → **Kirim Bahan** (surat jalan bahan KBM-).
