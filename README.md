@@ -4,7 +4,7 @@ Aplikasi ERP untuk manufaktur pakaian (garment): master data, Bill of Materials,
 
 **Stack:** Laravel 13 · PHP 8.3+ · MySQL · Tailwind CSS 4 · Vite · Alpine.js
 
-**Library form:** Tom Select (dropdown dengan pencarian), flatpickr (pilih tanggal, bahasa Indonesia), IMask (format rupiah/angka & nomor telepon), SweetAlert2 (konfirmasi & notifikasi).
+**Library form:** Choices.js (dropdown dengan pencarian), flatpickr (pilih tanggal, bahasa Indonesia), IMask (format rupiah/angka & nomor telepon), SweetAlert2 (konfirmasi & notifikasi).
 
 ## Instalasi
 
@@ -59,7 +59,7 @@ Semua perubahan stok lewat `App\Services\StockService` sehingga setiap mutasi te
 
 Cukup tambahkan atribut pada elemen, plugin diinisialisasi otomatis oleh `resources/js/app.js`:
 
-- `<select data-select>` → Tom Select
+- `<select data-select>` → Choices.js (instans di `el._choices`)
 - `<input data-date>` → flatpickr (nilai terkirim `Y-m-d`)
 - `<input data-money>` / `data-money="2"` → format ribuan Indonesia; nilai asli dikirim ke server tanpa titik
 - `<input data-phone>` → mask nomor telepon

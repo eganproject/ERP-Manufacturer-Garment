@@ -4,7 +4,7 @@
     $key = str_replace(['[', ']'], ['.', ''], $name);
     $id = $attributes->get('id', 'f_'.str_replace('.', '_', $key));
     $current = old($key, $value instanceof \BackedEnum ? $value->value : $value);
-    // Semua pilihan memakai Tom Select (bisa dicari); :native="true" untuk select biasa
+    // Semua pilihan memakai Choices.js (bisa dicari); :native="true" untuk select biasa
     $enhance = ! $native && ! $attributes->has('data-select');
 @endphp
 

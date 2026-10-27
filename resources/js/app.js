@@ -1,6 +1,6 @@
 import Alpine from 'alpinejs';
 import collapse from '@alpinejs/collapse';
-import TomSelect from 'tom-select';
+import Choices from 'choices.js';
 import flatpickr from 'flatpickr';
 import { Indonesian } from 'flatpickr/dist/l10n/id.js';
 import monthSelectPlugin from 'flatpickr/dist/plugins/monthSelect/index.js';
@@ -15,15 +15,17 @@ flatpickr.localize(Indonesian);
 const svg = (path, stroke = 2) =>
     `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="${stroke}"><path stroke-linecap="round" stroke-linejoin="round" d="${path}"/></svg>`;
 
+// Ikon dialog: emoji dalam lingkaran lembut yang "melompat" kecil saat muncul
+const emoji = (char) => `<span class="erp-swal-emoji" aria-hidden="true">${char}</span>`;
 const ICONS = {
-    warning: svg('M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z', 1.8),
-    error: svg('M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 1.8),
-    question: svg('M8.23 9a4 4 0 017.54 1.33c0 2.67-4 3.67-4 3.67M12 17h.01', 1.8),
-    info: svg('M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 1.8),
-    success: svg('M5 13l4 4L19 7', 2.2),
+    warning: emoji('🤔'),
+    error: emoji('😬'),
+    question: emoji('🤔'),
+    info: emoji('💡'),
+    success: emoji('🎉'),
 };
 
-/** Dialog bertema ERP: tombol memakai kelas .btn-*, ikon garis, tanpa warna inline. */
+/** Dialog bertema ERP: tombol memakai kelas .btn-*, ikon emoji, tanpa warna inline. */
 const Swal = BaseSwal.mixin({
     buttonsStyling: false,
     reverseButtons: true,
@@ -41,16 +43,18 @@ Swal.fire = (options, ...rest) =>
     baseFire(options && typeof options === 'object' && options.icon && !options.iconHtml ? { ...options, iconHtml: ICONS[options.icon] } : options, ...rest);
 window.Swal = Swal;
 
+// Nada notifikasi: emoji + warna lembut + sapaan kecil bila judul kosong
 const TOAST_TONES = {
-    success: ['bg-emerald-50 text-emerald-600', ICONS.success],
-    error: ['bg-red-50 text-red-600', svg('M6 18L18 6M6 6l12 12', 2.2)],
-    warning: ['bg-amber-50 text-amber-600', svg('M12 9v4m0 4h.01', 2.4)],
-    info: ['bg-indigo-50 text-indigo-600', svg('M12 16v-4m0-4h.01', 2.4)],
+    success: { emoji: ['🎉', '✨', '👍', '🙌'], hello: 'Berhasil!' },
+    error: { emoji: ['😵', '🙈', '😬'], hello: 'Ups, ada masalah' },
+    warning: { emoji: ['🤔', '👀', '✋'], hello: 'Tunggu sebentar' },
+    info: { emoji: ['💡', '👋', '📌'], hello: 'Info' },
 };
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
-/** Notifikasi kecil di pojok kanan atas: ERP.toast.fire({ icon: 'success', title: '...' }) */
+/** Notifikasi kecil di pojok kanan atas: ERP.toast.fire({ icon: 'success', title: '...', text: '...' }) */
 const toast = {
-    fire({ icon = 'info', title = '', text = '', timer = 4000 } = {}) {
+    fire({ icon = 'info', title = '', text = '', timer = 4500 } = {}) {
         let host = document.querySelector('.erp-toaster');
 
         if (!host) {
@@ -60,26 +64,66 @@ const toast = {
             document.body.appendChild(host);
         }
 
-        const [tone, iconSvg] = TOAST_TONES[icon] || TOAST_TONES.info;
+        const tone = TOAST_TONES[icon] ? icon : 'info';
         const el = document.createElement('div');
-        el.className = 'erp-toast';
+        el.className = `erp-toast erp-toast-${tone}`;
         el.dataset.state = 'enter';
-        el.setAttribute('role', icon === 'error' ? 'alert' : 'status');
-        el.innerHTML = `<span class="erp-toast-icon ${tone}">${iconSvg}</span>
-            <div class="min-w-0 flex-1 pt-0.5"><p class="font-medium text-gray-900"></p><p class="mt-0.5 text-gray-500 empty:hidden"></p></div>
-            <button type="button" class="-m-1 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label="Tutup">${svg('M6 18L18 6M6 6l12 12', 2)}</button>`;
-        el.querySelector('p').textContent = title;
-        el.querySelectorAll('p')[1].textContent = text;
-        el.querySelector('button svg').classList.add('h-4', 'w-4');
+        el.setAttribute('role', tone === 'error' ? 'alert' : 'status');
+        el.innerHTML = `<span class="erp-toast-icon" aria-hidden="true"><span class="erp-toast-emoji"></span></span>
+            <div class="min-w-0 flex-1"><p class="erp-toast-title"></p><p class="erp-toast-text empty:hidden"></p></div>
+            <button type="button" class="erp-toast-close" aria-label="Tutup">${svg('M6 18L18 6M6 6l12 12', 2)}</button>
+            <span class="erp-toast-bar" aria-hidden="true"></span>`;
+        el.querySelector('.erp-toast-emoji').textContent = pick(TOAST_TONES[tone].emoji);
+        el.querySelector('.erp-toast-title').textContent = title || TOAST_TONES[tone].hello;
+        el.querySelector('.erp-toast-text').textContent = text;
+
+        if (tone === 'success') {
+            // Taburan konfeti kecil di sekitar ikon
+            const burst = document.createElement('span');
+            burst.className = 'erp-confetti';
+            burst.setAttribute('aria-hidden', 'true');
+            burst.innerHTML = Array.from({ length: 8 }, (_, i) => `<i style="--a:${i * 45}deg"></i>`).join('');
+            el.querySelector('.erp-toast-icon').appendChild(burst);
+        }
+
+        let remaining = timer;
+        let started = Date.now();
+        let closeTimer;
+        const bar = el.querySelector('.erp-toast-bar');
 
         const close = () => {
+            clearTimeout(closeTimer);
             el.dataset.state = 'leave';
-            setTimeout(() => el.remove(), 300);
+            setTimeout(() => el.remove(), 350);
         };
-        el.querySelector('button').addEventListener('click', close);
+        const run = () => {
+            if (!timer) return;
+            started = Date.now();
+            closeTimer = setTimeout(close, remaining);
+            bar.style.transition = `transform ${remaining}ms linear`;
+            bar.style.transform = 'scaleX(0)';
+        };
+
+        // Berhenti sejenak saat disorot, agar sempat dibaca
+        el.addEventListener('pointerenter', () => {
+            if (!timer || el.dataset.state === 'leave') return;
+            clearTimeout(closeTimer);
+            remaining = Math.max(remaining - (Date.now() - started), 800);
+            const scale = remaining / timer;
+            bar.style.transition = 'none';
+            bar.style.transform = `scaleX(${scale})`;
+        });
+        el.addEventListener('pointerleave', () => el.dataset.state !== 'leave' && run());
+        el.querySelector('.erp-toast-close').addEventListener('click', close);
+
         host.appendChild(el);
-        requestAnimationFrame(() => requestAnimationFrame(() => (el.dataset.state = 'shown')));
-        if (timer) setTimeout(close, timer);
+        if (!timer) bar.hidden = true;
+        requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+                el.dataset.state = 'shown';
+                run();
+            }),
+        );
     },
 };
 
@@ -91,26 +135,64 @@ export function formatNumber(value, decimals = 0) {
 }
 
 const pluginInitializers = {
-    // Dropdown dengan pencarian: <select data-select>
+    // Dropdown dengan pencarian: <select data-select> (Choices.js)
     select(el) {
-        const options = {
-            // Wajib diisi → opsi kosong hanya jadi placeholder; opsional → bisa dikosongkan lagi
-            allowEmptyOption: !el.required,
-            maxOptions: 500,
-            placeholder: el.dataset.placeholder || el.querySelector('option[value=""]')?.textContent.trim() || 'Pilih...',
-            plugins: el.multiple ? ['remove_button'] : [],
-            // Dropdown ditempel ke body agar tidak terpotong tabel yang bisa digeser (overflow)
-            dropdownParent: 'body',
-            render: {
-                no_results: () => '<div class="no-results p-2 text-gray-500">Data tidak ditemukan</div>',
-            },
+        const blank = el.querySelector('option[value=""]');
+        const placeholder = el.dataset.placeholder || blank?.textContent.trim() || 'Pilih...';
+        const count = el.options.length;
+
+        const choices = new Choices(el, {
+            allowHTML: false,
+            shouldSort: false,
+            searchEnabled: el.multiple || count > 6,
+            searchResultLimit: 100,
+            renderChoiceLimit: -1,
+            searchPlaceholderValue: 'Ketik untuk mencari…',
+            placeholder: true,
+            placeholderValue: placeholder,
+            removeItemButton: el.multiple || !el.required,
+            itemSelectText: '',
+            noResultsText: 'Tidak ketemu 🔍 coba kata lain',
+            noChoicesText: 'Tidak ada pilihan lagi',
+            addItemText: (value) => `Tekan Enter untuk menambah "${value}"`,
+            addChoices: el.dataset.create !== undefined,
+            loadingText: 'Memuat…',
+            position: 'auto',
+            // Cocokkan potongan kata di mana pun (mis. sebagian SKU), tidak terlalu "ngawur"
+            fuseOptions: { threshold: 0.3, ignoreLocation: true },
+        });
+
+        const container = choices.containerOuter.element;
+        const dropdown = choices.dropdown.element;
+
+        // Dropdown memakai posisi fixed agar tidak terpotong tabel/kartu yang bisa digeser (overflow)
+        const place = () => {
+            const r = container.getBoundingClientRect();
+            const below = window.innerHeight - r.bottom;
+            const up = below < 280 && r.top > below;
+            dropdown.style.position = 'fixed';
+            dropdown.style.left = `${r.left}px`;
+            dropdown.style.width = `${Math.max(r.width, 224)}px`;
+            dropdown.style.top = up ? 'auto' : `${r.bottom + 6}px`;
+            dropdown.style.bottom = up ? `${window.innerHeight - r.top + 6}px` : 'auto';
+            container.classList.toggle('is-flipped', up);
         };
+        const onScroll = (e) => (dropdown.contains(e.target) ? null : place());
 
-        if (el.dataset.create !== undefined) {
-            options.create = true;
-        }
+        el.addEventListener('showDropdown', () => {
+            place();
+            window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+            window.addEventListener('resize', place);
+        });
+        el.addEventListener('hideDropdown', () => {
+            window.removeEventListener('scroll', onScroll, { capture: true });
+            window.removeEventListener('resize', place);
+        });
+        el.addEventListener('change', () => container.classList.remove('is-invalid'));
 
-        el._tom = new TomSelect(el, options);
+        if (el.classList.contains('is-invalid')) container.classList.add('is-invalid');
+
+        el._choices = choices;
     },
 
     // Datepicker: <input data-date> (dikirim sebagai Y-m-d, ditampilkan d M Y)
@@ -348,6 +430,27 @@ const tips = (() => {
 
 window.ERP = { initPlugins, setMoney, formatNumber, toast, tips };
 
+// Select Choices menyembunyikan <select> asli, jadi pesan "wajib diisi" bawaan browser tidak muncul.
+// Tandai merah, beri tahu, lalu buka dropdown-nya.
+let invalidNotified = false;
+document.addEventListener('invalid', (event) => {
+    const el = event.target;
+    if (!(el instanceof HTMLSelectElement) || !el._choices) return;
+
+    event.preventDefault();
+    const container = el._choices.containerOuter.element;
+    container.classList.add('is-invalid');
+
+    if (invalidNotified) return;
+    invalidNotified = true;
+    setTimeout(() => (invalidNotified = false), 300);
+
+    const label = el.id ? document.querySelector(`label[for="${el.id}"]`)?.textContent.replace('*', '').trim() : '';
+    toast.fire({ icon: 'warning', title: label ? `${label} belum dipilih` : 'Masih ada pilihan yang kosong', text: 'Pilih salah satu dulu, ya.' });
+    container.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    setTimeout(() => el._choices.showDropdown(), 250);
+}, true);
+
 document.addEventListener('submit', async (event) => {
     const form = event.target;
 
@@ -406,9 +509,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (flash.dataset.validation) {
             Swal.fire({
                 icon: 'error',
-                title: 'Periksa kembali isian',
+                title: 'Ada isian yang perlu dicek',
                 html: flash.dataset.validation,
-                confirmButtonText: 'Mengerti',
+                confirmButtonText: 'Oke, saya perbaiki',
             });
         }
     }

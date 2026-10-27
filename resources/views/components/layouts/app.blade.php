@@ -165,7 +165,7 @@
             @if ($company['logo'])
                 <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($company['logo']) }}" alt="" class="h-9 w-9 rounded-lg border border-gray-200 bg-white object-contain p-0.5">
             @else
-                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-900 text-white shadow-xs">
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-xs">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3L4 6v4l3 1v10h10V11l3-1V6l-5-3a3 3 0 01-6 0z"/></svg>
                 </div>
             @endif
@@ -189,7 +189,7 @@
                 @if (isset($entry['heading']))
                     @php $key = \Illuminate\Support\Str::slug($entry['heading']); @endphp
                     <div class="pt-4">
-                        <button type="button" class="group flex w-full items-center justify-between rounded-md px-2.5 pb-1.5 text-[11px] font-semibold tracking-wider text-gray-400 uppercase transition hover:text-gray-700"
+                        <button type="button" class="group flex w-full items-center justify-between rounded-md px-2.5 pb-1.5 text-[0.6875rem] font-semibold tracking-wider text-gray-400 uppercase transition hover:text-gray-700"
                                 @click="toggle('{{ $key }}')" :aria-expanded="{{ $entry['active'] ? 'true' : "! collapsed['{$key}']" }}">
                             {{ $entry['heading'] }}
                             <svg class="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100" :class="{{ $entry['active'] ? 'false' : "collapsed['{$key}']" }} ? '-rotate-90 opacity-100' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -209,7 +209,7 @@
         {{-- Pengguna --}}
         <div class="relative shrink-0 border-t border-gray-200 p-3" x-data="{ open: false }" @click.outside="open = false">
             <button type="button" class="flex w-full items-center gap-3 rounded-lg p-2 text-left transition hover:bg-gray-100" @click="open = !open">
-                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xs font-semibold text-white">{{ $initials }}</span>
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-indigo-700 text-xs font-semibold text-white">{{ $initials }}</span>
                 <span class="min-w-0 flex-1">
                     <span class="block truncate text-sm font-medium text-gray-900">{{ auth()->user()->name }}</span>
                     <span class="block truncate text-xs text-gray-500">{{ auth()->user()->role->label() }}</span>
@@ -235,7 +235,7 @@
 
     <div class="flex min-h-full flex-col lg:pl-[17rem]">
         {{-- Topbar --}}
-        <header class="sticky top-0 z-20 border-b border-gray-200/80 bg-white/85 backdrop-blur-md supports-[backdrop-filter]:bg-white/70">
+        <header class="sticky top-0 z-20 border-b border-gray-200/70 bg-white/75 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
             <div class="mx-auto flex h-14 max-w-[1600px] items-center gap-3 px-4 sm:px-6 lg:px-8">
                 <button type="button" class="-ml-1 rounded-lg p-2 text-gray-500 hover:bg-gray-100 lg:hidden" @click="sidebarOpen = true" aria-label="Buka menu">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -260,12 +260,12 @@
             </div>
         </header>
 
-        <main class="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main class="page-enter mx-auto w-full max-w-[1600px] flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
             {{-- Judul halaman + aksi utama --}}
             @if ($title || isset($actions))
-                <div class="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+                <div class="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
                     <div class="min-w-0">
-                        @if ($title)<h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">{{ $title }}</h1>@endif
+                        @if ($title)<h1 class="text-xl font-semibold tracking-tight text-gray-900">{{ $title }}</h1>@endif
                         @if ($subtitle)<p class="mt-1 text-sm text-gray-500">{{ $subtitle }}</p>@endif
                     </div>
                     @isset($actions)
@@ -291,18 +291,18 @@
             <div class="flex items-center gap-3 border-b border-gray-100 px-4">
                 <svg class="h-5 w-5 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
                 <input x-ref="input" x-model="query" @input="cursor = 0" @keydown.down.prevent="move(1)" @keydown.up.prevent="move(-1)" @keydown.enter.prevent="go()"
-                       type="text" placeholder="Ketik nama menu atau aksi, mis. &quot;invoice&quot;…" class="h-14 w-full border-0 bg-transparent p-0 text-[15px] text-gray-900 placeholder:text-gray-400 focus:ring-0">
+                       type="text" placeholder="Ketik nama menu atau aksi, mis. &quot;invoice&quot;…" class="h-14 w-full border-0 bg-transparent p-0 text-[0.9375rem] text-gray-900 placeholder:text-gray-400 focus:ring-0">
                 <span class="kbd">Esc</span>
             </div>
             <ul class="max-h-[55vh] overflow-y-auto p-2" x-ref="list">
                 <template x-for="(item, i) in results" :key="item.url + item.label">
                     <li>
                         <template x-if="i === 0 || results[i - 1].group !== item.group">
-                            <p class="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-gray-400 uppercase" x-text="item.group"></p>
+                            <p class="px-3 pt-2 pb-1 text-[0.6875rem] font-semibold tracking-wider text-gray-400 uppercase" x-text="item.group"></p>
                         </template>
                         <a :href="item.url" @mouseenter="cursor = i" :data-active="cursor === i"
                            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-700 data-[active=true]:bg-gray-100 data-[active=true]:text-gray-900">
-                            <svg class="h-[18px] w-[18px] shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" :d="item.icon"/></svg>
+                            <svg class="h-4.5 w-4.5 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" :d="item.icon"/></svg>
                             <span class="flex-1 truncate" x-text="item.label"></span>
                             <svg x-show="cursor === i" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 10l-5 5 5 5M20 4v7a4 4 0 01-4 4H4"/></svg>
                         </a>
