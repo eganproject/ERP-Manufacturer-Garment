@@ -22,7 +22,7 @@
         </x-card>
 
         <x-card title="Daftar Bahan" :padding="false">
-            <x-slot:header><button type="button" class="btn-secondary py-1.5" @click="add()">+ Bahan</button></x-slot:header>
+            <x-slot:header><button type="button" class="btn-secondary btn-sm" @click="add()">+ Bahan</button></x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">
                     <thead><tr><th class="min-w-72">Bahan</th><th class="w-36">Qty <x-tip title="Qty" text="Jumlah yang dipesan dalam satuan bahan (lihat kode satuan di nama bahan)." /></th><th class="w-44">Harga (Rp) <x-tip title="Harga" text="Harga beli per satuan sesuai kesepakatan dengan supplier. Terisi dari harga beli standar bahan dan boleh diubah. Harga ini menjadi dasar harga pokok bahan saat diterima." /></th><th class="w-44 text-right">Subtotal</th><th class="w-12"></th></tr></thead>

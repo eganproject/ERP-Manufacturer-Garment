@@ -36,7 +36,7 @@
 
         @unless ($isTransfer)
             <x-card :title="$isIn ? 'Sumber Penerimaan (akun kredit)' : 'Penggunaan Dana (akun debit)'" :padding="false" :tip="$isIn ? 'Pilih akun yang menjelaskan asal uang, mis. Pendapatan Lain-lain, Modal Pemilik, Pinjaman Bank. Boleh lebih dari satu baris.' : 'Pilih akun biaya atau tujuan uang, mis. Beban Listrik, Beban Sewa, Hutang PPN. Boleh lebih dari satu baris bila satu kuitansi untuk beberapa keperluan.'">
-                <x-slot:header><button type="button" class="btn-secondary py-1.5" @click="add()">+ Baris</button></x-slot:header>
+                <x-slot:header><button type="button" class="btn-secondary btn-sm" @click="add()">+ Baris</button></x-slot:header>
                 <div class="overflow-x-auto">
                     <table class="table-base">
                         <thead><tr><th class="min-w-72">Akun</th><th class="min-w-48">Keterangan baris</th><th class="w-48">Jumlah (Rp)</th><th class="w-12"></th></tr></thead>

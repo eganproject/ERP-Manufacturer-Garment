@@ -1,34 +1,47 @@
 @php use App\Enums\SalesOrderStatus; @endphp
-<x-layouts.app :title="'SO '.$order->number">
+<x-layouts.app :title="$order->number" :subtitle="'Sales Order · '.$order->customer->name">
     <x-slot:actions>
-        <a href="{{ route('sales-orders.pdf', $order) }}" target="_blank" class="btn-secondary">Cetak SO</a>
+        <x-more-actions>
+            <a href="{{ route('sales-orders.pdf', $order) }}" target="_blank" class="menu-item">Cetak SO</a>
+            @can('sales.manage')
+                @if ($order->isEditable())
+                    <a href="{{ route('sales-orders.edit', $order) }}" class="menu-item">Ubah SO</a>
+                @endif
+                @if ($order->canDeliver())
+                    @can('mrp.view')
+                        <a href="{{ route('mrp.index', ['sales_order_ids' => [$order->id]]) }}" class="menu-item">Cek Kebutuhan Bahan</a>
+                    @endcan
+                @endif
+                @if ($order->canClose())
+                    <x-reason-form :action="route('sales-orders.close', $order)" title="Tutup SO?" text="Sisa qty yang belum dikirim tidak akan dikirim dan keluar dari daftar pesanan terbuka / MRP." placeholder="Alasan, mis. pelanggan tidak jadi ambil sisa" button="Ya, tutup SO" :danger="false" class="menu-item">Tutup Sisa SO</x-reason-form>
+                @endif
+                @if ($order->canCancel() || $order->isEditable())
+                    <div class="menu-divider"></div>
+                @endif
+                @if ($order->canCancel())
+                    <x-action-form :action="route('sales-orders.cancel', $order)" confirm="SO akan dibatalkan." button="Ya, batalkan" class="menu-item-danger">Batalkan SO</x-action-form>
+                @endif
+                @if ($order->isEditable())
+                    <x-delete-button :action="route('sales-orders.destroy', $order)" label="Hapus SO" class="menu-item-danger" />
+                @endif
+            @endcan
+        </x-more-actions>
+        @if ($order->canReturn())
+            @can('sales-returns.manage')
+                <a href="{{ route('sales-returns.create', ['order_id' => $order->id]) }}" class="btn-secondary">Retur Barang</a>
+            @endcan
+        @endif
         @can('sales.manage')
             @if ($order->isEditable())
-                <x-delete-button :action="route('sales-orders.destroy', $order)" class="btn-secondary !text-red-600" />
-                <a href="{{ route('sales-orders.edit', $order) }}" class="btn-secondary">Ubah</a>
-                <x-action-form :action="route('sales-orders.confirm', $order)" confirm="SO akan dikunci dan siap diproduksi/dikirim." icon="question" button="Ya, konfirmasi" class="btn-primary">Konfirmasi</x-action-form>
-            @endif
-            @if ($order->canCancel())
-                <x-action-form :action="route('sales-orders.cancel', $order)" confirm="SO akan dibatalkan." button="Ya, batalkan">Batalkan</x-action-form>
-            @endif
-            @if ($order->canClose())
-                <x-reason-form :action="route('sales-orders.close', $order)" title="Tutup SO?" text="Sisa qty yang belum dikirim tidak akan dikirim dan keluar dari daftar pesanan terbuka / MRP." placeholder="Alasan, mis. pelanggan tidak jadi ambil sisa" button="Ya, tutup SO" :danger="false">Tutup Sisa SO</x-reason-form>
+                <x-action-form :action="route('sales-orders.confirm', $order)" confirm="SO akan dikunci dan siap diproduksi/dikirim." icon="question" button="Ya, konfirmasi" class="btn-primary">Konfirmasi SO</x-action-form>
             @endif
         @endcan
         @if ($order->canDeliver())
-            @can('mrp.view')
-                <a href="{{ route('mrp.index', ['sales_order_ids' => [$order->id]]) }}" class="btn-secondary">Cek Kebutuhan Bahan</a>
-            @endcan
             @can('production.manage')
                 <a href="{{ route('production-orders.create', ['sales_order_id' => $order->id]) }}" class="btn-secondary">Buat SPK</a>
             @endcan
             @can('sales.deliver')
-                <a href="{{ route('sales-orders.deliver', $order) }}" class="btn-success">Kirim Barang</a>
-            @endcan
-        @endif
-        @if ($order->canReturn())
-            @can('sales-returns.manage')
-                <a href="{{ route('sales-returns.create', ['order_id' => $order->id]) }}" class="btn-secondary">Retur Barang</a>
+                <a href="{{ route('sales-orders.deliver', $order) }}" class="btn-primary">Kirim Barang</a>
             @endcan
         @endif
         @if ($order->canInvoice())
@@ -94,7 +107,7 @@
                                 <td class="text-right"><a href="{{ route('deliveries.pdf', $delivery) }}" target="_blank" class="text-sm font-medium text-indigo-600 hover:underline">Cetak</a></td>
                             </tr>
                         @empty
-                            <x-empty-row colspan="5" message="Belum ada pengiriman." />
+                            <x-empty-row compact colspan="5" message="Belum ada pengiriman." />
                         @endforelse
                     </tbody>
                 </table>
@@ -117,7 +130,7 @@
                                 <td><x-payable-status :doc="$invoice" /></td>
                             </tr>
                         @empty
-                            <x-empty-row colspan="6" message="Belum ada invoice untuk SO ini." />
+                            <x-empty-row compact colspan="6" message="Belum ada invoice untuk SO ini." />
                         @endforelse
                     </tbody>
                 </table>
@@ -147,7 +160,7 @@
                             <td><x-status-badge :status="$po->status" /></td>
                         </tr>
                     @empty
-                        <x-empty-row colspan="4" message="Belum ada SPK untuk SO ini." />
+                        <x-empty-row compact colspan="4" message="Belum ada SPK untuk SO ini." />
                     @endforelse
                 </tbody>
             </table>

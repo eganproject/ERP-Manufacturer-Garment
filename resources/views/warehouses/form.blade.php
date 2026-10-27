@@ -17,7 +17,7 @@
         </form>
         @if ($warehouse->exists && ! $warehouse->is_default)
             @can('warehouses.manage')
-                <div class="mt-6 border-t border-gray-100 pt-4"><x-delete-button :action="route('warehouses.destroy', $warehouse)" class="btn-secondary !text-red-600" /></div>
+                <div class="mt-6 border-t border-gray-100 pt-4"><x-delete-button :action="route('warehouses.destroy', $warehouse)" class="btn-outline-danger" /></div>
             @endcan
         @endif
     </x-card>

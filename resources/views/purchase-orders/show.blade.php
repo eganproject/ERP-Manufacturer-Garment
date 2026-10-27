@@ -4,31 +4,42 @@
     $canDecide = $order->isPendingApproval() && auth()->user()->can('purchase.approve')
         && ($order->created_by !== auth()->id() || auth()->user()->isAdmin());
 @endphp
-<x-layouts.app :title="'PO '.$order->number">
+<x-layouts.app :title="$order->number" :subtitle="'Purchase Order · '.$order->supplier->name">
     <x-slot:actions>
-        <a href="{{ route('purchase-orders.pdf', $order) }}" target="_blank" class="btn-secondary">Cetak PO</a>
-        @can('purchase.manage')
-        @if ($order->isEditable())
-            <x-delete-button :action="route('purchase-orders.destroy', $order)" class="btn-secondary !text-red-600" />
-            <a href="{{ route('purchase-orders.edit', $order) }}" class="btn-secondary">Ubah</a>
-            @if ($needsApproval)
-                <x-action-form :action="route('purchase-orders.submit', $order)" confirm="Nilai PO melewati batas persetujuan. PO akan dikunci dan diajukan ke penyetuju." icon="question" button="Ya, ajukan" class="btn-primary">Ajukan Persetujuan</x-action-form>
-            @else
-                <x-action-form :action="route('purchase-orders.submit', $order)" confirm="PO akan dikunci dan ditandai sudah dipesan ke supplier." icon="question" button="Ya, pesan" class="btn-primary">Tandai Dipesan</x-action-form>
-            @endif
-        @endif
-        @if ($order->canCancel())
-            <x-action-form :action="route('purchase-orders.cancel', $order)" confirm="PO akan dibatalkan." button="Ya, batalkan">Batalkan</x-action-form>
-        @endif
-        @if ($order->canClose())
-            <x-reason-form :action="route('purchase-orders.close', $order)" title="Tutup PO?" text="Sisa qty yang belum diterima tidak lagi ditunggu dari supplier dan keluar dari hitungan MRP." placeholder="Alasan, mis. supplier kehabisan stok" button="Ya, tutup PO" :danger="false">Tutup Sisa PO</x-reason-form>
-        @endif
-        @endcan
-        @if ($order->canReceive() && auth()->user()->can('purchase.receive'))
-            <a href="{{ route('purchase-orders.receive', $order) }}" class="btn-success">Terima Barang</a>
-        @endif
+        <x-more-actions>
+            <a href="{{ route('purchase-orders.pdf', $order) }}" target="_blank" class="menu-item">Cetak PO</a>
+            @can('purchase.manage')
+                @if ($order->isEditable())
+                    <a href="{{ route('purchase-orders.edit', $order) }}" class="menu-item">Ubah PO</a>
+                @endif
+                @if ($order->canClose())
+                    <x-reason-form :action="route('purchase-orders.close', $order)" title="Tutup PO?" text="Sisa qty yang belum diterima tidak lagi ditunggu dari supplier dan keluar dari hitungan MRP." placeholder="Alasan, mis. supplier kehabisan stok" button="Ya, tutup PO" :danger="false" class="menu-item">Tutup Sisa PO</x-reason-form>
+                @endif
+                @if ($order->canCancel() || $order->isEditable())
+                    <div class="menu-divider"></div>
+                @endif
+                @if ($order->canCancel())
+                    <x-action-form :action="route('purchase-orders.cancel', $order)" confirm="PO akan dibatalkan." button="Ya, batalkan" class="menu-item-danger">Batalkan PO</x-action-form>
+                @endif
+                @if ($order->isEditable())
+                    <x-delete-button :action="route('purchase-orders.destroy', $order)" label="Hapus PO" class="menu-item-danger" />
+                @endif
+            @endcan
+        </x-more-actions>
         @if ($order->canReturn() && auth()->user()->can('purchase-returns.manage'))
             <a href="{{ route('purchase-returns.create', ['order_id' => $order->id]) }}" class="btn-secondary">Retur ke Supplier</a>
+        @endif
+        @can('purchase.manage')
+            @if ($order->isEditable())
+                @if ($needsApproval)
+                    <x-action-form :action="route('purchase-orders.submit', $order)" confirm="Nilai PO melewati batas persetujuan. PO akan dikunci dan diajukan ke penyetuju." icon="question" button="Ya, ajukan" class="btn-primary">Ajukan Persetujuan</x-action-form>
+                @else
+                    <x-action-form :action="route('purchase-orders.submit', $order)" confirm="PO akan dikunci dan ditandai sudah dipesan ke supplier." icon="question" button="Ya, pesan" class="btn-primary">Tandai Dipesan</x-action-form>
+                @endif
+            @endif
+        @endcan
+        @if ($order->canReceive() && auth()->user()->can('purchase.receive'))
+            <a href="{{ route('purchase-orders.receive', $order) }}" class="btn-primary">Terima Barang</a>
         @endif
         @if ($order->canBill() && auth()->user()->can('payables.manage'))
             <a href="{{ route('bills.create', ['purchase_order_id' => $order->id]) }}" class="btn-primary">Catat Tagihan</a>
@@ -52,7 +63,7 @@
                     </div>
                     <div class="flex gap-2">
                         <button type="submit" class="btn-success">Setujui</button>
-                        <button type="submit" formaction="{{ route('purchase-orders.reject', $order) }}" class="btn-secondary !text-red-600">Tolak</button>
+                        <button type="submit" formaction="{{ route('purchase-orders.reject', $order) }}" class="btn-outline-danger">Tolak</button>
                     </div>
                 </form>
             @elseif (auth()->user()->can('purchase.approve'))
@@ -125,7 +136,7 @@
                             <td class="text-right"><a href="{{ route('goods-receipts.pdf', $receipt) }}" target="_blank" class="text-sm font-medium text-indigo-600 hover:underline">Cetak</a></td>
                         </tr>
                     @empty
-                        <x-empty-row colspan="5" message="Belum ada penerimaan barang." />
+                        <x-empty-row compact colspan="5" message="Belum ada penerimaan barang." />
                     @endforelse
                 </tbody>
             </table>
@@ -152,7 +163,7 @@
                                 <td><x-payable-status :doc="$bill" /></td>
                             </tr>
                         @empty
-                            <x-empty-row colspan="7" message="Belum ada tagihan supplier untuk PO ini." />
+                            <x-empty-row compact colspan="7" message="Belum ada tagihan supplier untuk PO ini." />
                         @endforelse
                     </tbody>
                 </table>

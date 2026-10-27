@@ -20,7 +20,7 @@
         </x-card>
 
         <x-card title="Baris Jurnal" :padding="false">
-            <x-slot:header><button type="button" class="btn-secondary py-1.5" @click="add()">+ Baris</button></x-slot:header>
+            <x-slot:header><button type="button" class="btn-secondary btn-sm" @click="add()">+ Baris</button></x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">
                     <thead><tr><th class="min-w-72">Akun</th><th class="min-w-48">Keterangan baris</th><th class="w-44">Debit (Rp) <x-tip title="Debit" text="Menambah aset & beban, atau mengurangi kewajiban, ekuitas & pendapatan." /></th><th class="w-44">Kredit (Rp) <x-tip title="Kredit" text="Menambah kewajiban, ekuitas & pendapatan, atau mengurangi aset & beban." /></th><th class="w-12"></th></tr></thead>

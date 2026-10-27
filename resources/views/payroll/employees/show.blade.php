@@ -49,7 +49,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <x-empty-row colspan="6" message="Belum ada kasbon. Kasbon otomatis diusulkan dipotong saat penggajian." />
+                            <x-empty-row compact colspan="6" message="Belum ada kasbon. Kasbon otomatis diusulkan dipotong saat penggajian." />
                         @endforelse
                     </tbody>
                 </table>
@@ -85,7 +85,7 @@
                                 <td class="text-right"><a href="{{ route('payrolls.slip', [$line->payroll, $line]) }}" target="_blank" class="text-sm text-indigo-600 hover:underline">Slip</a></td>
                             </tr>
                         @empty
-                            <x-empty-row colspan="9" message="Belum pernah masuk penggajian." />
+                            <x-empty-row compact colspan="9" message="Belum pernah masuk penggajian." />
                         @endforelse
                     </tbody>
                 </table>
@@ -116,7 +116,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <x-empty-row colspan="9" message="Belum ada hasil kerja tercatat." />
+                            <x-empty-row compact colspan="9" message="Belum ada hasil kerja tercatat." />
                         @endforelse
                     </tbody>
                 </table>

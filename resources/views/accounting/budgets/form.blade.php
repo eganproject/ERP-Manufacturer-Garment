@@ -38,7 +38,7 @@
             <x-slot:header>
                 <div class="flex items-center gap-3 text-sm">
                     <span class="text-gray-500">Total pendapatan − beban akan dihitung di laporan</span>
-                    <button type="button" class="btn-secondary py-1.5" @click="add()">+ Akun</button>
+                    <button type="button" class="btn-secondary btn-sm" @click="add()">+ Akun</button>
                 </div>
             </x-slot:header>
             <div class="overflow-x-auto">
@@ -93,7 +93,7 @@
             <div>
                 @if ($budget->exists)
                     @can('budget.manage')
-                        <button type="submit" form="delete-budget" class="btn-secondary !text-red-600">Hapus Anggaran</button>
+                        <button type="submit" form="delete-budget" class="btn-outline-danger">Hapus Anggaran</button>
                     @endcan
                 @endif
             </div>

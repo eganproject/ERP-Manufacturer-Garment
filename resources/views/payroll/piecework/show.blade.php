@@ -6,7 +6,7 @@
     <x-slot:actions>
         <a href="{{ route('piecework.pdf', $sheet) }}" target="_blank" class="btn-secondary">Cetak</a>
         @if ($canDelete)
-            <x-delete-button :action="route('piecework.destroy', $sheet)" confirm="Lembar hasil kerja dihapus dan upahnya dikeluarkan dari HPP SPK." class="btn-secondary !text-red-600" />
+            <x-delete-button :action="route('piecework.destroy', $sheet)" confirm="Lembar hasil kerja dihapus dan upahnya dikeluarkan dari HPP SPK." class="btn-outline-danger" />
         @endif
         @can('piecework.record')
             @if ($spk->status === \App\Enums\ProductionOrderStatus::InProgress)

@@ -24,7 +24,7 @@ Tidak dipakai bila tahap jahit dimaklonkan atau artikel memakai tarif upah boron
         </x-card>
 
         <x-card title="Kebutuhan Bahan per 1 pcs" :padding="false" tip="Isi pemakaian bahan untuk satu potong produk jadi. Saat SPK dibuat, angka ini dikalikan jumlah pcs (+ waste).">
-            <x-slot:header><button type="button" class="btn-secondary py-1.5" @click="add()">+ Bahan</button></x-slot:header>
+            <x-slot:header><button type="button" class="btn-secondary btn-sm" @click="add()">+ Bahan</button></x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">
                     <thead><tr><th class="min-w-72">Bahan</th><th class="w-40">Qty / pcs <x-tip title="Qty per pcs" text="Jumlah bahan untuk 1 pcs dalam satuan bahan, mis. 1,6 (meter kain) atau 7 (kancing)." /></th><th class="w-32">Waste % <x-tip title="Waste (susut)" text="Cadangan bahan yang terbuang saat potong/jahit. Mis. 5 berarti kebutuhan dinaikkan 5%: 1,6 m → 1,68 m per pcs." /></th><th>Keterangan</th><th class="w-12"></th></tr></thead>

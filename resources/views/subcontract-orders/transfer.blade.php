@@ -24,7 +24,7 @@
 
         <x-card title="Bahan" :padding="false" x-data>
             <x-slot:header>
-                <button type="button" class="btn-secondary py-1.5" @click="document.querySelectorAll('[data-suggest]').forEach(el => el.value = el.dataset.suggest)">{{ $isDispatch ? 'Isi sesuai sisa rencana' : 'Isi semua saldo' }}</button>
+                <button type="button" class="btn-secondary btn-sm" @click="document.querySelectorAll('[data-suggest]').forEach(el => el.value = el.dataset.suggest)">{{ $isDispatch ? 'Isi sesuai sisa rencana' : 'Isi semua saldo' }}</button>
             </x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">

@@ -5,7 +5,7 @@
             @if ($invoice->canCancel())
                 <form method="POST" action="{{ route('invoices.cancel', $invoice) }}" class="inline" data-confirm="Invoice dibatalkan dan barangnya bisa ditagihkan ulang." data-confirm-button="Ya, batalkan">
                     @csrf
-                    <button type="submit" class="btn-secondary !text-red-600">Batalkan</button>
+                    <button type="submit" class="btn-outline-danger">Batalkan</button>
                 </form>
             @endif
             @if ($invoice->isOpen())

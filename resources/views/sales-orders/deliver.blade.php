@@ -20,7 +20,7 @@
 
         <x-card title="Jumlah Dikirim" :padding="false" x-data>
             <x-slot:header>
-                <button type="button" class="btn-secondary py-1.5" @click="document.querySelectorAll('[data-outstanding]').forEach(el => el.value = Math.min(el.dataset.outstanding, el.dataset.stock))">Isi sesuai sisa & stok</button>
+                <button type="button" class="btn-secondary btn-sm" @click="document.querySelectorAll('[data-outstanding]').forEach(el => el.value = Math.min(el.dataset.outstanding, el.dataset.stock))">Isi sesuai sisa & stok</button>
             </x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">

@@ -9,12 +9,15 @@
     $withCost = $user->can('costing.view');
 @endphp
 
-<x-layouts.app :title="'Order Maklon '.$order->number">
+<x-layouts.app :title="'Order Maklon '.$order->number" :subtitle="$order->supplier->name.' · '.$spk->number">
     <x-slot:actions>
-        <a href="{{ route('subcontract-orders.pdf', $order) }}" target="_blank" class="btn-secondary">Cetak Order</a>
-        @if ($canManage && $order->canCancel())
-            <x-action-form :action="route('subcontract-orders.cancel', $order)" confirm="Order maklon dibatalkan, tahap kembali dikerjakan internal." button="Ya, batalkan" class="btn-secondary !text-red-600">Batalkan</x-action-form>
-        @endif
+        <x-more-actions>
+            <a href="{{ route('subcontract-orders.pdf', $order) }}" target="_blank" class="menu-item">Cetak Order</a>
+            @if ($canManage && $order->canCancel())
+                <div class="menu-divider"></div>
+                <x-action-form :action="route('subcontract-orders.cancel', $order)" confirm="Order maklon dibatalkan, tahap kembali dikerjakan internal." button="Ya, batalkan" class="menu-item-danger">Batalkan Order</x-action-form>
+            @endif
+        </x-more-actions>
         @if ($canTransfer && $spkRunning)
             <a href="{{ route('subcontract-orders.transfer', [$order, 'dispatch']) }}" class="btn-secondary">Kirim Bahan</a>
         @endif
@@ -120,7 +123,7 @@
                                 <td class="text-right"><a href="{{ route('subcontract-transfers.pdf', $transfer) }}" target="_blank" class="text-sm font-medium text-indigo-600 hover:underline">PDF</a></td>
                             </tr>
                         @empty
-                            <x-empty-row :colspan="$withCost ? 7 : 6" message="Belum ada bahan yang dikirim ke vendor." />
+                            <x-empty-row compact :colspan="$withCost ? 7 : 6" message="Belum ada bahan yang dikirim ke vendor." />
                         @endforelse
                     </tbody>
                 </table>
@@ -150,7 +153,7 @@
                                 <td class="text-right"><a href="{{ route('subcontract-receipts.pdf', $receipt) }}" target="_blank" class="text-sm font-medium text-indigo-600 hover:underline">PDF</a></td>
                             </tr>
                         @empty
-                            <x-empty-row colspan="8" message="Belum ada hasil yang diterima dari vendor." />
+                            <x-empty-row compact colspan="8" message="Belum ada hasil yang diterima dari vendor." />
                         @endforelse
                     </tbody>
                 </table>

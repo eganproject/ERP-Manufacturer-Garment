@@ -47,7 +47,7 @@
 
                 <x-card :title="'3. Alokasi ke '.($isReceipt ? 'Invoice' : 'Tagihan')" :padding="false">
                     <x-slot:header>
-                        <button type="button" class="btn-secondary py-1.5" @click="rows.forEach(r => r.amount = r.outstanding)">Lunasi semua</button>
+                        <button type="button" class="btn-secondary btn-sm" @click="rows.forEach(r => r.amount = r.outstanding)">Lunasi semua</button>
                     </x-slot:header>
                     <div class="overflow-x-auto">
                         <table class="table-base">

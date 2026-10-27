@@ -27,7 +27,7 @@
                                                 <input type="hidden" name="marketplace_name" value="{{ $row->name }}">
                                                 <div class="flex-1"><x-form.select name="product_variant_id" :options="$variants" data-select :id="'v'.$loop->index" /></div>
                                                 <input type="number" name="units_per_item" value="1" min="0.01" step="0.01" class="form-control w-20" title="Isi per paket (pcs)">
-                                                <button type="submit" class="btn-primary !py-1.5">Simpan</button>
+                                                <button type="submit" class="btn-primary btn-sm">Simpan</button>
                                             </form>
                                         @else
                                             <span class="text-xs text-gray-500">Isi SKU penjual di Seller Center agar bisa dipetakan.</span>

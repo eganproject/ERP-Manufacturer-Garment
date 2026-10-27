@@ -6,5 +6,5 @@
     @if (strtoupper($method) !== 'POST')
         @method($method)
     @endif
-    <button type="submit" {{ $attributes->merge(['class' => 'btn-secondary']) }}>{{ $slot }}</button>
+    <button type="submit" {{ $attributes->has('class') ? $attributes : $attributes->merge(['class' => 'btn-secondary']) }}>{{ $slot }}</button>
 </form>

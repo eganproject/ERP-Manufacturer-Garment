@@ -3,7 +3,7 @@
         <a href="{{ route('stock-transfers.pdf', $transfer) }}" target="_blank" class="btn-secondary">Cetak Surat Transfer</a>
         @can('stock.transfer')
             @unless ($transfer->isCancelled())
-                <x-reason-form :action="route('stock-transfers.cancel', $transfer)" title="Batalkan transfer?" text="Barang dikembalikan ke gudang asal (stok di gudang tujuan harus cukup)." button="Ya, batalkan" class="btn-secondary !text-red-600">Batalkan</x-reason-form>
+                <x-reason-form :action="route('stock-transfers.cancel', $transfer)" title="Batalkan transfer?" text="Barang dikembalikan ke gudang asal (stok di gudang tujuan harus cukup)." button="Ya, batalkan" class="btn-outline-danger">Batalkan</x-reason-form>
             @endunless
         @endcan
     </x-slot:actions>

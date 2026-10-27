@@ -18,7 +18,7 @@
 
         <x-card title="Jumlah Diterima" :padding="false" x-data>
             <x-slot:header>
-                <button type="button" class="btn-secondary py-1.5" @click="document.querySelectorAll('[data-outstanding]').forEach(el => el.value = el.dataset.outstanding)">Isi semua sesuai sisa</button>
+                <button type="button" class="btn-secondary btn-sm" @click="document.querySelectorAll('[data-outstanding]').forEach(el => el.value = el.dataset.outstanding)">Isi semua sesuai sisa</button>
             </x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">

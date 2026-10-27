@@ -27,7 +27,7 @@
         </x-card>
 
         <x-card title="Produk Ditawarkan" :padding="false">
-            <x-slot:header><button type="button" class="btn-secondary py-1.5" @click="add()">+ Produk</button></x-slot:header>
+            <x-slot:header><button type="button" class="btn-secondary btn-sm" @click="add()">+ Produk</button></x-slot:header>
             <div class="overflow-x-auto" x-data="{ tax: {{ (float) old('tax_rate', $quotation->tax_rate) }} }">
                 <table class="table-base">
                     <thead><tr><th class="min-w-72">Produk / Varian</th><th class="min-w-48">Keterangan <x-tip title="Keterangan" text="Detail tambahan per baris yang dicetak, mis. sablon 2 warna, bordir logo dada kiri." /></th><th class="w-28">Qty</th><th class="w-40">Harga (Rp)</th><th class="w-40 text-right">Subtotal</th><th class="w-12"></th></tr></thead>
