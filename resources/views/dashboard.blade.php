@@ -1,4 +1,9 @@
-<x-layouts.app title="Dashboard">
+@php
+    $hour = (int) now()->format('G');
+    $greeting = match (true) { $hour < 11 => 'Selamat pagi', $hour < 15 => 'Selamat siang', $hour < 18 => 'Selamat sore', default => 'Selamat malam' };
+    $firstName = \Illuminate\Support\Str::of(auth()->user()->name)->explode(' ')->first();
+@endphp
+<x-layouts.app title="Dashboard" :subtitle="$greeting.', '.$firstName.' 👋 Semoga produksinya lancar hari ini.'">
     @php
         $pct = fn ($v) => number_format((float) $v, 1, ',', '.').'%';
         $growth = $invoiced['growth'];
@@ -7,47 +12,47 @@
                 'label' => 'Penjualan terfaktur bulan ini', 'value' => rupiah($invoiced['current']),
                 'hint' => $growth === null ? 'Bulan lalu '.rupiah($invoiced['previous']) : (($growth >= 0 ? '▲ ' : '▼ ').$pct(abs($growth)).' dibanding bulan lalu'),
                 'tone' => $growth === null ? null : ($growth >= 0 ? 'green' : 'red'),
-                'link' => route('reports.sales'),
+                'link' => route('reports.sales'), 'icon' => 'M3 17l6-6 4 4 8-8M14 7h7v7',
             ] : null,
             $grossProfit !== null ? [
                 'label' => 'Laba kotor bulan ini', 'value' => rupiah($grossProfit['gross_profit']),
                 'hint' => 'Margin '.$pct($grossProfit['margin']).($grossProfit['previous_margin'] !== null ? ' · bulan lalu '.$pct($grossProfit['previous_margin']) : '').' · HPP '.rupiah($grossProfit['cost']),
                 'tone' => $grossProfit['gross_profit'] < 0 ? 'red' : ($grossProfit['previous_margin'] !== null && $grossProfit['dpp'] > 0 ? ($grossProfit['margin'] >= $grossProfit['previous_margin'] ? 'green' : 'amber') : null),
-                'link' => route('reports.sales', ['group' => 'item']),
+                'link' => route('reports.sales', ['group' => 'item']), 'icon' => 'M12 8c-1.66 0-3 .9-3 2s1.34 2 3 2 3 .9 3 2-1.34 2-3 2m0-8c1.11 0 2.08.4 2.6 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.4-2.6-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
             ] : null,
             $pendingApprovals !== null ? [
                 'label' => 'PO menunggu persetujuan', 'value' => $pendingApprovals['count'],
                 'hint' => $pendingApprovals['count'] > 0 ? 'Senilai '.rupiah($pendingApprovals['total']) : 'Tidak ada PO yang perlu disetujui',
                 'tone' => $pendingApprovals['count'] > 0 ? 'amber' : null,
-                'link' => route('purchase-orders.index', ['status' => \App\Enums\PurchaseOrderStatus::PendingApproval->value]),
+                'link' => route('purchase-orders.index', ['status' => \App\Enums\PurchaseOrderStatus::PendingApproval->value]), 'icon' => 'M9 12l2 2 4-4m5.62-4.02A11.96 11.96 0 0112 2.94a11.96 11.96 0 01-8.62 3.04A12 12 0 003 9c0 5.59 3.82 10.29 9 11.62 5.18-1.33 9-6.03 9-11.62 0-1.04-.13-2.05-.38-3.02z',
             ] : null,
             auth()->user()->can('sales.view') ? [
                 'label' => 'Pesanan (SO) bulan ini', 'value' => rupiah($stats['sales_this_month']),
-                'hint' => $stats['open_sales'].' SO menunggu dikirim', 'link' => route('sales-orders.index'),
+                'hint' => $stats['open_sales'].' SO menunggu dikirim', 'link' => route('sales-orders.index'), 'icon' => 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z',
             ] : null,
             $receivables !== null ? [
                 'label' => 'Piutang pelanggan', 'value' => rupiah($receivables['outstanding']),
                 'hint' => $receivables['overdue'] > 0 ? 'Lewat jatuh tempo '.rupiah($receivables['overdue']) : $receivables['count'].' invoice belum lunas',
-                'tone' => $receivables['overdue'] > 0 ? 'red' : null, 'link' => route('reports.receivables-aging'),
+                'tone' => $receivables['overdue'] > 0 ? 'red' : null, 'link' => route('reports.receivables-aging'), 'icon' => 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z',
             ] : null,
             $payables !== null ? [
                 'label' => 'Hutang supplier', 'value' => rupiah($payables['outstanding']),
                 'hint' => 'Jatuh tempo ≤ 7 hari '.rupiah($stats['payable_due']),
-                'tone' => $stats['payable_due'] > 0 ? 'amber' : null, 'link' => route('reports.payables-aging'),
+                'tone' => $stats['payable_due'] > 0 ? 'amber' : null, 'link' => route('reports.payables-aging'), 'icon' => 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
             ] : null,
             $production !== null ? [
                 'label' => 'Produksi selesai bulan ini', 'value' => qty($production['finished']).' pcs',
                 'hint' => 'Reject '.$pct($production['reject_rate']).' · '.$stats['active_production'].' SPK berjalan',
-                'tone' => $production['reject_rate'] > 5 ? 'red' : null, 'link' => route('reports.production'),
+                'tone' => $production['reject_rate'] > 5 ? 'red' : null, 'link' => route('reports.production'), 'icon' => 'M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65a.5.5 0 00.12-.64l-2-3.46a.5.5 0 00-.61-.22l-2.49 1a7.3 7.3 0 00-1.69-.98l-.38-2.65A.49.49 0 0014 2h-4a.49.49 0 00-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1a.5.5 0 00-.61.22l-2 3.46a.49.49 0 00.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65a.5.5 0 00-.12.64l2 3.46a.5.5 0 00.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1a.5.5 0 00.61-.22l2-3.46a.5.5 0 00-.12-.64l-2.11-1.65zM12 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z',
             ] : null,
             $stockValue !== null ? [
                 'label' => 'Nilai persediaan', 'value' => rupiah($stockValue['materials'] + $stockValue['products']),
                 'hint' => 'Bahan '.rupiah($stockValue['materials']).' · Jadi '.rupiah($stockValue['products']),
-                'link' => route('reports.stock-valuation'),
+                'link' => route('reports.stock-valuation'), 'icon' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
             ] : null,
             auth()->user()->can('purchase.view') ? [
                 'label' => 'PO belum diterima', 'value' => $stats['open_purchases'],
-                'hint' => 'PO dipesan / diterima sebagian', 'link' => route('purchase-orders.index'),
+                'hint' => 'PO dipesan / diterima sebagian', 'link' => route('purchase-orders.index'), 'icon' => 'M9 17a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0h2m-2 0H9m10 0h1a1 1 0 001-1v-3.65a1 1 0 00-.22-.62l-3.48-4.35A1 1 0 0016.52 7H13',
             ] : null,
         ]);
         $maxTrend = max(1, (float) $trend->max('sales'), (float) $trend->max('purchases'));
@@ -84,12 +89,15 @@
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         @foreach ($cards as $card)
-            <a href="{{ $card['link'] }}" class="card group relative p-5 transition hover:border-gray-300 hover:shadow-pop">
-                <div class="flex items-start justify-between gap-2">
-                    <p class="text-[13px] font-medium text-gray-500">{{ $card['label'] }}</p>
-                    <svg class="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M9 7h8v8"/></svg>
+            <a href="{{ $card['link'] }}" class="card group relative p-4">
+                <div class="flex items-start gap-3">
+                    <span @class(['icon-chip transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6', 'tone-'.($card['tone'] ?? '') => ! empty($card['tone'])])>
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $card['icon'] }}"/></svg>
+                    </span>
+                    <p class="min-w-0 flex-1 pt-0.5 text-[0.8125rem] leading-snug font-medium text-gray-500">{{ $card['label'] }}</p>
+                    <svg class="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M9 7h8v8"/></svg>
                 </div>
-                <p class="mt-2 text-2xl font-semibold tracking-tight text-gray-900 tabular-nums">{{ $card['value'] }}</p>
+                <p class="mt-3 text-xl font-semibold tracking-tight text-gray-900 tabular-nums">{{ $card['value'] }}</p>
                 <p @class([
                     'mt-1.5 flex items-center gap-1.5 text-xs',
                     'text-gray-500' => empty($card['tone']),

@@ -22,7 +22,7 @@
     <div x-show="open" x-collapse x-cloak>
         <div class="guide-body">
             @if (trim($slot) !== '')
-                <p class="mb-3 text-[13px] leading-relaxed text-gray-600">{{ $slot }}</p>
+                <p class="mb-3 text-[0.8125rem] leading-relaxed text-gray-600">{{ $slot }}</p>
             @endif
             @if ($steps)
                 <ol class="guide-steps">

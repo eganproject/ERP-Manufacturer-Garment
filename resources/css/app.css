@@ -2,7 +2,6 @@
 @plugin '@tailwindcss/forms';
 
 @import '@fontsource-variable/inter';
-@import 'tom-select/dist/css/tom-select.css';
 @import 'flatpickr/dist/flatpickr.min.css';
 @import 'flatpickr/dist/plugins/monthSelect/style.css';
 @import 'sweetalert2/dist/sweetalert2.min.css';
@@ -81,13 +80,27 @@
 }
 
 @layer base {
+    /* Ukuran dasar 15px (bawaan 16px) di layar lebar, 14.5px di laptop kecil:
+       semua ukuran rem (teks, jarak, tinggi tombol, lebar sidebar) ikut mengecil proporsional */
     html {
+        font-size: 93.75%;
         font-feature-settings: 'cv11', 'ss01', 'ss03';
         -webkit-tap-highlight-color: transparent;
     }
 
+    @media (width >= 64rem) and (width < 96rem) {
+        html {
+            font-size: 90.625%;
+        }
+    }
+
     body {
         @apply bg-gray-50 text-gray-800;
+        /* Cahaya aksen lembut di atas halaman agar tidak datar */
+        background-image:
+            radial-gradient(60rem 22rem at 85% -6rem, oklch(0.94 0.03 266 / 0.75), transparent 70%),
+            radial-gradient(40rem 18rem at 10% -8rem, oklch(0.95 0.03 160 / 0.45), transparent 70%);
+        background-repeat: no-repeat;
     }
 
     ::selection {
@@ -140,7 +153,7 @@
     }
 
     .form-label {
-        @apply mb-1.5 block text-[13px] font-medium text-gray-700;
+        @apply mb-1.5 block text-[0.8125rem] font-medium text-gray-700;
     }
 
     .form-help {
@@ -170,12 +183,12 @@
     .btn-danger,
     .btn-success,
     .btn-ghost {
-        @apply inline-flex h-[38px] shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3.5 text-sm font-medium whitespace-nowrap transition-[background-color,border-color,color,box-shadow] duration-150 select-none focus:outline-none focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-50;
+        @apply inline-flex h-9.5 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3.5 text-sm font-medium whitespace-nowrap transition-[background-color,border-color,color,box-shadow,transform] duration-150 select-none focus:outline-none focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-50;
     }
 
     .btn-primary,
     .btn-success {
-        @apply bg-indigo-600 text-white shadow-xs hover:bg-indigo-700 focus-visible:ring-indigo-500/25;
+        @apply bg-indigo-600 bg-gradient-to-b from-indigo-500 to-indigo-600 text-white shadow-xs hover:-translate-y-px hover:from-indigo-600 hover:to-indigo-700 focus-visible:ring-indigo-500/25 active:translate-y-0;
         box-shadow:
             inset 0 1px 0 0 rgb(255 255 255 / 0.12),
             0 1px 2px 0 rgb(24 24 27 / 0.08);
@@ -195,11 +208,11 @@
     }
 
     .btn-sm {
-        @apply h-8 rounded-md px-2.5 text-[13px];
+        @apply h-8 rounded-md px-2.5 text-[0.8125rem];
     }
 
     .btn-icon {
-        @apply h-[38px] w-[38px] px-0;
+        @apply h-9.5 w-9.5 px-0;
     }
 
     /* ---------- Tabel ---------- */
@@ -208,7 +221,7 @@
     }
 
     .table-base thead th {
-        @apply border-b border-gray-200 bg-gray-50/80 px-4 py-2.5 text-left text-[11px] font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase;
+        @apply border-b border-gray-200 bg-gray-50/80 px-4 py-2 text-left text-[0.6875rem] font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase;
     }
 
     .table-base thead th.text-right {
@@ -220,11 +233,11 @@
     }
 
     .table-base tbody td {
-        @apply px-4 py-3 align-top text-gray-700;
+        @apply px-4 py-2.5 align-top text-gray-700;
     }
 
     .table-base tbody tr {
-        @apply transition-colors hover:bg-gray-50/70;
+        @apply transition-colors hover:bg-indigo-50/40;
     }
 
     .table-base tbody + tbody {
@@ -258,11 +271,37 @@
 
     /* ---------- Lain-lain ---------- */
     .card {
-        @apply rounded-xl border border-gray-200 bg-white shadow-card;
+        @apply rounded-xl border border-gray-200/80 bg-white shadow-card;
+    }
+
+    /* Kartu yang bisa diklik: sedikit terangkat saat disorot */
+    a.card {
+        @apply transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-pop;
+    }
+
+    /* Chip ikon berwarna lembut (dashboard, ringkasan) */
+    .icon-chip {
+        @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100;
+    }
+
+    .icon-chip svg {
+        @apply h-4.5 w-4.5;
+    }
+
+    .icon-chip.tone-green {
+        @apply bg-emerald-50 text-emerald-600 ring-emerald-100;
+    }
+
+    .icon-chip.tone-amber {
+        @apply bg-amber-50 text-amber-600 ring-amber-100;
+    }
+
+    .icon-chip.tone-red {
+        @apply bg-red-50 text-red-600 ring-red-100;
     }
 
     .kbd {
-        @apply inline-flex h-5 min-w-5 items-center justify-center rounded border border-gray-200 bg-white px-1 font-sans text-[11px] font-medium text-gray-500 shadow-xs;
+        @apply inline-flex h-5 min-w-5 items-center justify-center rounded border border-gray-200 bg-white px-1 font-sans text-[0.6875rem] font-medium text-gray-500 shadow-xs;
     }
 
     .link {
@@ -275,124 +314,193 @@
     }
 }
 
-/* ---------- Tom Select (dropdown dengan pencarian) ---------- */
-.ts-wrapper.form-control {
-    @apply min-h-0 border-0 bg-transparent p-0 shadow-none ring-0 hover:border-0 focus:ring-0;
+/* ---------- Choices.js (dropdown dengan pencarian, <select data-select>) ---------- */
+.choices {
+    @apply relative text-sm;
 }
 
-.ts-wrapper .ts-control,
-.ts-wrapper.single .ts-control,
-.ts-wrapper.single.input-active .ts-control {
-    @apply min-h-[38px] cursor-pointer rounded-lg border border-gray-300 bg-white py-[7px] pr-9 pl-3 text-sm text-gray-900 shadow-xs transition-[border-color,box-shadow] duration-150;
-    background-image: none;
+.choices:focus {
+    outline: none;
 }
 
-.ts-wrapper.multi .ts-control {
-    @apply gap-1 py-1.5 pl-1.5;
+.choices [hidden] {
+    @apply hidden;
 }
 
-.ts-wrapper:not(.disabled):hover .ts-control {
+.choices__inner {
+    @apply flex min-h-9.5 w-full cursor-pointer items-center rounded-lg border border-gray-300 bg-white py-1 pr-9 pl-3 text-gray-900 shadow-xs transition-[border-color,box-shadow] duration-150;
+}
+
+.choices[data-type*='select-multiple'] .choices__inner {
+    @apply flex-wrap gap-1 py-1 pl-1.5;
+}
+
+.choices:not(.is-disabled):hover .choices__inner {
     @apply border-gray-400;
 }
 
-.ts-wrapper.focus .ts-control,
-.ts-wrapper.dropdown-active .ts-control {
+.choices.is-focused .choices__inner,
+.choices.is-open .choices__inner {
     @apply border-indigo-500 ring-4 ring-indigo-500/12;
 }
 
-.ts-wrapper .ts-control > input {
-    @apply text-sm placeholder:text-gray-400;
+.choices.is-invalid .choices__inner {
+    @apply border-red-400 ring-red-500/12;
+    animation: erp-shake 0.35s ease-in-out;
 }
 
-.ts-wrapper.single .ts-control::after {
+.choices.is-disabled .choices__inner {
+    @apply cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500;
+}
+
+/* Panah */
+.choices::after {
     content: '';
-    @apply absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 border-0 transition-transform duration-150;
-    margin: 0;
+    @apply pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 transition-transform duration-200;
     background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2371717a' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.6' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")
         center / 16px no-repeat;
 }
 
-.ts-wrapper.single.dropdown-active .ts-control::after {
-    @apply rotate-180;
-    margin: 0;
+.choices.is-open::after {
+    @apply -translate-y-1/2 rotate-180;
 }
 
-.ts-wrapper.disabled .ts-control {
-    @apply cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500 opacity-100;
+.choices__list {
+    @apply m-0 list-none p-0;
 }
 
-.ts-wrapper.multi .ts-control > .item {
-    @apply m-0 rounded-md border-0 bg-gray-100 px-2 py-0.5 text-[13px] font-medium text-gray-700;
+.choices__list--single {
+    @apply min-w-0 flex-1;
 }
 
-.ts-wrapper.multi .ts-control > .item.active {
-    @apply bg-indigo-50 text-indigo-700;
+.choices__list--single .choices__item {
+    @apply block truncate pr-5;
 }
 
-.ts-wrapper.plugin-remove_button .item .remove {
-    @apply ml-1 rounded border-0 px-1 text-gray-400 hover:bg-transparent hover:text-gray-700;
-}
-
-.ts-dropdown {
-    @apply z-[70] mt-1.5 overflow-hidden rounded-xl border border-gray-200 bg-white p-1 text-sm text-gray-700 shadow-pop;
-}
-
-.ts-dropdown .ts-dropdown-content {
-    @apply max-h-72;
-}
-
-.ts-dropdown .option,
-.ts-dropdown .no-results,
-.ts-dropdown .create {
-    @apply rounded-lg px-2.5 py-2;
-}
-
-.ts-dropdown .option[data-value=''],
-.ts-wrapper .ts-control > .item[data-value=''] {
+.choices__placeholder,
+.choices__list--single .choices__item[data-value=''] {
     @apply text-gray-400;
 }
 
-.ts-dropdown .option.selected {
-    @apply font-medium text-gray-900;
+/* Tombol × untuk mengosongkan pilihan */
+.choices__button {
+    @apply cursor-pointer appearance-none border-0 bg-transparent bg-center bg-no-repeat p-0 indent-[-9999px] opacity-50 transition hover:opacity-100;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2352525b' stroke-linecap='round' stroke-width='1.8' d='M6 6l8 8M14 6l-8 8'/%3e%3c/svg%3e");
+    background-size: 14px;
 }
 
-.ts-dropdown .option.selected:not([data-value=''])::after {
-    content: '✓';
-    @apply float-right ml-2 text-indigo-600;
+.choices[data-type*='select-one'] .choices__button {
+    @apply absolute top-1/2 right-8 h-5 w-5 -translate-y-1/2 rounded-full hover:bg-gray-100;
 }
 
-.ts-dropdown .active,
-.ts-dropdown .option.active,
-.ts-dropdown .create.active {
-    @apply bg-gray-100 text-gray-900;
+.choices[data-type*='select-one'] .choices__item[data-value=''] .choices__button,
+.choices[data-type*='select-one'] .choices__placeholder .choices__button {
+    @apply hidden;
 }
 
-.ts-dropdown .highlight {
-    @apply rounded-sm bg-indigo-100 text-indigo-900;
+/* Pilihan ganda: "pil" lembut */
+.choices__list--multiple {
+    @apply contents;
 }
 
-.ts-dropdown .optgroup-header {
-    @apply px-2.5 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-gray-400 uppercase;
+.choices__list--multiple .choices__item {
+    @apply inline-flex items-center gap-1 rounded-md bg-indigo-50 py-0.5 pr-1 pl-2 text-[0.8125rem] font-medium text-indigo-700 ring-1 ring-indigo-200/70 ring-inset;
+    animation: erp-pop 0.18s ease-out;
 }
 
-.ts-dropdown .dropdown-input-wrap {
-    @apply p-1;
+.choices__list--multiple .choices__item.is-highlighted {
+    @apply bg-indigo-100;
 }
 
-.is-invalid,
-.is-invalid + .ts-wrapper .ts-control {
-    @apply border-red-400 focus:border-red-500 focus:ring-red-500/12;
+.choices__list--multiple .choices__button {
+    @apply h-4 w-4 rounded;
+    background-size: 12px;
+}
+
+.choices[data-type*='select-multiple'] .choices__input--cloned {
+    @apply m-0 min-w-24 flex-1 border-0 bg-transparent p-1 text-sm shadow-none focus:ring-0;
+}
+
+/* Dropdown */
+.choices__list--dropdown {
+    @apply absolute top-full left-0 z-[70] mt-1.5 hidden w-full origin-top overflow-hidden rounded-xl border border-gray-200 bg-white p-1 text-gray-700 shadow-pop;
+    word-break: break-word;
+}
+
+.choices__list--dropdown.is-active {
+    @apply block;
+    animation: erp-drop 0.16s ease-out;
+}
+
+.choices.is-flipped .choices__list--dropdown {
+    @apply top-auto bottom-full mt-0 mb-1.5 origin-bottom;
+}
+
+.choices__list--dropdown .choices__list {
+    @apply max-h-72 overflow-y-auto overscroll-contain;
+}
+
+.choices[data-type*='select-one'] .choices__list--dropdown .choices__input {
+    @apply mb-1 block w-full rounded-lg border-gray-200 bg-gray-50 py-1.5 pr-3 pl-8 text-sm shadow-none placeholder:text-gray-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/12;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa' stroke-width='2'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z'/%3e%3c/svg%3e");
+    background-position: 0.6rem center;
+    background-repeat: no-repeat;
+    background-size: 14px;
+}
+
+.choices__list--dropdown .choices__item {
+    @apply relative rounded-lg px-2.5 py-1.75;
+}
+
+.choices__list--dropdown .choices__item--selectable {
+    @apply cursor-pointer;
+}
+
+.choices__list--dropdown .choices__item--selectable.is-highlighted {
+    @apply bg-indigo-50 text-indigo-900;
+}
+
+.choices__list--dropdown .choices__item--selectable.is-selected {
+    @apply pr-7 font-medium text-gray-900;
+}
+
+.choices__list--dropdown .choices__item--selectable.is-selected:not([data-value=''])::after {
+    content: '';
+    @apply absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2;
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%234f46e5' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.2' d='M5 10.5l3.2 3.2L15 7'/%3e%3c/svg%3e")
+        center / contain no-repeat;
+}
+
+/* Opsi kosong cukup jadi placeholder; mengosongkan pilihan lewat tombol × */
+.choices__list--dropdown .choices__item--choice[data-value=''] {
+    @apply hidden;
+}
+
+.choices__item--disabled {
+    @apply cursor-not-allowed opacity-50;
+}
+
+.choices__list--dropdown .has-no-results,
+.choices__list--dropdown .has-no-choices {
+    @apply cursor-default px-2.5 py-3 text-center text-gray-500;
+}
+
+.choices__heading {
+    @apply px-2.5 pt-2.5 pb-1 text-[0.6875rem] font-semibold tracking-wider text-gray-400 uppercase;
 }
 
 /* Input kecil di dalam tabel baris */
-td > .ts-wrapper .ts-control,
-td .ts-wrapper .ts-control {
+td .choices {
     @apply min-w-48;
+}
+
+.is-invalid {
+    @apply border-red-400 focus:border-red-500 focus:ring-red-500/12;
 }
 
 /* ---------- flatpickr ---------- */
 .flatpickr-calendar {
-    @apply mt-1.5 w-[296px] rounded-xl border border-gray-200 bg-white p-2 font-sans shadow-pop;
+    @apply mt-1.5 w-[18.5rem] rounded-xl border border-gray-200 bg-white p-2 font-sans shadow-pop;
 }
 
 .flatpickr-calendar.arrowTop::before,
@@ -445,11 +553,11 @@ td .ts-wrapper .ts-control {
 }
 
 span.flatpickr-weekday {
-    @apply text-[11px] font-semibold text-gray-400;
+    @apply text-[0.6875rem] font-semibold text-gray-400;
 }
 
 .flatpickr-day {
-    @apply h-9 max-w-none rounded-lg border-0 text-[13px] leading-9 text-gray-700 hover:bg-gray-100;
+    @apply h-9 max-w-none rounded-lg border-0 text-[0.8125rem] leading-9 text-gray-700 hover:bg-gray-100;
     flex-basis: 14.2857%;
 }
 
@@ -479,7 +587,7 @@ span.flatpickr-weekday {
 }
 
 .flatpickr-monthSelect-month {
-    @apply m-0 rounded-lg border-0 py-2 text-[13px] text-gray-700 hover:bg-gray-100;
+    @apply m-0 rounded-lg border-0 py-2 text-[0.8125rem] text-gray-700 hover:bg-gray-100;
     width: calc(33.33% - 0.25rem);
 }
 
@@ -534,7 +642,7 @@ span.flatpickr-weekday {
 }
 
 .erp-swal .swal2-html-container ul {
-    @apply mx-auto max-w-sm space-y-1 rounded-lg bg-red-50 p-3 text-[13px] text-red-700;
+    @apply mx-auto max-w-sm space-y-1 rounded-lg bg-red-50 p-3 text-[0.8125rem] text-red-700;
 }
 
 .erp-swal .swal2-input {
@@ -555,52 +663,252 @@ span.flatpickr-weekday {
 
 .erp-swal.swal2-icon-warning .erp-swal-confirm,
 .erp-swal.swal2-icon-error .erp-swal-confirm {
-    @apply bg-red-600 hover:bg-red-700 focus-visible:ring-red-500/25;
+    @apply bg-red-600 bg-none hover:bg-red-700 focus-visible:ring-red-500/25;
 }
 
-/* Ikon dialog: lingkaran lembut + ikon garis (lihat ICONS di app.js) */
+/* Ikon dialog: emoji dalam lingkaran lembut yang memantul (lihat ICONS di app.js) */
 .erp-swal .swal2-icon {
     @apply flex items-center justify-center rounded-full;
+    animation: erp-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.erp-swal .swal2-icon .swal2-icon-content svg {
-    @apply h-6 w-6;
+.erp-swal .swal2-icon .swal2-icon-content {
+    @apply text-[1.75rem] leading-none;
+}
+
+.erp-swal-emoji {
+    @apply inline-block;
+    animation: erp-wiggle 1.2s ease-in-out 0.35s;
 }
 
 .erp-swal .swal2-icon.swal2-warning,
 .erp-swal .swal2-icon.swal2-error {
-    @apply bg-red-50 text-red-600;
+    @apply bg-red-50 ring-8 ring-red-50/50;
 }
 
 .erp-swal .swal2-icon.swal2-question,
 .erp-swal .swal2-icon.swal2-info {
-    @apply bg-indigo-50 text-indigo-600;
+    @apply bg-indigo-50 ring-8 ring-indigo-50/50;
 }
 
 .erp-swal .swal2-icon.swal2-success {
-    @apply bg-emerald-50 text-emerald-600;
+    @apply bg-emerald-50 ring-8 ring-emerald-50/50;
 }
 
-/* ---------- Toast ---------- */
+.swal2-popup.erp-swal.swal2-show {
+    animation: erp-dialog-in 0.32s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/* ---------- Toast (ERP.toast) ---------- */
 .erp-toaster {
-    @apply pointer-events-none fixed top-4 right-4 z-[90] flex w-[22rem] max-w-[calc(100vw-2rem)] flex-col gap-2;
+    @apply pointer-events-none fixed top-4 right-4 z-[90] flex w-[22rem] max-w-[calc(100vw-2rem)] flex-col gap-2.5;
 }
 
 .erp-toast {
-    @apply pointer-events-auto flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-3.5 pr-3 text-sm shadow-pop transition duration-300;
+    --tone: var(--color-indigo-500);
+    --tone-soft: var(--color-indigo-50);
+    @apply pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 py-3 pr-2.5 pl-3 text-sm shadow-pop backdrop-blur;
+    transition:
+        transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+        opacity 0.3s ease;
 }
 
-.erp-toast[data-state='enter'],
+.erp-toast-success {
+    --tone: var(--color-emerald-500);
+    --tone-soft: var(--color-emerald-50);
+}
+
+.erp-toast-error {
+    --tone: var(--color-red-500);
+    --tone-soft: var(--color-red-50);
+}
+
+.erp-toast-warning {
+    --tone: var(--color-amber-500);
+    --tone-soft: var(--color-amber-50);
+}
+
+.erp-toast[data-state='enter'] {
+    @apply opacity-0;
+    transform: translateX(1.5rem) scale(0.9);
+}
+
 .erp-toast[data-state='leave'] {
-    @apply translate-x-4 opacity-0;
+    @apply opacity-0;
+    transform: translateX(1rem) scale(0.95);
+    transition-timing-function: ease-in;
 }
 
 .erp-toast-icon {
-    @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-full;
+    @apply relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl leading-none;
+    background: var(--tone-soft);
 }
 
-.erp-toast-icon svg {
-    @apply h-3.5 w-3.5;
+.erp-toast-emoji {
+    @apply inline-block;
+    animation: erp-bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+}
+
+.erp-toast-error .erp-toast-emoji,
+.erp-toast-warning .erp-toast-emoji {
+    animation:
+        erp-bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both,
+        erp-wiggle 0.9s ease-in-out 0.6s;
+}
+
+.erp-toast-title {
+    @apply font-semibold text-gray-900;
+}
+
+.erp-toast-text {
+    @apply mt-0.5 text-[0.8125rem] leading-snug text-gray-500;
+}
+
+.erp-toast-close {
+    @apply -my-1 shrink-0 self-start rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700;
+}
+
+.erp-toast-close svg {
+    @apply h-4 w-4;
+}
+
+/* Garis waktu tersisa */
+.erp-toast-bar {
+    @apply absolute inset-x-0 bottom-0 h-[3px] origin-left opacity-70;
+    background: var(--tone);
+}
+
+/* Konfeti kecil untuk notifikasi berhasil */
+.erp-confetti {
+    @apply pointer-events-none absolute inset-0;
+}
+
+.erp-confetti i {
+    @apply absolute top-1/2 left-1/2 h-1.5 w-1.5 rounded-full opacity-0;
+    background: var(--color-emerald-400);
+    animation: erp-confetti 0.75s ease-out 0.15s;
+}
+
+.erp-confetti i:nth-child(3n) {
+    background: var(--color-indigo-400);
+}
+
+.erp-confetti i:nth-child(3n + 1) {
+    @apply rounded-[1px];
+    background: var(--color-amber-400);
+}
+
+@keyframes erp-confetti {
+    0% {
+        opacity: 1;
+        transform: rotate(var(--a)) translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: rotate(var(--a)) translateY(-1.6rem) scale(0.4);
+    }
+}
+
+@keyframes erp-bounce-in {
+    0% {
+        transform: scale(0.3) rotate(-15deg);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+    }
+}
+
+@keyframes erp-wiggle {
+    0%,
+    100% {
+        transform: rotate(0);
+    }
+    20% {
+        transform: rotate(-12deg);
+    }
+    40% {
+        transform: rotate(10deg);
+    }
+    60% {
+        transform: rotate(-6deg);
+    }
+    80% {
+        transform: rotate(4deg);
+    }
+}
+
+@keyframes erp-pop {
+    0% {
+        transform: scale(0.6);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes erp-dialog-in {
+    0% {
+        transform: translateY(0.75rem) scale(0.94);
+        opacity: 0;
+    }
+    100% {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+@keyframes erp-drop {
+    0% {
+        transform: translateY(-4px) scale(0.98);
+        opacity: 0;
+    }
+    100% {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+@keyframes erp-shake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-4px);
+    }
+    75% {
+        transform: translateX(4px);
+    }
+}
+
+@keyframes erp-rise {
+    0% {
+        transform: translateY(6px);
+        opacity: 0;
+    }
+    100% {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+/* Konten halaman muncul halus */
+.page-enter {
+    animation: erp-rise 0.35s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 
 /* ---------- Tooltip penjelasan (<x-tip>) ---------- */
@@ -623,7 +931,7 @@ span.flatpickr-weekday {
 }
 
 .erp-tip {
-    @apply pointer-events-auto fixed top-0 left-0 z-[95] w-max max-w-[min(20rem,calc(100vw-1.5rem))] rounded-xl bg-gray-900 px-3.5 py-2.5 text-[13px] leading-relaxed text-gray-100 shadow-pop transition-[opacity,transform] duration-150 ease-out;
+    @apply pointer-events-auto fixed top-0 left-0 z-[95] w-max max-w-[min(20rem,calc(100vw-1.5rem))] rounded-xl bg-gray-900 px-3.5 py-2.5 text-[0.8125rem] leading-relaxed text-gray-100 shadow-pop transition-[opacity,transform] duration-150 ease-out;
     overflow-wrap: anywhere;
 }
 
@@ -640,7 +948,7 @@ span.flatpickr-weekday {
 }
 
 .erp-tip-title {
-    @apply mb-0.5 block text-[13px] font-semibold text-white;
+    @apply mb-0.5 block text-[0.8125rem] font-semibold text-white;
 }
 
 .erp-tip-body {
@@ -679,7 +987,7 @@ span.flatpickr-weekday {
 }
 
 .guide-icon svg {
-    @apply h-[18px] w-[18px];
+    @apply h-4.5 w-4.5;
 }
 
 .guide-body {
@@ -687,7 +995,7 @@ span.flatpickr-weekday {
 }
 
 .guide-steps {
-    @apply grid gap-x-6 gap-y-2.5 text-[13px] leading-relaxed text-gray-700 md:grid-cols-2;
+    @apply grid gap-x-6 gap-y-2.5 text-[0.8125rem] leading-relaxed text-gray-700 md:grid-cols-2;
 }
 
 .guide-steps li {
@@ -699,5 +1007,5 @@ span.flatpickr-weekday {
 }
 
 .guide-step-no {
-    @apply mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-semibold text-white;
+    @apply mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[0.6875rem] font-semibold text-white;
 }
