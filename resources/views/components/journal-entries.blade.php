@@ -18,7 +18,7 @@
             @if ($entries->isEmpty())
                 <p class="p-5 text-sm text-gray-500">Belum ada jurnal untuk dokumen ini.</p>
             @else
-                <div class="divide-y divide-gray-100">
+                <div class="@container divide-y divide-gray-100">
                     @foreach ($entries as $entry)
                         <div @class(['px-5 py-3', 'opacity-60' => $entry->isReversed() || $entry->isReversal()])>
                             <div class="flex flex-wrap items-baseline gap-2 text-sm">
@@ -31,9 +31,9 @@
                             <table class="mt-1 w-full text-sm">
                                 @foreach ($entry->lines as $line)
                                     <tr>
-                                        <td @class(['py-0.5 text-gray-700', 'pl-8' => (float) $line->credit > 0])>{{ $line->account->code }} · {{ $line->account->name }}</td>
-                                        <td class="w-36 py-0.5 text-right whitespace-nowrap">{{ (float) $line->debit ? rupiah($line->debit, false) : '' }}</td>
-                                        <td class="w-36 py-0.5 text-right whitespace-nowrap">{{ (float) $line->credit ? rupiah($line->credit, false) : '' }}</td>
+                                        <td @class(['py-0.5 pr-2 text-gray-700', 'pl-4 @md:pl-8' => (float) $line->credit > 0])>{{ $line->account->code }} · {{ $line->account->name }}</td>
+                                        <td class="w-24 py-0.5 text-right whitespace-nowrap tabular-nums @md:w-36">{{ (float) $line->debit ? rupiah($line->debit, false) : '' }}</td>
+                                        <td class="w-24 py-0.5 text-right whitespace-nowrap tabular-nums @md:w-36">{{ (float) $line->credit ? rupiah($line->credit, false) : '' }}</td>
                                     </tr>
                                 @endforeach
                             </table>

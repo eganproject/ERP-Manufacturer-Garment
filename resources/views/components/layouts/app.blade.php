@@ -121,6 +121,7 @@
         ['Buat Sales Order', 'sales-orders.create', 'sales.manage'],
         ['Buat Purchase Order', 'purchase-orders.create', 'purchase.manage'],
         ['Buat SPK Produksi', 'production-orders.create', 'production.manage'],
+        ['Buat Order Maklon', 'subcontract-orders.create', 'subcontract.manage'],
         ['Catat Hasil Kerja Borongan', 'piecework.create', 'piecework.record'],
         ['Catat Penerimaan Pembayaran', 'receipts.create', 'receivables.manage'],
         ['Catat Pembayaran Supplier', 'disbursements.create', 'payables.manage'],

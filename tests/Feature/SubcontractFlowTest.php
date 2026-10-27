@@ -67,6 +67,19 @@ class SubcontractFlowTest extends TestCase
         return SubcontractOrder::latest('id')->first();
     }
 
+    public function test_create_without_spk_shows_spk_picker(): void
+    {
+        $spk = $this->createSpk();
+        $done = $this->createSpk();
+        $done->update(['status' => ProductionOrderStatus::Cancelled]);
+
+        $this->get(route('subcontract-orders.create'))
+            ->assertOk()
+            ->assertSee('SPK yang bisa dimaklonkan')
+            ->assertSee(route('subcontract-orders.create', ['production_order_id' => $spk->id]), false)
+            ->assertDontSee(route('subcontract-orders.create', ['production_order_id' => $done->id]), false);
+    }
+
     public function test_full_cmt_flow_from_material_dispatch_to_vendor_bill(): void
     {
         $spk = $this->createSpk();
