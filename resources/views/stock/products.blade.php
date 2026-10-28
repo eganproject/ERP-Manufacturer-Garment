@@ -2,6 +2,7 @@
     <x-slot:actions>
         <a href="{{ route('defects.index') }}" class="btn-secondary">Barang Cacat</a>
         @can('stock.adjust')
+            <a href="{{ route('imports.show', 'opening-stock') }}" class="btn-secondary">Impor Stok Awal</a>
             <a href="{{ route('stock.adjustment') }}" class="btn-secondary">Penyesuaian Stok</a>
         @endcan
     </x-slot:actions>

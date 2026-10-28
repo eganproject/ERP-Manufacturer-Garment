@@ -1,5 +1,6 @@
 <x-layouts.app :title="'BOM: '.$bom->name">
     <x-slot:actions>
+        <a href="{{ route('boms.pdf', $bom) }}" target="_blank" class="btn-secondary">Cetak</a>
         <a href="{{ route('boms.edit', $bom) }}" class="btn-primary">Ubah BOM</a>
     </x-slot:actions>
 
@@ -26,6 +27,7 @@
                 <label class="flex items-center gap-2 text-sm text-gray-600">Simulasi untuk
                     <input type="number" min="1" x-model.number="qty" class="form-control w-24 py-1"> pcs
                 </label>
+                <a :href="@js(route('boms.pdf', $bom)) + '?qty=' + (qty || 1)" target="_blank" class="btn-ghost btn-sm">Cetak kebutuhan</a>
             </x-slot:header>
             <table class="table-base">
                 <thead><tr><th>Bahan</th><th class="text-right">Qty / pcs</th><th class="text-right">Waste</th><th class="text-right">Total kebutuhan</th><th class="text-right">Estimasi biaya</th></tr></thead>

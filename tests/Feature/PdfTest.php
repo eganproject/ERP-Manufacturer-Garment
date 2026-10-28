@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\Role;
 use App\Enums\StockMovementType;
+use App\Models\Bom;
 use App\Models\Customer;
 use App\Models\Material;
 use App\Models\Product;
@@ -57,6 +58,7 @@ class PdfTest extends TestCase
         $spk = ProductionOrder::first();
 
         $urls = [
+            route('boms.pdf', [Bom::first(), 'qty' => 120]),
             route('purchase-orders.pdf', $po),
             route('goods-receipts.pdf', $po->receipts()->first()),
             route('sales-orders.pdf', $so),

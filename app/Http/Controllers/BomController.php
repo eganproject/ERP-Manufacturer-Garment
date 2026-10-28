@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Bom;
 use App\Models\Material;
 use App\Models\Product;
+use App\Support\DocumentPdf;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,6 +53,15 @@ class BomController extends Controller
         $bom->load(['product.unit', 'items.material.unit']);
 
         return view('boms.show', compact('bom'));
+    }
+
+    /** Lembar kebutuhan bahan (untuk bagian potong / gudang), opsional dikalikan jumlah produksi. */
+    public function pdf(Request $request, Bom $bom)
+    {
+        $bom->load(['product.unit', 'items.material.unit']);
+        $quantity = max(1, (int) $request->integer('qty', 1));
+
+        return DocumentPdf::stream('pdf.bom', ['bom' => $bom, 'quantity' => $quantity, 'showCost' => $request->user()->can('costing.view')], 'BOM-'.$bom->product->code);
     }
 
     public function edit(Bom $bom)

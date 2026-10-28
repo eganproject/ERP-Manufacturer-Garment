@@ -50,7 +50,7 @@ class MarketplaceSettlementController extends Controller implements HasMiddlewar
     {
         $data = $request->validate([
             'marketplace_store_id' => ['required', Rule::exists('marketplace_stores', 'id')],
-            'file' => ['required', 'file', 'max:20480', 'mimes:csv,txt,xlsx'],
+            'file' => ['required', 'file', 'max:20480', 'extensions:csv,txt,xlsx,xls'],
             'date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string'],
         ], [], ['marketplace_store_id' => 'toko', 'file' => 'file laporan penghasilan', 'date' => 'tanggal pencairan']);
@@ -106,10 +106,12 @@ class MarketplaceSettlementController extends Controller implements HasMiddlewar
 
     public function template()
     {
-        $csv = MarketplaceImporter::template(MarketplaceSettlementService::TEMPLATE, [
-            '2610250001ABC', '2026-10-30', '198000', '10000', '12000', '6000', '1000', '3000', '0', '0', '166000', 'Pesanan',
+        return MarketplaceImporter::template(MarketplaceSettlementService::TEMPLATE, [
+            '2610250001ABC', '2026-10-30', 198000, 10000, 12000, 6000, 1000, 3000, 0, 0, 166000, 'Pesanan',
+        ], 'template-pencairan-marketplace.xlsx', [
+            'Isi satu baris per pesanan yang dananya dilepas di sheet "Data". Lihat sheet "Contoh".',
+            'Biaya (komisi, layanan, transaksi, ongkir, lain-lain) diisi angka positif; Total Penghasilan = dana bersih yang masuk ke saldo penjual.',
+            'Simpan sebagai .xlsx (atau .xls / .csv) lalu unggah di menu Pencairan Marketplace → Impor.',
         ]);
-
-        return response($csv, 200, ['Content-Type' => 'text/csv', 'Content-Disposition' => 'attachment; filename="template-pencairan-marketplace.csv"']);
     }
 }

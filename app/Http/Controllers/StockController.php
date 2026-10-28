@@ -67,6 +67,7 @@ class StockController extends Controller
             'warehouse_id' => ['nullable', Warehouse::rule()],
             'mode' => ['required', 'in:in,out,set'],
             'quantity' => ['required', 'numeric', 'min:0'],
+            'unit_cost' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['required', 'string', 'max:255'],
         ], [
             'notes.required' => 'Alasan penyesuaian wajib diisi.',
@@ -87,7 +88,8 @@ class StockController extends Controller
         }
 
         DB::transaction(fn () => $journal->stockAdjustment($stock->move(
-            $item, $qty, StockMovementType::Adjustment, null, null, $data['notes'], Carbon::parse($data['date']), warehouse: $warehouseId,
+            $item, $qty, StockMovementType::Adjustment, null, null, $data['notes'], Carbon::parse($data['date']),
+            unitCost: $qty > 0 && isset($data['unit_cost']) ? (float) $data['unit_cost'] : null, warehouse: $warehouseId,
         )));
 
         return redirect()->route($type === 'material' ? 'stock.materials.card' : 'stock.products.card', $id)

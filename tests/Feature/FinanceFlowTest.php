@@ -264,6 +264,9 @@ class FinanceFlowTest extends TestCase
 
         $this->get(route('reports.receivables-aging', ['as_of' => '2026-12-20']))->assertOk()->assertSee($so->customer->name);
         $this->get(route('reports.payables-aging'))->assertOk();
+        $this->get(route('reports.receivables-aging', ['as_of' => '2026-12-20', 'export' => 'xlsx']))->assertOk()
+            ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $this->get(route('reports.payables-aging', ['export' => 'pdf']))->assertOk();
     }
 
     public function test_finance_permissions(): void

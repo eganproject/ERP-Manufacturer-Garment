@@ -1,6 +1,6 @@
 <x-layouts.app title="Stok Marketplace">
     @if ($store)
-        <x-slot:actions><a href="{{ route('marketplace-stock.index', ['store_id' => $store->id, 'export' => 'csv']) }}" class="btn-secondary">Unduh CSV Stok Tersedia</a></x-slot:actions>
+        <x-slot:actions><a href="{{ route('marketplace-stock.index', ['store_id' => $store->id, 'export' => 'xlsx']) }}" class="btn-secondary">Unduh Excel Stok Tersedia</a></x-slot:actions>
     @endif
 
     <x-card class="mb-4">

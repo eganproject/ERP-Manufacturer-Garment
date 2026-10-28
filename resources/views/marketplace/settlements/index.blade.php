@@ -1,6 +1,6 @@
 <x-layouts.app title="Pencairan Dana Marketplace">
     <x-slot:actions>
-        <a href="{{ route('marketplace-settlements.template') }}" class="btn-secondary">Template CSV</a>
+        <a href="{{ route('marketplace-settlements.template') }}" class="btn-secondary">Template Excel</a>
         @can('marketplace.settle')<a href="{{ route('marketplace-settlements.create') }}" class="btn-primary">Impor Laporan Penghasilan</a>@endcan
     </x-slot:actions>
 

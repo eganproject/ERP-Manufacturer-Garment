@@ -7,8 +7,9 @@ use Illuminate\Validation\ValidationException;
 use ZipArchive;
 
 /**
- * Pembaca file tabel sederhana tanpa paket tambahan: CSV / TXT (pemisah koma, titik koma, atau tab)
- * dan XLSX (sheet pertama, lewat ZipArchive). Mengembalikan baris berupa array nilai teks.
+ * Pembaca file tabel tanpa paket tambahan: Excel .xlsx (lewat ZipArchive), Excel lama .xls (XlsReader),
+ * dan CSV / TXT (pemisah koma, titik koma, atau tab). Hanya sheet pertama yang dibaca.
+ * Mengembalikan baris berupa array nilai teks.
  */
 class SpreadsheetReader
 {
@@ -19,11 +20,12 @@ class SpreadsheetReader
     {
         $ext = strtolower(pathinfo($originalName ?? $path, PATHINFO_EXTENSION));
 
-        if ($ext === 'xls') {
-            throw ValidationException::withMessages(['file' => 'Format .xls lama tidak didukung. Simpan ulang sebagai .xlsx atau .csv.']);
-        }
-
-        $rows = $ext === 'xlsx' || self::isZip($path) ? self::readXlsx($path) : self::readCsv($path);
+        $rows = match (true) {
+            XlsReader::isXls($path) => XlsReader::read($path),
+            self::isZip($path) => self::readXlsx($path),
+            in_array($ext, ['xls', 'xlsx'], true) => throw ValidationException::withMessages(['file' => 'File Excel rusak atau bukan file Excel asli. Buka di Excel lalu simpan ulang sebagai .xlsx.']),
+            default => self::readCsv($path),
+        };
 
         // Buang baris kosong di akhir
         return array_values(array_filter($rows, fn ($r) => implode('', array_map('trim', $r)) !== ''));
@@ -59,7 +61,7 @@ class SpreadsheetReader
             }
         }
 
-        throw ValidationException::withMessages(['file' => 'Judul kolom tidak dikenali. Pastikan file adalah ekspor dari Seller Center atau memakai template yang disediakan.']);
+        throw ValidationException::withMessages(['file' => 'Judul kolom tidak dikenali. Pastikan baris judul kolom sesuai template yang disediakan (atau file asli ekspor Seller Center).']);
     }
 
     /** "No. Pesanan" → "nopesanan", "Order ID" → "orderid". */
@@ -120,8 +122,13 @@ class SpreadsheetReader
 
         try {
             if (is_numeric($v) && (float) $v > 20000 && (float) $v < 80000) {
-                // Serial tanggal Excel (hari sejak 1899-12-30)
-                return Carbon::create(1899, 12, 30)->addSeconds((int) round((float) $v * 86400));
+                // Serial tanggal Excel (hari sejak 1899-12-30). Hari dihitung di UTC agar tidak terpengaruh
+                // selisih zona waktu lokal tahun 1899 (LMT), baru jamnya ditambahkan di zona aplikasi.
+                $days = (int) floor((float) $v);
+                $seconds = (int) round(((float) $v - $days) * 86400);
+                $day = Carbon::create(1899, 12, 30, 0, 0, 0, 'UTC')->addDays($days)->format('Y-m-d');
+
+                return Carbon::parse($day)->addSeconds($seconds);
             }
 
             if (preg_match('#^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})(.*)$#', $v, $m)) {
@@ -186,15 +193,7 @@ class SpreadsheetReader
         if (($xml = $zip->getFromName('xl/sharedStrings.xml')) !== false) {
             $doc = simplexml_load_string($xml);
             foreach ($doc->si as $si) {
-                if (isset($si->t)) {
-                    $shared[] = (string) $si->t;
-                } else {
-                    $text = '';
-                    foreach ($si->r as $r) {
-                        $text .= (string) $r->t;
-                    }
-                    $shared[] = $text;
-                }
+                $shared[] = self::richText($si);
             }
         }
 
@@ -227,10 +226,14 @@ class SpreadsheetReader
             foreach ($row->c as $cell) {
                 $col = self::columnIndex((string) $cell['r']);
                 $type = (string) $cell['t'];
+                $raw = (string) $cell->v;
                 $value = match ($type) {
-                    's' => $shared[(int) $cell->v] ?? '',
-                    'inlineStr' => (string) ($cell->is->t ?? ''),
-                    default => (string) $cell->v,
+                    's' => $shared[(int) $raw] ?? '',
+                    'inlineStr' => self::richText($cell->is),
+                    'b' => $raw === '1' ? 'TRUE' : 'FALSE',
+                    'e' => '',
+                    'str' => $raw,
+                    default => is_numeric($raw) ? XlsReader::numeric((float) $raw) : $raw,
                 };
                 $values[$col] = $value;
             }
@@ -244,6 +247,23 @@ class SpreadsheetReader
         }
 
         return $rows;
+    }
+
+    /** Teks sel biasa (<t>) atau rich text (<r><t>…). */
+    private static function richText(?\SimpleXMLElement $node): string
+    {
+        if (! $node) {
+            return '';
+        }
+        if (isset($node->t)) {
+            return (string) $node->t;
+        }
+        $text = '';
+        foreach ($node->r as $r) {
+            $text .= (string) $r->t;
+        }
+
+        return $text;
     }
 
     private static function columnIndex(string $ref): int

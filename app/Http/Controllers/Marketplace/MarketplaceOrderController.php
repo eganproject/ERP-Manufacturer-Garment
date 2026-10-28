@@ -133,7 +133,7 @@ class MarketplaceOrderController extends Controller implements HasMiddleware
     {
         $data = $request->validate([
             'marketplace_store_id' => ['required', Rule::exists('marketplace_stores', 'id')->where('is_active', true)],
-            'file' => ['required', 'file', 'max:20480', 'mimes:csv,txt,xlsx'],
+            'file' => ['required', 'file', 'max:20480', 'extensions:csv,txt,xlsx,xls'],
         ], [], ['marketplace_store_id' => 'toko', 'file' => 'file pesanan']);
 
         $store = MarketplaceStore::findOrFail($data['marketplace_store_id']);
@@ -147,11 +147,15 @@ class MarketplaceOrderController extends Controller implements HasMiddleware
 
     public function template()
     {
-        $csv = MarketplaceImporter::template(MarketplaceImporter::ORDER_TEMPLATE, [
-            '2610250001ABC', 'Perlu Dikirim', '2026-10-25 09:15', '2026-10-25 09:20', '', '', 'pembeli01', 'Budi', 'Bandung', 'J&T', '', '10000', 'TS-BSC-HTM-M', 'Kaos Basic', 'Hitam, M', '2', '99000', '198000', 'Ya', '2026-11-24',
+        return MarketplaceImporter::template(MarketplaceImporter::ORDER_TEMPLATE, [
+            '2610250001ABC', 'Perlu Dikirim', '2026-10-25 09:15', '2026-10-25 09:20', '', '', 'pembeli01', 'Budi', 'Bandung', 'J&T', '', 10000, 'TS-BSC-HTM-M', 'Kaos Basic', 'Hitam, M', 2, 99000, 198000, 'Ya', '2026-11-24',
+        ], 'template-pesanan-marketplace.xlsx', [
+            'Isi pesanan di sheet "Data" (satu baris per produk dalam pesanan; pesanan dengan beberapa produk = beberapa baris dengan No. Pesanan sama).',
+            'Lihat sheet "Contoh" untuk format pengisian. Jangan ubah judul kolom.',
+            'SKU harus sama dengan SKU varian di ERP atau sudah dipetakan di menu Mapping SKU.',
+            'Tanggal boleh format tanggal Excel atau teks 2026-10-25 09:15 / 25/10/2026 09:15.',
+            'Simpan sebagai .xlsx (atau .xls / .csv) lalu unggah di menu Impor Pesanan.',
         ]);
-
-        return response($csv, 200, ['Content-Type' => 'text/csv', 'Content-Disposition' => 'attachment; filename="template-pesanan-marketplace.csv"']);
     }
 
     public function ship(Request $request, MarketplaceOrder $marketplaceOrder, MarketplaceOrderService $service)

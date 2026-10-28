@@ -6,8 +6,10 @@ use App\Enums\MarketplacePlatform;
 use App\Models\ActivityLog;
 use App\Models\MarketplaceStore;
 use App\Support\SpreadsheetReader;
+use App\Support\XlsxWriter;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Impor file ekspor pesanan dari Seller Center Shopee / TikTok Shop (xlsx / csv) atau template ERP.
@@ -189,17 +191,24 @@ class MarketplaceImporter
         return $map;
     }
 
-    /** CSV template impor (judul kolom + satu contoh baris). */
-    public static function template(array $headers, array $example): string
+    /**
+     * Template Excel: sheet "Data" (judul kolom saja, isi di sini), sheet "Contoh" berisi satu baris contoh.
+     * Contoh sengaja dipisah agar tidak ikut terimpor.
+     *
+     * @param  list<string>  $headers
+     * @param  list<string|int|float>  $example
+     * @param  list<string>  $notes
+     */
+    public static function template(array $headers, array $example, string $filename, array $notes = []): BinaryFileResponse
     {
-        $stream = fopen('php://temp', 'r+');
-        fwrite($stream, "\xEF\xBB\xBF");
-        fputcsv($stream, $headers, ',', '"', '');
-        fputcsv($stream, $example, ',', '"', '');
-        rewind($stream);
-        $csv = stream_get_contents($stream);
-        fclose($stream);
+        $writer = (new XlsxWriter)
+            ->sheet('Data', [$headers], textColumns: [0])
+            ->sheet('Contoh', [$headers, $example], textColumns: [0]);
 
-        return $csv;
+        if ($notes) {
+            $writer->sheet('Petunjuk', array_map(fn ($line) => [$line], $notes), header: false);
+        }
+
+        return $writer->download($filename);
     }
 }
