@@ -84,6 +84,7 @@
             ['label' => 'Supplier', 'can' => 'suppliers.manage', 'route' => 'suppliers.index', 'active' => 'suppliers.*', 'icon' => 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4'],
             ['label' => 'Kategori', 'can' => 'master.basic', 'route' => 'categories.index', 'active' => 'categories.*', 'icon' => 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z'],
             ['label' => 'Satuan', 'can' => 'master.basic', 'route' => 'units.index', 'active' => 'units.*', 'icon' => 'M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3'],
+            ['label' => 'Impor Data (Excel)', 'can' => 'imports.use', 'route' => 'imports.index', 'active' => 'imports.*', 'icon' => 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'],
         ]],
         ['heading' => 'Administrasi', 'items' => [
             ['label' => 'Pengguna & Hak Akses', 'can' => 'users.manage', 'route' => 'users.index', 'active' => 'users.*', 'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'],
@@ -128,6 +129,7 @@
         ['Buat Bukti Kas / Bank', 'cash-transactions.create', 'cashbank.manage'],
         ['Buat Jurnal Umum', 'journals.create', 'accounting.manage'],
         ['Transfer Stok Antar Gudang', 'stock-transfers.create', 'stock.transfer'],
+        ['Impor Data dari Excel', 'imports.index', 'imports.use'],
     ])->filter(fn ($a) => \Illuminate\Support\Facades\Route::has($a[1]) && $user->can($a[2]))
         ->map(fn ($a) => ['label' => $a[0], 'group' => 'Aksi cepat', 'url' => route($a[1]), 'icon' => 'M12 4v16m8-8H4']);
     $paletteItems = collect($menu)

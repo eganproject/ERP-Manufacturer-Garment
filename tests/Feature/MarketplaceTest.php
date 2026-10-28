@@ -333,7 +333,11 @@ class MarketplaceTest extends TestCase
         $this->assertFalse($order->fresh()->load('items')->hasUnmappedItems());
 
         $this->get(route('marketplace-stock.index', ['store_id' => $this->shopee->id]))->assertOk()->assertSee('PAKET-L3');
-        $this->get(route('marketplace-stock.index', ['store_id' => $this->shopee->id, 'export' => 'csv']))->assertOk()->assertSee('TS-BSC-HTM-M,', false);
+        $export = $this->get(route('marketplace-stock.index', ['store_id' => $this->shopee->id, 'export' => 'xlsx']))->assertOk()
+            ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $rows = SpreadsheetReader::read($export->baseResponse->getFile()->getPathname(), 'stok.xlsx');
+        $this->assertSame('SKU', $rows[0][0]);
+        $this->assertContains('TS-BSC-HTM-M', array_column($rows, 0));
 
         $this->post(route('marketplace-orders.ship-many'), ['orders' => [$order->id], 'date' => '2026-10-22'])->assertSessionHas('success');
         $this->assertSame(MarketplaceOrderStatus::Shipped, $order->fresh()->status);

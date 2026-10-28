@@ -1,6 +1,7 @@
 <x-layouts.app title="Stok Bahan Baku">
     <x-slot:actions>
         @can('stock.adjust')
+            <a href="{{ route('imports.show', 'opening-stock') }}" class="btn-secondary">Impor Stok Awal</a>
             <a href="{{ route('stock.adjustment') }}" class="btn-secondary">Penyesuaian Stok</a>
         @endcan
     </x-slot:actions>

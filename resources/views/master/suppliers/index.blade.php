@@ -1,5 +1,5 @@
 <x-layouts.app title="Supplier">
-    <x-slot:actions><a href="{{ route('suppliers.create') }}" class="btn-primary">+ Tambah Supplier</a></x-slot:actions>
+    <x-slot:actions><a href="{{ route('imports.show', 'suppliers') }}" class="btn-secondary">Impor Excel</a><a href="{{ route('suppliers.create') }}" class="btn-primary">+ Tambah Supplier</a></x-slot:actions>
 
     <x-card :padding="false">
         <div class="border-b border-gray-200 p-4"><x-search-filter placeholder="Cari kode / nama / telepon...">

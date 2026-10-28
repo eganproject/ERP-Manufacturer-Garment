@@ -1,6 +1,7 @@
 <x-layouts.app title="Karyawan Produksi">
     <x-slot:actions>
         @can('employees.manage')
+            <a href="{{ route('imports.show', 'employees') }}" class="btn-secondary">Impor Excel</a>
             <a href="{{ route('piece-rates.index') }}" class="btn-secondary">Tarif Borongan</a>
             <a href="{{ route('employees.create') }}" class="btn-primary">+ Tambah Karyawan</a>
         @endcan

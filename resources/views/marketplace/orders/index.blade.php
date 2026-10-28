@@ -1,7 +1,7 @@
 @use('App\Enums\MarketplaceOrderStatus')
 <x-layouts.app title="Pesanan Marketplace">
     <x-slot:actions>
-        <a href="{{ route('marketplace-orders.template') }}" class="btn-secondary">Template CSV</a>
+        <a href="{{ route('marketplace-orders.template') }}" class="btn-secondary">Template Excel</a>
         @can('marketplace.manage')<a href="{{ route('marketplace-orders.import') }}" class="btn-primary">Impor Pesanan</a>@endcan
     </x-slot:actions>
 

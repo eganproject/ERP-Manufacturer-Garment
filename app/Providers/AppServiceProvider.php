@@ -41,6 +41,7 @@ use App\Models\Supplier;
 use App\Models\User;
 use App\Models\VatPeriod;
 use App\Models\Warehouse;
+use App\Services\Import\ImportRegistry;
 use App\Support\LedgerAccounts;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
@@ -107,5 +108,9 @@ class AppServiceProvider extends ServiceProvider
         foreach (array_keys(Role::abilities()) as $ability) {
             Gate::define($ability, fn (User $user) => $user->hasPermission($ability));
         }
+
+        // Menu Impor Data: tampil bila pengguna boleh memakai salah satu jenis impor
+        Gate::define('imports.use', fn (User $user) => collect(ImportRegistry::types())
+            ->contains(fn ($class) => $user->hasPermission(app($class)->ability())));
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MarketplaceOrderItem;
 use App\Models\MarketplaceProduct;
 use App\Models\MarketplaceStore;
+use App\Support\XlsxWriter;
 use Illuminate\Http\Request;
 
 /**
@@ -21,18 +22,14 @@ class MarketplaceStockController extends Controller
         $store = $stores->firstWhere('id', $request->integer('store_id')) ?? $stores->first();
         $rows = $store ? $this->rows($store) : collect();
 
-        if ($store && $request->query('export') === 'csv') {
-            $stream = fopen('php://temp', 'r+');
-            fwrite($stream, "\xEF\xBB\xBF");
-            fputcsv($stream, ['SKU', 'Nama Produk Marketplace', 'Varian ERP', 'Stok Gudang (pcs)', 'Dialokasikan (pcs)', 'Stok Tersedia'], ',', '"', '');
+        if ($store && in_array($request->query('export'), ['xlsx', 'csv'], true)) {
+            $data = [['SKU', 'Nama Produk Marketplace', 'Varian ERP', 'Stok Gudang (pcs)', 'Dialokasikan (pcs)', 'Stok Tersedia']];
             foreach ($rows as $r) {
-                fputcsv($stream, [$r['sku'], $r['name'], $r['variant'], $r['stock'], $r['reserved'], $r['available']], ',', '"', '');
+                $data[] = [$r['sku'], $r['name'], $r['variant'], (float) $r['stock'], (float) $r['reserved'], (float) $r['available']];
             }
-            rewind($stream);
-            $content = stream_get_contents($stream);
-            $filename = 'stok-'.str($store->display_name)->slug().'-'.today()->format('Ymd').'.csv';
 
-            return response($content, 200, ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""]);
+            return (new XlsxWriter)->sheet('Stok '.$store->platform->label(), $data, textColumns: [0])
+                ->download('stok-'.str($store->display_name)->slug().'-'.today()->format('Ymd').'.xlsx');
         }
 
         return view('marketplace.stock.index', compact('stores', 'store', 'rows'));

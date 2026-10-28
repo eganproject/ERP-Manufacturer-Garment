@@ -17,6 +17,7 @@ use App\Http\Controllers\CashBankController;
 use App\Http\Controllers\CostingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DefectController;
+use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\Marketplace\MarketplaceMappingController;
 use App\Http\Controllers\Marketplace\MarketplaceOrderController;
@@ -79,8 +80,17 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::resource('products', ProductController::class)->middleware('can:products.manage');
     });
 
+    // Impor data massal dari Excel / CSV (hak akses per jenis dicek di controller)
+    Route::controller(ImportController::class)->prefix('imports')->name('imports.')->middleware('can:imports.use')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('{type}', 'show')->name('show');
+        Route::get('{type}/template', 'template')->name('template');
+        Route::post('{type}', 'store')->name('store');
+    });
+
     // Bill of Materials
     Route::resource('boms', BomController::class)->middleware('can:boms.manage');
+    Route::get('boms/{bom}/pdf', [BomController::class, 'pdf'])->name('boms.pdf')->middleware('can:boms.manage');
 
     // Pembelian
     Route::resource('purchase-orders', PurchaseOrderController::class);

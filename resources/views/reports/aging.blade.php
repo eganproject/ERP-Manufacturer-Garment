@@ -5,6 +5,7 @@
     $partyLabel = $isAr ? 'Pelanggan' : 'Supplier';
 @endphp
 <x-layouts.app :title="$isAr ? 'Umur Piutang' : 'Umur Hutang'">
+    <x-slot:actions><x-report.export-buttons /></x-slot:actions>
     <x-card :padding="false" class="mb-6">
         <div class="border-b border-gray-200 p-4">
             <form method="GET" class="flex flex-wrap items-end gap-2">

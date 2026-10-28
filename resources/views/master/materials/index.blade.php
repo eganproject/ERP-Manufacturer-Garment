@@ -1,5 +1,5 @@
 <x-layouts.app title="Bahan Baku">
-    <x-slot:actions><a href="{{ route('materials.create') }}" class="btn-primary">+ Tambah Bahan</a></x-slot:actions>
+    <x-slot:actions><a href="{{ route('imports.show', 'materials') }}" class="btn-secondary">Impor Excel</a><a href="{{ route('materials.create') }}" class="btn-primary">+ Tambah Bahan</a></x-slot:actions>
 
     <x-card :padding="false">
         <div class="border-b border-gray-200 p-4">

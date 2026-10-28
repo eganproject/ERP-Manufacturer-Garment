@@ -17,7 +17,20 @@ Masuk dengan `<peran>@erp.test` / `password` untuk melihat sudut pandang tiap pe
 - **Catatan kaki semua dokumen** → dicetak di bawah setiap halaman. **Syarat & ketentuan PO** → dicetak di setiap Purchase Order.
 - **Rekening pembayaran** → dicetak di invoice, penawaran harga, dan sales order.
 
-Dokumen yang bisa dicetak (tombol **Cetak** di halaman dokumen, atau **Lainnya → Cetak**): penawaran, SO, surat jalan, invoice, kwitansi/bukti bayar, PO, penerimaan barang, tagihan supplier, SPK, order/kirim/terima maklon, retur, hasil kerja borongan, kasbon, penggajian & slip upah, bukti kas/bank, jurnal, barang cacat, transfer gudang, stock opname, pencairan marketplace, dan semua laporan.
+Dokumen yang bisa dicetak (tombol **Cetak** di halaman dokumen, atau **Lainnya → Cetak**): BOM (lembar kebutuhan bahan per jumlah produksi), penawaran, SO, surat jalan, invoice, kwitansi/bukti bayar, PO, penerimaan barang, tagihan supplier, SPK, order/kirim/terima maklon, retur, hasil kerja borongan, kasbon, penggajian & slip upah, bukti kas/bank, jurnal, barang cacat, transfer gudang, stock opname, pencairan marketplace, dan semua laporan.
+
+## Persiapan: Impor data awal dari Excel
+
+Menu **Master Data → Impor Data (Excel)** (atau tombol **Impor Excel** di daftar pelanggan, supplier, bahan, produk, karyawan, dan **Impor Stok Awal** di halaman stok). Semua impor menerima **Excel (.xlsx / .xls)** maupun CSV.
+
+1. Pilih jenis data → **Unduh Template Excel**. Template berisi sheet **Data** (diisi), **Contoh**, dan **Petunjuk** (penjelasan tiap kolom). Kolom bertanda * wajib.
+2. Urutan yang disarankan saat mulai memakai sistem: **Supplier & Vendor Maklon → Bahan Baku → Produk & Varian → Pelanggan → Karyawan Produksi → Stok Awal → Jurnal / Saldo Awal Akun**.
+3. Unggah file. Semua baris diperiksa dulu: bila ada satu kesalahan, **tidak ada yang disimpan** dan sistem menampilkan nomor baris + penyebabnya. Perbaiki lalu unggah ulang.
+4. Kode / SKU yang sudah ada **diperbarui** (sel kosong = nilai lama tetap). Untuk ubah massal (mis. naikkan harga): **Unduh Data Saat Ini** → ubah di Excel → unggah lagi.
+5. Catatan per jenis:
+   - **Produk & Varian**: satu baris = satu SKU; ulangi Kode Produk untuk setiap ukuran/warna. Satuan & kategori yang belum ada dibuat otomatis.
+   - **Stok Awal**: menambah stok per gudang dengan **harga pokok per unit** (wajib untuk barang jadi yang belum punya harga pokok). Nilainya dijurnal ke Persediaan lawan Ekuitas Saldo Awal. Mengimpor file yang sama dua kali = stok dobel.
+   - **Jurnal / Saldo Awal Akun**: baris dengan Tanggal + Keterangan + No. Referensi sama menjadi satu jurnal manual (JU-) dan harus seimbang. Dipakai untuk saldo awal kas, bank, modal, piutang/hutang lama.
 
 ## Gambaran alur
 
@@ -47,8 +60,8 @@ Hanya untuk dua platform: **TikTok Shop** dan **Shopee**.
 
 1. **Marketplace → Toko Marketplace** → *+ Tambah Toko* (Sales / Gudang): platform, nama toko, **gudang sumber stok** (disarankan gudang khusus online, mis. *Gudang Online*), PPN dalam harga (isi 11 bila PKP), dan rekening **Saldo Penjual** (default akun *1110 Saldo Penjual Marketplace*, sudah tercatat sebagai rekening kas). Kredensial API bersifat opsional.
 2. **Mapping SKU**: SKU penjual di Seller Center yang sama persis dengan SKU varian ERP terpetakan otomatis. Yang berbeda dipetakan di halaman ini; isi *Isi per Paket* untuk bundling (mis. 1 SKU = 3 pcs).
-3. **Pesanan Marketplace → Impor Pesanan**: unggah file ekspor pesanan dari Seller Center (.xlsx / .csv) atau [template CSV]. Impor ulang file yang lebih baru aman karena pesanan tidak digandakan dan status ikut diperbarui:
-   - *Belum Bayar* / *Perlu Dikirim*: belum ada efek stok. Pesanan Perlu Dikirim **mengalokasikan** stok di **Stok Marketplace** (stok tersedia = stok gudang − pesanan perlu dikirim, bisa diunduh CSV untuk update stok massal di Seller Center).
+3. **Pesanan Marketplace → Impor Pesanan**: unggah file ekspor pesanan dari Seller Center (.xlsx / .xls / .csv) atau template Excel. Impor ulang file yang lebih baru aman karena pesanan tidak digandakan dan status ikut diperbarui:
+   - *Belum Bayar* / *Perlu Dikirim*: belum ada efek stok. Pesanan Perlu Dikirim **mengalokasikan** stok di **Stok Marketplace** (stok tersedia = stok gudang − pesanan perlu dikirim, bisa diunduh ke Excel untuk update stok massal di Seller Center).
    - *Dikirim* / *Selesai*: stok keluar dari gudang toko, penjualan dicatat **Dr Piutang Marketplace / Cr Penjualan Marketplace (+ PPN)** dan HPP. Bisa juga dikirim manual (*Kirim Pesanan* / centang lalu *Kirim yang Dipilih*).
    - *Batal* sebelum dikirim: tanpa efek. *Batal* setelah dikirim (gagal kirim) atau *Pengembalian*: status **Retur Diproses**, menunggu paket kembali.
    - SKU yang belum dipetakan menahan pengiriman; daftar peringatan muncul setelah impor.
@@ -151,7 +164,7 @@ Kartu stok produk menandai mutasi stok cacat dengan label *Stok Cacat*. Nilai pe
 
 - **Keuangan → Kas & Bank**: saldo tiap rekening, mutasi, bukti kas masuk/keluar (mis. listrik, sewa) & transfer antar rekening.
 - **Akuntansi**: Jurnal Umum (otomatis + manual), Buku Besar, Neraca Saldo, Laba Rugi, Neraca, Arus Kas, Anggaran vs realisasi, **Tutup Buku** per bulan (periode tertutup menolak transaksi bertanggal di dalamnya).
-- **Laporan**: penjualan & pembelian (bersih retur), PPN per masa, produksi, maklon, upah borongan, nilai persediaan, HPP & margin produk, umur piutang & hutang. Semua bisa diekspor ke Excel / PDF.
+- **Laporan**: penjualan & pembelian (bersih retur), PPN per masa, produksi, maklon, upah borongan, nilai persediaan, HPP & margin produk, umur piutang & hutang (rincian per invoice/tagihan). Semua bisa diekspor ke Excel / PDF.
 
 ## Tips
 
