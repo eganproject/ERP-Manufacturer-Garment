@@ -27,12 +27,52 @@
         @endcan
     </x-slot:actions>
 
+    @php
+        $state = $fulfillment['state'] ?? null;
+        $variantNames = $order->items->pluck('variant', 'product_variant_id')->filter();
+    @endphp
+    @if ($order->status === MarketplaceOrderStatus::Pending)
+        <x-next-step tone="amber">Pembeli belum membayar. Pesanan belum dihitung di Rencana Produksi; impor ulang file pesanan setelah dibayar.</x-next-step>
+    @elseif ($state === \App\Services\Marketplace\MarketplaceFulfillment::READY)
+        <x-next-step tone="green">Stok sudah dialokasikan untuk pesanan ini. Kemas & kirim (cetak <strong>Daftar Ambil Barang</strong> dari daftar pesanan), lalu klik <strong>Kirim Pesanan</strong> atau impor ulang file berstatus dikirim.</x-next-step>
+    @elseif ($state === \App\Services\Marketplace\MarketplaceFulfillment::WAITING)
+        <x-next-step tone="amber">Stok gudang toko belum cukup. Pesanan ini ikut dihitung di <strong>Rencana Produksi</strong>; buat SPK dari sana. Saat hasil SPK masuk gudang, pesanan otomatis menjadi Siap Dikirim.</x-next-step>
+    @elseif ($state === \App\Services\Marketplace\MarketplaceFulfillment::UNMAPPED)
+        <x-next-step tone="amber">Ada SKU yang belum dipetakan ke varian ERP. Petakan di <strong>Mapping SKU</strong> agar stok bisa dialokasikan dan pesanan dihitung di rencana produksi.</x-next-step>
+    @endif
+
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <x-card title="Informasi">
             <dl class="space-y-3 text-sm">
                 <div><dt class="text-gray-500">Status</dt><dd><x-status-badge :status="$order->status" /> <span class="text-xs text-gray-500">{{ $order->platform_status }}</span>
                     @if ($order->cancel_reason)<div class="mt-1 text-gray-600">Batal: {{ $order->cancel_reason }}</div>@endif
                     @if ($order->return_reason)<div class="mt-1 text-gray-600">Retur: {{ $order->return_reason }}</div>@endif</dd></div>
+                @if (! $order->isShipped() && $order->status !== MarketplaceOrderStatus::Cancelled)
+                    <div x-data="{ edit: false }"><dt class="text-gray-500">Jenis & batas kirim</dt>
+                        <dd class="flex flex-wrap items-center gap-2">
+                            <x-badge :color="$order->is_preorder ? 'indigo' : 'gray'">{{ $order->is_preorder ? 'PO (pre-order)' : 'Ready stock' }}</x-badge>
+                            @if ($order->ship_by)
+                                <span @class(['font-medium', 'text-red-600' => $order->daysToShipBy() !== null && $order->daysToShipBy() <= \App\Services\Marketplace\MarketplaceFulfillment::URGENT_DAYS])>{{ tanggal($order->ship_by) }}</span>
+                                <span class="text-xs text-gray-500">({{ $order->daysToShipBy() < 0 ? 'terlambat '.abs($order->daysToShipBy()).' hari' : $order->daysToShipBy().' hari lagi' }})</span>
+                            @endif
+                            @can('marketplace.manage')<button type="button" class="text-xs text-indigo-600 hover:underline" @click="edit = ! edit">Ubah</button>@endcan
+                        </dd>
+                        @if ($state === \App\Services\Marketplace\MarketplaceFulfillment::READY)
+                            <dd class="mt-1"><x-badge color="green">Siap dikirim</x-badge></dd>
+                        @elseif ($state === \App\Services\Marketplace\MarketplaceFulfillment::WAITING)
+                            <dd class="mt-1"><x-badge color="amber">Menunggu produksi</x-badge>
+                                <div class="mt-1 text-xs text-gray-600">Kurang: {{ collect($fulfillment['short'])->map(fn ($q, $id) => ($variantNames[$id]?->sku ?? '#'.$id).' '.qty($q))->implode(', ') }}</div></dd>
+                        @endif
+                        @can('marketplace.manage')
+                            <form x-cloak x-show="edit" method="POST" action="{{ route('marketplace-orders.schedule', $order) }}" class="mt-2 space-y-2 rounded-lg border border-gray-200 p-3">
+                                @csrf
+                                <x-form.checkbox name="is_preorder" label="Pesanan PO (pre-order)" :checked="$order->is_preorder" tip="Centang bila pesanan ini pre-order. Hanya sebagai tanda; urutan alokasi stok mengikuti batas kirim." />
+                                <x-form.input name="ship_by" label="Batas kirim" :value="$order->ship_by_fixed ? $order->ship_by : null" data-date tip="Tanggal pesanan harus dikirim (lihat Seller Center). Kosongkan untuk dihitung otomatis: tgl bayar + hari PO SKU / hari proses toko." />
+                                <button type="submit" class="btn-primary btn-sm">Simpan</button>
+                            </form>
+                        @endcan
+                    </div>
+                @endif
                 <div><dt class="text-gray-500">Toko</dt><dd class="font-medium">{{ $order->store->display_name }}</dd><dd class="text-xs text-gray-500">Gudang {{ $order->store->warehouse->name }}</dd></div>
                 <div><dt class="text-gray-500">Tanggal pesanan</dt><dd>{{ $order->order_date->translatedFormat('d M Y H:i') }}</dd></div>
                 @if ($order->paid_at)<div><dt class="text-gray-500">Dibayar</dt><dd>{{ $order->paid_at->translatedFormat('d M Y H:i') }}</dd></div>@endif

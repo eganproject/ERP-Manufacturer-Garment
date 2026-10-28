@@ -96,6 +96,7 @@ class MarketplaceStoreController extends Controller implements HasMiddleware
             'warehouse_id' => ['required', Warehouse::rule()],
             'balance_account_id' => ['nullable', Account::cashRule()],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'handling_days' => ['nullable', 'integer', 'min:0', 'max:30'],
             'is_active' => ['boolean'],
             'notes' => ['nullable', 'string'],
             'api_enabled' => ['boolean'],
@@ -104,9 +105,10 @@ class MarketplaceStoreController extends Controller implements HasMiddleware
             'api_access_token' => ['nullable', 'string', 'max:2000'],
             'api_refresh_token' => ['nullable', 'string', 'max:2000'],
             'api_shop_cipher' => ['nullable', 'string', 'max:120'],
-        ], [], ['warehouse_id' => 'gudang', 'balance_account_id' => 'rekening saldo penjual', 'tax_rate' => 'PPN']);
+        ], [], ['warehouse_id' => 'gudang', 'balance_account_id' => 'rekening saldo penjual', 'tax_rate' => 'PPN', 'handling_days' => 'hari proses ready stock']);
 
         $data['tax_rate'] = (float) ($data['tax_rate'] ?? 0);
+        $data['handling_days'] = (int) ($data['handling_days'] ?? 2);
         $data['is_active'] = $request->boolean('is_active');
         $data['api_enabled'] = $request->boolean('api_enabled');
 

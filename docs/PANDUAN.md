@@ -40,6 +40,7 @@ Penawaran ──► Sales Order ──► SPK Produksi ──► (Order Maklon) 
                    └──► MRP ──► Purchase Order ──► Persetujuan ──► Penerimaan Barang ──► Tagihan Supplier ──► Pembayaran
                                                                           └──► Penggajian borongan ──► Bayar upah
 Marketplace (TikTok Shop / Shopee): Impor pesanan ──► Kirim (stok gudang toko keluar) ──► Selesai / Retur ──► Impor pencairan dana ──► Posting
+Pesanan PO marketplace: Impor (PO + batas kirim) ──► Menunggu Produksi ──► Rencana Produksi ──► SPK ──► MRP/PO bahan ──► SPK selesai ──► Siap Dikirim ──► Daftar Ambil Barang ──► Kirim
 Retur penjualan cacat ──► Stok Cacat ──► Perbaiki / Musnahkan / Kembalikan ke stok jual
 Aset tetap (tunai / kredit / saldo awal) ──► Penyusutan bulanan ──► Pelepasan (jual / hapus)
 Semua transaksi bernilai otomatis membuat jurnal → Buku Besar, Laba Rugi, Neraca, Arus Kas.
@@ -59,10 +60,14 @@ Semua transaksi bernilai otomatis membuat jurnal → Buku Besar, Laba Rugi, Nera
 Hanya untuk dua platform: **TikTok Shop** dan **Shopee**.
 
 1. **Marketplace → Toko Marketplace** → *+ Tambah Toko* (Sales / Gudang): platform, nama toko, **gudang sumber stok** (disarankan gudang khusus online, mis. *Gudang Online*), PPN dalam harga (isi 11 bila PKP), dan rekening **Saldo Penjual** (default akun *1110 Saldo Penjual Marketplace*, sudah tercatat sebagai rekening kas). Kredensial API bersifat opsional.
-2. **Mapping SKU**: SKU penjual di Seller Center yang sama persis dengan SKU varian ERP terpetakan otomatis. Yang berbeda dipetakan di halaman ini; isi *Isi per Paket* untuk bundling (mis. 1 SKU = 3 pcs).
+2. **Mapping SKU**: SKU penjual di Seller Center yang sama persis dengan SKU varian ERP terpetakan otomatis. Yang berbeda dipetakan di halaman ini; isi *Isi per Paket* untuk bundling (mis. 1 SKU = 3 pcs). Untuk produk **PO (pre-order)** isi **Hari PO** (mis. 30); bisa massal: centang SKU → isi hari → *Terapkan*. 0 = ready stock.
 3. **Pesanan Marketplace → Impor Pesanan**: unggah file ekspor pesanan dari Seller Center (.xlsx / .xls / .csv) atau template Excel. Impor ulang file yang lebih baru aman karena pesanan tidak digandakan dan status ikut diperbarui:
    - *Belum Bayar* / *Perlu Dikirim*: belum ada efek stok. Pesanan Perlu Dikirim **mengalokasikan** stok di **Stok Marketplace** (stok tersedia = stok gudang − pesanan perlu dikirim, bisa diunduh ke Excel untuk update stok massal di Seller Center).
    - *Dikirim* / *Selesai*: stok keluar dari gudang toko, penjualan dicatat **Dr Piutang Marketplace / Cr Penjualan Marketplace (+ PPN)** dan HPP. Bisa juga dikirim manual (*Kirim Pesanan* / centang lalu *Kirim yang Dipilih*).
+   - **PO & batas kirim**: batas kirim diambil dari kolom *Pesanan Harus Dikirimkan Sebelum* (Shopee) bila ada; kolom *Normal or Pre-order* (TikTok) / *Pre-order* (template) menandai PO. Bila tidak ada, batas kirim = tanggal bayar + **Hari PO** SKU (pesanan PO) atau + **Hari Proses Ready Stock** toko (default 2). Bisa diubah per pesanan (*Jenis & batas kirim → Ubah*).
+   - **Alokasi stok**: stok gudang toko dibagikan ke pesanan Perlu Dikirim mulai **batas kirim terdekat**. Pesanan yang semua barangnya kebagian = **Siap Dikirim**; sisanya **Menunggu Produksi** (stok tidak ditahan untuk pesanan yang belum lengkap). Alokasi otomatis diperbarui saat hasil SPK masuk gudang.
+   - **Produksi → Rencana Produksi**: kekurangan per ukuran = pesanan marketplace + sisa SO − stok jadi − SPK berjalan, dengan batas kirim terdekat. Centang artikel, sesuaikan jumlah, pilih gudang toko sebagai gudang hasil, lalu **Buat SPK Draft** (target selesai = 1 hari sebelum batas kirim). MRP juga ikut menghitung pesanan marketplace.
+   - **Daftar Ambil Barang** (tombol di Pesanan Marketplace): PDF total per SKU + rincian pesanan Siap Dikirim untuk gudang/packing. Dashboard memberi peringatan pesanan PO yang batas kirimnya ≤ 3 hari tetapi barang belum siap.
    - *Batal* sebelum dikirim: tanpa efek. *Batal* setelah dikirim (gagal kirim) atau *Pengembalian*: status **Retur Diproses**, menunggu paket kembali.
    - SKU yang belum dipetakan menahan pengiriman; daftar peringatan muncul setelah impor.
 4. **Terima retur** (Gudang, di halaman pesanan): pilih **kondisi paket saat dibuka**, lalu per barang isi qty direfund, qty barang **kita** yang kembali, dan berapa yang cacat. Rekam video unboxing.

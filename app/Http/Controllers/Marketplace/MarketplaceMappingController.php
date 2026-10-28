@@ -8,6 +8,7 @@ use App\Models\MarketplaceOrderItem;
 use App\Models\MarketplaceProduct;
 use App\Models\MarketplaceStore;
 use App\Models\ProductVariant;
+use App\Services\Marketplace\MarketplaceFulfillment;
 use App\Services\Marketplace\MarketplaceOrderService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -42,6 +43,8 @@ class MarketplaceMappingController extends Controller implements HasMiddleware
         $mappings = MarketplaceProduct::with(['store', 'variant.product'])
             ->when($storeId, fn ($q) => $q->where('marketplace_store_id', $storeId))
             ->when($request->q, fn ($q, $s) => $q->where(fn ($w) => $w->where('marketplace_sku', 'like', "%{$s}%")->orWhere('marketplace_name', 'like', "%{$s}%")))
+            ->when($request->type === 'preorder', fn ($q) => $q->where('preorder_days', '>', 0))
+            ->when($request->type === 'ready', fn ($q) => $q->where('preorder_days', 0))
             ->orderBy('marketplace_store_id')->orderBy('marketplace_sku')
             ->paginate(30)->withQueryString();
 
@@ -62,12 +65,14 @@ class MarketplaceMappingController extends Controller implements HasMiddleware
             'marketplace_name' => ['nullable', 'string', 'max:255'],
             'product_variant_id' => ['required', 'exists:product_variants,id'],
             'units_per_item' => ['nullable', 'numeric', 'min:0.01'],
-        ], [], ['marketplace_sku' => 'SKU marketplace', 'product_variant_id' => 'varian ERP', 'units_per_item' => 'isi per paket']);
+            'preorder_days' => ['nullable', 'integer', 'min:0', 'max:90'],
+        ], [], ['marketplace_sku' => 'SKU marketplace', 'product_variant_id' => 'varian ERP', 'units_per_item' => 'isi per paket', 'preorder_days' => 'hari PO']);
 
         $updated = DB::transaction(function () use ($data, $service) {
             $mapping = MarketplaceProduct::updateOrCreate(
                 ['marketplace_store_id' => $data['marketplace_store_id'], 'marketplace_sku' => trim($data['marketplace_sku'])],
-                ['product_variant_id' => $data['product_variant_id'], 'marketplace_name' => $data['marketplace_name'] ?? null, 'units_per_item' => $data['units_per_item'] ?? 1],
+                ['product_variant_id' => $data['product_variant_id'], 'marketplace_name' => $data['marketplace_name'] ?? null, 'units_per_item' => $data['units_per_item'] ?? 1,
+                    'preorder_days' => (int) ($data['preorder_days'] ?? 0)],
             );
             ActivityLog::record('mapped', "Mapping SKU {$mapping->marketplace_sku} → {$mapping->variant->sku}", $mapping->store);
 
@@ -99,6 +104,29 @@ class MarketplaceMappingController extends Controller implements HasMiddleware
         });
 
         return back()->with('success', $count ? "{$count} SKU dipetakan otomatis." : 'Tidak ada SKU yang sama dengan SKU varian ERP.');
+    }
+
+    /** Atur hari PO (pre-order) untuk banyak SKU sekaligus; batas kirim pesanan terbuka ikut dihitung ulang. */
+    public function preorder(Request $request, MarketplaceFulfillment $fulfillment)
+    {
+        $data = $request->validate([
+            'mappings' => ['required', 'array', 'min:1'],
+            'mappings.*' => ['integer'],
+            'preorder_days' => ['required', 'integer', 'min:0', 'max:90'],
+        ], ['mappings.required' => 'Centang minimal satu SKU.'], ['preorder_days' => 'hari PO']);
+
+        $orders = DB::transaction(function () use ($data, $fulfillment) {
+            $orders = 0;
+            foreach (MarketplaceProduct::with('store')->whereIn('id', $data['mappings'])->get() as $mapping) {
+                $mapping->update(['preorder_days' => $data['preorder_days']]);
+                $orders += $fulfillment->rescheduleSku($mapping->marketplace_store_id, $mapping->marketplace_sku);
+            }
+            ActivityLog::record('updated', count($data['mappings']).' SKU marketplace diatur '.($data['preorder_days'] ? "PO {$data['preorder_days']} hari" : 'ready stock'));
+
+            return $orders;
+        });
+
+        return back()->with('success', 'Hari PO disimpan'.($orders ? ", batas kirim {$orders} pesanan terbuka dihitung ulang." : '.'));
     }
 
     public function destroy(MarketplaceProduct $mapping)
