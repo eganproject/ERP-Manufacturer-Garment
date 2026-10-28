@@ -1,6 +1,7 @@
 @use('App\Enums\MarketplaceOrderStatus')
 <x-layouts.app title="Pesanan Marketplace">
     <x-slot:actions>
+        <a href="{{ route('marketplace-orders.picking', array_filter(['store_id' => request('store_id')])) }}" target="_blank" class="btn-secondary">Daftar Ambil Barang</a>
         <a href="{{ route('marketplace-orders.template') }}" class="btn-secondary">Template CSV</a>
         @can('marketplace.manage')<a href="{{ route('marketplace-orders.import') }}" class="btn-primary">Impor Pesanan</a>@endcan
     </x-slot:actions>
@@ -19,6 +20,10 @@
             <a href="{{ route('marketplace-orders.index', $base + ['status' => $status->value]) }}" @class(['rounded-full px-3 py-1 border font-medium transition', 'bg-gray-900 text-white border-gray-900' => request('status') === $status->value, 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900' => request('status') !== $status->value])>
                 {{ $status->label() }} <span class="opacity-70">{{ $counts[$status->value] ?? 0 }}</span>
             </a>
+        @endforeach
+        @php $states = collect($allocation)->countBy('state'); @endphp
+        @foreach (['ready' => ['Siap Dikirim', $states['ready'] ?? 0], 'waiting' => ['Menunggu Produksi', $states['waiting'] ?? 0], 'preorder' => ['PO belum dikirim', null]] as $key => [$label, $n])
+            <a href="{{ route('marketplace-orders.index', $base + ['status' => $key]) }}" @class(['rounded-full px-3 py-1 border font-medium transition', 'bg-gray-900 text-white border-gray-900' => request('status') === $key, 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900' => request('status') !== $key])>{{ $label }}@if ($n !== null) <span class="opacity-70">{{ $n }}</span>@endif</a>
         @endforeach
         <a href="{{ route('marketplace-orders.index', $base + ['status' => 'unmapped']) }}" @class(['rounded-full px-3 py-1 border font-medium transition', 'bg-gray-900 text-white border-gray-900' => request('status') === 'unmapped', 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900' => request('status') !== 'unmapped'])>SKU belum dipetakan</a>
         @foreach (['claimable' => 'Retur bermasalah', 'claim_open' => 'Banding diproses'] as $key => $label)
@@ -61,6 +66,15 @@
                             </td>
                             <td class="text-right whitespace-nowrap">{{ rupiah($order->total) }}</td>
                             <td><x-status-badge :status="$order->status" />
+                                @if (! $order->isShipped() && $order->status !== MarketplaceOrderStatus::Cancelled)
+                                    <div class="mt-1 flex flex-wrap items-center gap-1 text-xs whitespace-nowrap">
+                                        @if ($order->is_preorder)<x-badge color="indigo">PO</x-badge>@endif
+                                        @if ($order->ship_by)<span @class(['text-gray-500', 'font-medium text-red-600' => $order->daysToShipBy() <= \App\Services\Marketplace\MarketplaceFulfillment::URGENT_DAYS])>kirim ≤ {{ tanggal($order->ship_by) }}</span>@endif
+                                    </div>
+                                    @php $st = $allocation[$order->id]['state'] ?? null; @endphp
+                                    @if ($st === 'ready')<div class="mt-1"><x-badge color="green">Siap dikirim</x-badge></div>
+                                    @elseif ($st === 'waiting')<div class="mt-1"><x-badge color="amber">Menunggu produksi</x-badge></div>@endif
+                                @endif
                                 @if ($order->return_condition && $order->return_condition->claimable())<div class="mt-1"><x-badge :color="$order->return_condition->color()">{{ $order->return_condition->label() }}</x-badge></div>@endif
                                 @if ($order->claim_status)<div class="mt-1"><x-status-badge :status="$order->claim_status" /></div>@endif</td>
                             <td class="text-sm whitespace-nowrap">

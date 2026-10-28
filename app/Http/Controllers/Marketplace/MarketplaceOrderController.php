@@ -8,8 +8,10 @@ use App\Enums\MarketplaceReturnCondition;
 use App\Http\Controllers\Controller;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceStore;
+use App\Services\Marketplace\MarketplaceFulfillment;
 use App\Services\Marketplace\MarketplaceImporter;
 use App\Services\Marketplace\MarketplaceOrderService;
+use App\Support\DocumentPdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -22,15 +24,15 @@ class MarketplaceOrderController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('can:marketplace.view', only: ['index', 'show', 'template']),
-            new Middleware('can:marketplace.manage', except: ['index', 'show', 'template']),
+            new Middleware('can:marketplace.view', only: ['index', 'show', 'template', 'pickingList']),
+            new Middleware('can:marketplace.manage', except: ['index', 'show', 'template', 'pickingList']),
         ];
     }
 
-    public function index(Request $request)
+    public function index(Request $request, MarketplaceFulfillment $fulfillment)
     {
         $request->validate([
-            'status' => ['nullable', Rule::in(array_merge(array_keys(MarketplaceOrderStatus::options()), ['unmapped', 'unsettled', 'claimable', 'claim_open']))],
+            'status' => ['nullable', Rule::in(array_merge(array_keys(MarketplaceOrderStatus::options()), ['unmapped', 'unsettled', 'claimable', 'claim_open', 'ready', 'waiting', 'preorder']))],
             'platform' => ['nullable', Rule::enum(MarketplacePlatform::class)],
             'store_id' => ['nullable', 'integer'],
             'from' => ['nullable', 'date'],
@@ -44,8 +46,10 @@ class MarketplaceOrderController extends Controller implements HasMiddleware
             ->when($request->platform, fn ($q, $p) => $q->whereHas('store', fn ($s) => $s->where('platform', $p)))
             ->when($request->from, fn ($q, $d) => $q->where('order_date', '>=', $d))
             ->when($request->to, fn ($q, $d) => $q->where('order_date', '<=', $d.' 23:59:59'))
-            ->when($request->status, function ($q, $status) {
+            ->when($request->status, function ($q, $status) use ($fulfillment) {
                 match ($status) {
+                    'ready', 'waiting' => $q->whereIn('id', $fulfillment->idsInState($status === 'ready' ? MarketplaceFulfillment::READY : MarketplaceFulfillment::WAITING)),
+                    'preorder' => $q->where('is_preorder', true)->whereIn('status', [MarketplaceOrderStatus::Pending, MarketplaceOrderStatus::ToShip]),
                     'unmapped' => $q->whereNull('shipped_at')->whereNotIn('status', [MarketplaceOrderStatus::Cancelled])->whereHas('items', fn ($i) => $i->whereNull('product_variant_id')),
                     'unsettled' => $q->whereNotNull('shipped_at')->whereRaw('ROUND(total - returned_total + (CASE WHEN claim_status = \'won\' THEN claim_amount ELSE 0 END) - settled_receivable, 2) > 0'),
                     'claimable' => $q->whereNotNull('returned_at')->whereNull('claim_status')
@@ -54,6 +58,9 @@ class MarketplaceOrderController extends Controller implements HasMiddleware
                     default => $q->where('status', $status),
                 };
             })
+            // Pesanan yang belum dikirim diurutkan dari batas kirim terdekat
+            ->when(in_array($request->status, ['ready', 'waiting', 'preorder', MarketplaceOrderStatus::ToShip->value], true),
+                fn ($q) => $q->orderByRaw('CASE WHEN ship_by IS NULL THEN 1 ELSE 0 END')->orderBy('ship_by'))
             ->latest('order_date')->latest('id')
             ->paginate(25)->withQueryString();
 
@@ -63,15 +70,58 @@ class MarketplaceOrderController extends Controller implements HasMiddleware
         return view('marketplace.orders.index', [
             'orders' => $orders,
             'counts' => $counts,
+            'allocation' => $fulfillment->allocate(),
             'stores' => MarketplaceStore::options(false),
         ]);
     }
 
-    public function show(MarketplaceOrder $marketplaceOrder)
+    public function show(MarketplaceOrder $marketplaceOrder, MarketplaceFulfillment $fulfillment)
     {
         $marketplaceOrder->load(['store.warehouse', 'items.variant.product', 'settlementLines.settlement', 'activities.user']);
 
-        return view('marketplace.orders.show', ['order' => $marketplaceOrder]);
+        return view('marketplace.orders.show', ['order' => $marketplaceOrder, 'fulfillment' => $fulfillment->allocate()[$marketplaceOrder->id] ?? null]);
+    }
+
+    /** Ubah tanda PO / batas kirim pesanan secara manual. */
+    public function schedule(Request $request, MarketplaceOrder $marketplaceOrder, MarketplaceOrderService $service)
+    {
+        $data = $request->validate([
+            'is_preorder' => ['nullable', 'boolean'],
+            'ship_by' => ['nullable', 'date'],
+        ], [], ['ship_by' => 'batas kirim']);
+
+        $service->reschedule($marketplaceOrder, (bool) ($data['is_preorder'] ?? false), $data['ship_by'] ?? null);
+
+        return back()->with('success', 'Batas kirim pesanan diperbarui.');
+    }
+
+    /** Daftar ambil barang (picking list) untuk pesanan Siap Dikirim: total per SKU + rincian pesanan. */
+    public function pickingList(Request $request, MarketplaceFulfillment $fulfillment)
+    {
+        $request->validate(['store_id' => ['nullable', 'integer']]);
+
+        $orders = MarketplaceOrder::with(['store.warehouse', 'items.variant.product'])
+            ->whereIn('id', $fulfillment->idsInState(MarketplaceFulfillment::READY))
+            ->when($request->integer('store_id'), fn ($q, $id) => $q->where('marketplace_store_id', $id))
+            ->orderByRaw('CASE WHEN ship_by IS NULL THEN 1 ELSE 0 END')->orderBy('ship_by')->orderBy('order_date')
+            ->get();
+
+        $lines = $orders->flatMap(fn (MarketplaceOrder $order) => $order->items->map(fn ($item) => ['order' => $order, 'item' => $item]))
+            ->groupBy(fn ($row) => $row['order']->store->warehouse_id.':'.$row['item']->product_variant_id)
+            ->map(fn ($rows) => [
+                'variant' => $rows->first()['item']->variant,
+                'warehouse' => $rows->first()['order']->store->warehouse,
+                'quantity' => $rows->sum(fn ($row) => $row['item']->stockQuantity()),
+                'orders' => $rows->pluck('order.id')->unique()->count(),
+            ])
+            ->sortBy(fn ($line) => [$line['warehouse']->name, $line['variant']->sku])
+            ->values();
+
+        return DocumentPdf::stream('pdf.marketplace-picking', [
+            'orders' => $orders,
+            'lines' => $lines,
+            'store' => $request->integer('store_id') ? MarketplaceStore::find($request->integer('store_id')) : null,
+        ], 'daftar-ambil-barang-'.today()->format('Ymd'));
     }
 
     public function importForm()
@@ -98,7 +148,7 @@ class MarketplaceOrderController extends Controller implements HasMiddleware
     public function template()
     {
         $csv = MarketplaceImporter::template(MarketplaceImporter::ORDER_TEMPLATE, [
-            '2610250001ABC', 'Perlu Dikirim', '2026-10-25 09:15', '2026-10-25 09:20', '', '', 'pembeli01', 'Budi', 'Bandung', 'J&T', '', '10000', 'TS-BSC-HTM-M', 'Kaos Basic', 'Hitam, M', '2', '99000', '198000',
+            '2610250001ABC', 'Perlu Dikirim', '2026-10-25 09:15', '2026-10-25 09:20', '', '', 'pembeli01', 'Budi', 'Bandung', 'J&T', '', '10000', 'TS-BSC-HTM-M', 'Kaos Basic', 'Hitam, M', '2', '99000', '198000', 'Ya', '2026-11-24',
         ]);
 
         return response($csv, 200, ['Content-Type' => 'text/csv', 'Content-Disposition' => 'attachment; filename="template-pesanan-marketplace.csv"']);

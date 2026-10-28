@@ -37,6 +37,7 @@ use App\Http\Controllers\Payroll\PayrollController;
 use App\Http\Controllers\Payroll\PieceRateController;
 use App\Http\Controllers\Payroll\PieceworkController;
 use App\Http\Controllers\ProductionOrderController;
+use App\Http\Controllers\ProductionPlanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\PurchaseReturnController;
@@ -183,6 +184,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     // Perencanaan & biaya produksi
     Route::get('planning/mrp', [MrpController::class, 'index'])->name('mrp.index');
     Route::post('planning/mrp/purchase-orders', [MrpController::class, 'store'])->name('mrp.purchase-orders');
+    Route::get('planning/production', [ProductionPlanController::class, 'index'])->name('production-plan.index');
+    Route::post('planning/production', [ProductionPlanController::class, 'store'])->name('production-plan.store');
     Route::get('reports/production-costing', CostingController::class)->name('reports.costing')->middleware('can:costing.view');
 
     // Marketplace TikTok Shop & Shopee: toko, mapping SKU, pesanan & retur, alokasi stok, pencairan dana
@@ -194,6 +197,7 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('/', 'index')->name('index');
             Route::post('/', 'store')->name('store');
             Route::post('auto', 'auto')->name('auto');
+            Route::post('preorder', 'preorder')->name('preorder');
             Route::delete('{mapping}', 'destroy')->name('destroy');
         });
 
@@ -203,8 +207,10 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::post('import', 'import')->name('import.store');
             Route::get('template', 'template')->name('template');
             Route::post('ship', 'shipMany')->name('ship-many');
+            Route::get('picking-list', 'pickingList')->name('picking');
             Route::get('{marketplaceOrder}', 'show')->name('show');
             Route::post('{marketplaceOrder}/ship', 'ship')->name('ship');
+            Route::post('{marketplaceOrder}/schedule', 'schedule')->name('schedule');
             Route::post('{marketplaceOrder}/complete', 'complete')->name('complete');
             Route::post('{marketplaceOrder}/cancel', 'cancel')->name('cancel');
             Route::post('{marketplaceOrder}/request-return', 'requestReturn')->name('request-return');

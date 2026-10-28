@@ -34,8 +34,10 @@ class MrpController extends Controller implements HasMiddleware
 
         $salesOrderIds = array_values(array_filter(array_map('intval', $request->input('sales_order_ids', []))));
         $includeSafety = ! $request->has('filtered') || $request->boolean('safety');
+        $includeMarketplace = ! $request->has('filtered') || $request->boolean('marketplace');
 
-        return view('mrp.index', $this->service->calculate($salesOrderIds ?: null, $includeSafety) + [
+        return view('mrp.index', $this->service->calculate($salesOrderIds ?: null, $includeSafety, $includeMarketplace) + [
+            'includeMarketplace' => $includeMarketplace,
             'salesOrders' => SalesOrder::with('customer')->whereIn('status', SalesOrderStatus::open())->latest('order_date')->get(),
             'selectedSalesOrders' => $salesOrderIds,
             'includeSafety' => $includeSafety,

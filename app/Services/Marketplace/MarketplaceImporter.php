@@ -24,6 +24,9 @@ class MarketplaceImporter
         'paid_at' => ['waktupembayarandilakukan', 'waktupembayaran', 'paidtime', 'tanggalpembayaran'],
         'shipped_at' => ['waktupengirimandiatur', 'waktupengiriman', 'shippedtime', 'tanggalpengiriman', 'waktupesanandikirim', 'rtstime'],
         'completed_at' => ['waktupesananselesai', 'waktuselesai', 'deliveredtime', 'completedtime', 'tanggalselesai'],
+        'ship_by' => ['pesananharusdikirimkansebelummenghindariketerlambatan', 'pesananharusdikirimkansebelum', 'harusdikirimkansebelum', 'bataskirim',
+            'bataswaktupengiriman', 'shipbydate', 'shipbytime', 'shipby', 'latestshiptime', 'rtsslatime'],
+        'preorder' => ['normalorpreorder', 'preorder', 'pesananpreorder', 'ispreorder'],
         'cancelled_at' => ['waktupembatalan', 'cancelledtime', 'canceltime'],
         'cancel_reason' => ['alasanpembatalan', 'cancelreason', 'cancelby'],
         'buyer' => ['usernamepembeli', 'username', 'buyerusername', 'namapembeli', 'usernamebuyer'],
@@ -42,7 +45,8 @@ class MarketplaceImporter
 
     /** Judul kolom template ERP (urut sesuai file template). */
     public const ORDER_TEMPLATE = ['No. Pesanan', 'Status Pesanan', 'Waktu Pesanan Dibuat', 'Waktu Pembayaran', 'Waktu Pengiriman', 'Waktu Pesanan Selesai',
-        'Username Pembeli', 'Nama Penerima', 'Kota', 'Kurir', 'No. Resi', 'Ongkir Dibayar Pembeli', 'SKU', 'Nama Produk', 'Nama Variasi', 'Jumlah', 'Harga Satuan', 'Total Harga Produk'];
+        'Username Pembeli', 'Nama Penerima', 'Kota', 'Kurir', 'No. Resi', 'Ongkir Dibayar Pembeli', 'SKU', 'Nama Produk', 'Nama Variasi', 'Jumlah', 'Harga Satuan', 'Total Harga Produk',
+        'Pre-order', 'Batas Kirim'];
 
     public function __construct(private MarketplaceOrderService $orders) {}
 
@@ -116,6 +120,8 @@ class MarketplaceImporter
                     'shipped_at' => $date($row, 'shipped_at'),
                     'completed_at' => $date($row, 'completed_at'),
                     'cancelled_at' => $date($row, 'cancelled_at'),
+                    'ship_by' => $date($row, 'ship_by'),
+                    'preorder' => isset($map['preorder']) ? self::preorderFlag($get($row, 'preorder')) : null,
                     'cancel_reason' => $get($row, 'cancel_reason') ?: null,
                     'buyer' => $get($row, 'buyer') ?: null,
                     'recipient' => $get($row, 'recipient') ?: null,
@@ -147,6 +153,18 @@ class MarketplaceImporter
         }
 
         return array_values($orders);
+    }
+
+    /** Nilai kolom pre-order ("Pre-order", "Ya", "PO", "1") → true; "Normal", "Tidak", "0" → false; kosong → null (tentukan dari SKU). */
+    public static function preorderFlag(?string $value): ?bool
+    {
+        $v = mb_strtolower(trim((string) $value));
+
+        return match (true) {
+            $v === '' => null,
+            str_contains($v, 'pre') || in_array($v, ['y', 'ya', 'yes', 'po', '1', 'true'], true) => true,
+            default => false,
+        };
     }
 
     /**

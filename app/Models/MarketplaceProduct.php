@@ -11,6 +11,7 @@ class MarketplaceProduct extends Model
 
     protected $casts = [
         'units_per_item' => 'decimal:2',
+        'preorder_days' => 'integer',
     ];
 
     public function store()
