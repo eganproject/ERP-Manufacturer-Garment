@@ -10,7 +10,7 @@
     ]);
 @endphp
 <x-layouts.app title="MRP / Kebutuhan Bahan">
-    <x-guide title="Cara kerja MRP" :steps="['MRP menghitung **barang jadi** yang masih kurang dari Sales Order terbuka, lalu menghitung **bahan** yang dibutuhkan lewat BOM.', 'Kebutuhan dibandingkan dengan stok, PO yang sedang berjalan dan (opsional) stok minimum.', 'Centang bahan yang kurang lalu klik **Buat PO Draft**: PO otomatis dikelompokkan per supplier utama bahan.']"></x-guide>
+    <x-guide title="Cara kerja MRP" :steps="['MRP menghitung **barang jadi** yang masih kurang dari Sales Order terbuka **dan pesanan marketplace Perlu Dikirim** (PO & ready stock), lalu menghitung **bahan** yang dibutuhkan lewat BOM.', 'Kebutuhan dibandingkan dengan stok, PO yang sedang berjalan dan (opsional) stok minimum.', 'Centang bahan yang kurang lalu klik **Buat PO Draft**: PO otomatis dikelompokkan per supplier utama bahan.']"></x-guide>
     <x-card class="mb-6">
         <form method="GET" class="flex flex-wrap items-end gap-3">
             <input type="hidden" name="filtered" value="1">
@@ -27,13 +27,18 @@
                 Jaga stok minimum
             </label>
             <x-tip title="Jaga stok minimum" text="Bila dicentang, kebutuhan ditambah agar stok setelah produksi tidak turun di bawah stok minimum bahan." class="mb-2.5 -ml-1" />
+            <label class="flex items-center gap-2 pb-2 text-sm text-gray-700">
+                <input type="checkbox" name="marketplace" value="1" @checked($includeMarketplace) class="rounded border-gray-300 text-indigo-600">
+                Pesanan marketplace
+            </label>
+            <x-tip title="Pesanan marketplace" text="Ikut hitung pesanan TikTok Shop / Shopee berstatus Perlu Dikirim (PO maupun ready stock) yang SKU-nya sudah dipetakan." class="mb-2.5 -ml-1" />
             <button type="submit" class="btn-secondary">Hitung Ulang</button>
             @if (request()->has('filtered') || request()->has('sales_order_ids'))
                 <a href="{{ route('mrp.index') }}" class="pb-2 text-sm text-gray-500 hover:text-gray-700">Reset</a>
             @endif
         </form>
         <p class="mt-3 text-xs text-gray-500">
-            Kebutuhan barang jadi = sisa SO − stok barang jadi − rencana SPK berjalan. Kekurangan bahan = kebutuhan (BOM aktif + SPK draft) + stok minimum − stok gudang − PO yang belum diterima (termasuk PO draft / menunggu persetujuan).
+            Kebutuhan barang jadi = sisa SO + pesanan marketplace Perlu Dikirim − stok barang jadi − rencana SPK berjalan. Kekurangan bahan = kebutuhan (BOM aktif + SPK draft) + stok minimum − stok gudang − PO yang belum diterima (termasuk PO draft / menunggu persetujuan).
         </p>
     </x-card>
 
@@ -43,6 +48,7 @@
 
     <x-summary-tiles :tiles="[
         ['SO terbuka yang dihitung', $sales_order_count.' SO'],
+        ['Pesanan marketplace dihitung', $marketplace_order_count.' pesanan'],
         ['Bahan yang perlu dibeli', $shortages->count().' item', $shortages->isNotEmpty() ? 'red' : null],
         ['Estimasi nilai pembelian', rupiah($estimate), $estimate > 0 ? 'amber' : null],
     ]" />
@@ -50,24 +56,25 @@
     <x-card title="Kebutuhan Barang Jadi" :padding="false" class="mb-6">
         <div class="overflow-x-auto">
             <table class="table-base">
-                <thead><tr><th>Produk</th><th>SKU / Ukuran</th><th class="text-right">Sisa SO</th><th class="text-right">Stok Jadi</th><th class="text-right">Dalam SPK</th><th class="text-right">Perlu Diproduksi</th><th></th></tr></thead>
+                <thead><tr><th>Produk</th><th>SKU / Ukuran</th><th class="text-right">Sisa SO</th><th class="text-right">Marketplace</th><th class="text-right">Stok Jadi</th><th class="text-right">Dalam SPK</th><th class="text-right">Perlu Diproduksi</th><th></th></tr></thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($products as $row)
                         <tr>
                             <td>{{ $row['product']->code }} - {{ $row['product']->name }}</td>
                             <td>{{ $row['variant']->sku }} <span class="text-gray-500">· {{ $row['variant']->size }}{{ $row['variant']->color ? ' / '.$row['variant']->color : '' }}</span></td>
-                            <td class="text-right">{{ qty($row['ordered']) }}</td>
+                            <td class="text-right">{{ qty($row['sales']) }}</td>
+                            <td class="text-right">{{ qty($row['marketplace']) }}@if ($row['preorder'] > 0)<div class="text-xs text-gray-500">PO {{ qty($row['preorder']) }}</div>@endif</td>
                             <td class="text-right">{{ qty($row['stock']) }}</td>
                             <td class="text-right">{{ qty($row['planned']) }}</td>
                             <td @class(['text-right font-semibold', 'text-red-600' => $row['net'] > 0, 'text-gray-400' => $row['net'] <= 0])>{{ qty($row['net']) }}</td>
                             <td class="text-right">
                                 @if ($row['net'] > 0 && $canProduce)
-                                    <a href="{{ route('production-orders.create', ['product_id' => $row['product']->id]) }}" class="text-xs font-medium text-indigo-600 hover:underline">Buat SPK</a>
+                                    <a href="{{ route('production-plan.index') }}" class="text-xs font-medium text-indigo-600 hover:underline">Buat SPK</a>
                                 @endif
                             </td>
                         </tr>
                     @empty
-                        <x-empty-row colspan="7" message="Tidak ada SO terbuka yang masih menunggu pengiriman." />
+                        <x-empty-row colspan="8" message="Tidak ada SO terbuka / pesanan marketplace yang masih menunggu pengiriman." />
                     @endforelse
                 </tbody>
             </table>

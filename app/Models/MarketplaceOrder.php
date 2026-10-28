@@ -17,6 +17,9 @@ class MarketplaceOrder extends Model
 
     protected $casts = [
         'status' => MarketplaceOrderStatus::class,
+        'is_preorder' => 'boolean',
+        'ship_by' => 'date',
+        'ship_by_fixed' => 'boolean',
         'order_date' => 'datetime',
         'paid_at' => 'datetime',
         'shipped_at' => 'date',
@@ -61,6 +64,12 @@ class MarketplaceOrder extends Model
     public function getNumberAttribute(): string
     {
         return $this->order_number;
+    }
+
+    /** Hari tersisa sampai batas kirim (negatif = terlambat). */
+    public function daysToShipBy(): ?int
+    {
+        return $this->ship_by ? (int) today()->diffInDays($this->ship_by, false) : null;
     }
 
     public function isShipped(): bool

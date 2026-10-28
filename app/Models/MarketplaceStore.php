@@ -21,6 +21,7 @@ class MarketplaceStore extends Model
     protected $casts = [
         'platform' => MarketplacePlatform::class,
         'tax_rate' => 'decimal:2',
+        'handling_days' => 'integer',
         'is_active' => 'boolean',
         'api_enabled' => 'boolean',
         'api_partner_key' => 'encrypted',

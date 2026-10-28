@@ -27,7 +27,7 @@ use Illuminate\Validation\ValidationException;
  */
 class MarketplaceOrderService
 {
-    public function __construct(private StockService $stock, private AutoJournal $journal) {}
+    public function __construct(private StockService $stock, private AutoJournal $journal, private MarketplaceFulfillment $fulfillment) {}
 
     /**
      * Simpan / perbarui satu pesanan hasil impor atau API (format ternormalisasi, lihat {@see MarketplaceImporter}),
@@ -80,6 +80,13 @@ class MarketplaceOrderService
                     $this->replaceItems($order, $data['items']);
                     $result = 'updated';
                 }
+            }
+
+            // Tanda PO & batas kirim (dari file bila ada, selain itu dari hari PO SKU / hari proses toko)
+            $wasScheduled = [$order->is_preorder, $order->ship_by?->toDateString()];
+            $this->fulfillment->schedule($order, $data['preorder'] ?? null, $data['ship_by'] ?? null);
+            if ($result === 'unchanged' && $wasScheduled !== [$order->is_preorder, $order->ship_by?->toDateString()]) {
+                $result = 'updated';
             }
 
             $before = $order->status;
@@ -353,9 +360,28 @@ class MarketplaceOrderService
     /** Terapkan pemetaan SKU ke baris pesanan yang belum dikirim. */
     public function applyMapping(MarketplaceProduct $mapping): int
     {
-        return MarketplaceOrderItem::where('marketplace_sku', $mapping->marketplace_sku)
+        $updated = MarketplaceOrderItem::where('marketplace_sku', $mapping->marketplace_sku)
             ->whereHas('order', fn ($q) => $q->where('marketplace_store_id', $mapping->marketplace_store_id)->whereNull('shipped_at'))
             ->update(['product_variant_id' => $mapping->product_variant_id, 'units_per_item' => $mapping->units_per_item]);
+
+        // Hari PO SKU bisa berubah → batas kirim pesanan terbuka dihitung ulang
+        $this->fulfillment->rescheduleSku($mapping->marketplace_store_id, $mapping->marketplace_sku);
+
+        return $updated;
+    }
+
+    /** Ubah tanda PO / batas kirim satu pesanan secara manual (batas kirim menjadi tetap). */
+    public function reschedule(MarketplaceOrder $order, bool $preorder, \DateTimeInterface|string|null $shipBy): void
+    {
+        if ($order->isShipped() || $order->status === MarketplaceOrderStatus::Cancelled) {
+            throw ValidationException::withMessages(['ship_by' => 'Batas kirim hanya bisa diubah untuk pesanan yang belum dikirim.']);
+        }
+
+        if (! $shipBy) {
+            $order->ship_by_fixed = false;
+        }
+        $this->fulfillment->schedule($order, $preorder, $shipBy ? Carbon::parse($shipBy) : null);
+        ActivityLog::record('rescheduled', ($order->is_preorder ? 'Pesanan PO' : 'Pesanan ready stock').', batas kirim '.tanggal($order->ship_by), $order);
     }
 
     /**

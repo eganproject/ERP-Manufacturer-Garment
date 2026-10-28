@@ -25,6 +25,7 @@ use App\Models\SalesOrder;
 use App\Models\SubcontractOrder;
 use App\Models\User;
 use App\Services\DepreciationService;
+use App\Services\Marketplace\MarketplaceFulfillment;
 use App\Services\VatService;
 use Illuminate\Support\Collection;
 
@@ -69,8 +70,13 @@ class WorkQueue
             route('reports.vat'), 'Tutup masa PPN bulan lalu & setor kurang bayar', 'gray');
 
         // Marketplace (TikTok Shop & Shopee)
-        $add('marketplace.manage', 'Pesanan marketplace perlu dikirim', fn () => MarketplaceOrder::where('status', MarketplaceOrderStatus::ToShip)->count(),
-            route('marketplace-orders.index', ['status' => MarketplaceOrderStatus::ToShip->value]), 'Kemas & kirim, lalu impor ulang file pesanan / tandai dikirim', 'blue');
+        $fulfillment = app(MarketplaceFulfillment::class);
+        $add('marketplace.manage', 'Pesanan marketplace siap dikirim', fn () => count($fulfillment->idsInState(MarketplaceFulfillment::READY)),
+            route('marketplace-orders.index', ['status' => 'ready']), 'Cetak daftar ambil barang, kemas & kirim, lalu impor ulang file pesanan / tandai dikirim', 'blue');
+        $add('production.manage', 'Pesanan marketplace menunggu produksi', fn () => count($fulfillment->idsInState(MarketplaceFulfillment::WAITING)),
+            route('production-plan.index'), 'Stok belum cukup: buat SPK dari Rencana Produksi');
+        $add('production.view', 'Pesanan PO mendekati batas kirim, barang belum siap', fn () => $fulfillment->urgentWaitingCount(),
+            route('marketplace-orders.index', ['status' => 'waiting']), 'Batas kirim ≤ '.MarketplaceFulfillment::URGENT_DAYS.' hari: prioritaskan SPK / kabari pembeli', 'red');
         $add('marketplace.manage', 'SKU marketplace belum dipetakan', fn () => MarketplaceOrder::whereNull('shipped_at')->where('status', '!=', MarketplaceOrderStatus::Cancelled)
             ->whereHas('items', fn ($q) => $q->whereNull('product_variant_id'))->count(),
             route('marketplace-mappings.index'), 'Petakan SKU toko ke varian ERP agar stok bisa dikirim', 'red');

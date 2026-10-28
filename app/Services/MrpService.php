@@ -2,15 +2,15 @@
 
 namespace App\Services;
 
+use App\Enums\MarketplaceOrderStatus;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\SalesOrderStatus;
 use App\Models\ActivityLog;
+use App\Models\MarketplaceOrder;
 use App\Models\Material;
 use App\Models\Product;
 use App\Models\ProductionMaterial;
-use App\Models\ProductionOrderItem;
-use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\SalesOrderItem;
@@ -22,7 +22,7 @@ use Illuminate\Validation\ValidationException;
  * Material Requirements Planning: kebutuhan bahan dari SO terbuka + BOM, dibandingkan stok dan PO berjalan.
  *
  * Alur hitung:
- * 1. Kebutuhan barang jadi per varian = sisa SO − stok barang jadi − rencana SPK (draft/dalam proses).
+ * 1. Kebutuhan barang jadi per varian = sisa SO + pesanan marketplace Perlu Dikirim − stok barang jadi − rencana SPK (draft/dalam proses), lihat {@see ProductionPlanner}.
  * 2. Kebutuhan bahan kotor = kebutuhan bersih barang jadi × BOM aktif + bahan SPK draft yang belum dikeluarkan.
  * 3. Kekurangan bahan = kebutuhan kotor + stok minimum − stok gudang − sisa PO (draft/dipesan/sebagian).
  */
@@ -30,50 +30,18 @@ class MrpService
 {
     /**
      * @param  list<int>|null  $salesOrderIds  batasi ke SO tertentu (null = semua SO terbuka)
-     * @return array{products: Collection, materials: Collection, warnings: list<string>, sales_order_count: int}
+     * @param  bool  $includeMarketplace  ikut hitung pesanan marketplace Perlu Dikirim
+     * @return array{products: Collection, materials: Collection, warnings: list<string>, sales_order_count: int, marketplace_order_count: int}
      */
-    public function calculate(?array $salesOrderIds = null, bool $includeSafetyStock = true): array
+    public function calculate(?array $salesOrderIds = null, bool $includeSafetyStock = true, bool $includeMarketplace = true): array
     {
-        $demand = SalesOrderItem::query()
-            ->whereHas('salesOrder', fn ($q) => $q->whereIn('status', SalesOrderStatus::open())
-                ->when($salesOrderIds, fn ($w) => $w->whereIn('id', $salesOrderIds)))
-            ->selectRaw('product_variant_id, SUM(quantity - delivered_quantity) as qty, COUNT(DISTINCT sales_order_id) as so_count')
-            ->groupBy('product_variant_id')
-            ->get()
-            ->keyBy('product_variant_id');
+        $productRows = app(ProductionPlanner::class)->rows($salesOrderIds, true, $includeMarketplace);
 
         $salesOrderCount = SalesOrderItem::query()
             ->whereHas('salesOrder', fn ($q) => $q->whereIn('status', SalesOrderStatus::open())
                 ->when($salesOrderIds, fn ($w) => $w->whereIn('id', $salesOrderIds)))
             ->distinct()
             ->count('sales_order_id');
-
-        $planned = ProductionOrderItem::query()
-            ->whereHas('productionOrder', fn ($q) => $q->whereIn('status', [ProductionOrderStatus::Draft, ProductionOrderStatus::InProgress]))
-            ->selectRaw('product_variant_id, SUM(quantity - finished_quantity) as qty')
-            ->groupBy('product_variant_id')
-            ->pluck('qty', 'product_variant_id');
-
-        $variants = ProductVariant::with('product.activeBom.items')
-            ->whereIn('id', $demand->keys())
-            ->get();
-
-        $productRows = $variants->map(function (ProductVariant $variant) use ($demand, $planned) {
-            $ordered = max(0, (float) $demand[$variant->id]->qty);
-            $stock = max(0, (float) $variant->stock);
-            $inProduction = max(0, (float) ($planned[$variant->id] ?? 0));
-
-            return [
-                'variant' => $variant,
-                'product' => $variant->product,
-                'ordered' => $ordered,
-                'stock' => $stock,
-                'planned' => $inProduction,
-                'net' => max(0.0, round($ordered - $stock - $inProduction, 2)),
-            ];
-        })->filter(fn ($row) => $row['ordered'] > 0)
-            ->sortBy(fn ($row) => [$row['product']->name, $row['variant']->id])
-            ->values();
 
         // Kebutuhan bahan dari kebutuhan bersih barang jadi
         $gross = [];
@@ -162,6 +130,7 @@ class MrpService
             'materials' => $materialRows,
             'warnings' => $warnings,
             'sales_order_count' => $salesOrderCount,
+            'marketplace_order_count' => $includeMarketplace ? MarketplaceOrder::where('status', MarketplaceOrderStatus::ToShip)->count() : 0,
         ];
     }
 
