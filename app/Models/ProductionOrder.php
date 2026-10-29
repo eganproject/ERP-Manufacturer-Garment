@@ -21,6 +21,7 @@ class ProductionOrder extends Model
         'quantity' => 'decimal:2',
         'finished_quantity' => 'decimal:2',
         'reject_quantity' => 'decimal:2',
+        'defect_quantity' => 'decimal:2',
         'material_cost' => 'decimal:2',
         'conversion_cost' => 'decimal:2',
         'total_cost' => 'decimal:2',
@@ -59,6 +60,24 @@ class ProductionOrder extends Model
         return $this->hasMany(ProductionStage::class)->orderBy('sequence');
     }
 
+    public function materialTransfers()
+    {
+        return $this->hasMany(ProductionMaterialTransfer::class)->orderBy('date')->orderBy('id');
+    }
+
+    public function receipts()
+    {
+        return $this->hasMany(ProductionReceipt::class)->orderBy('date')->orderBy('id');
+    }
+
+    /** Pcs yang sudah disetor ke gudang (bagus + grade B). */
+    public function receivedQuantity(): float
+    {
+        $items = $this->relationLoaded('items') ? $this->items : $this->items()->get();
+
+        return round((float) $items->sum('finished_quantity') + (float) $items->sum('defect_quantity'), 2);
+    }
+
     public function costs()
     {
         return $this->hasMany(ProductionCost::class)->orderBy('date')->orderBy('id');
@@ -89,8 +108,8 @@ class ProductionOrder extends Model
         $conversion = (float) $this->costs->sum('amount');
         $total = $material + $conversion;
 
-        // HPP per pcs dibebankan ke barang jadi (reject ikut menanggung biaya)
-        $basis = $this->status === ProductionOrderStatus::Completed ? (float) $this->finished_quantity : $planned;
+        // HPP per pcs dibebankan ke barang jadi bagus + grade B (reject yang dibuang ikut menanggung biaya)
+        $basis = $this->status === ProductionOrderStatus::Completed ? (float) $this->finished_quantity + (float) $this->defect_quantity : $planned;
 
         return [
             'standard_material' => round($standardUnitMaterial * $planned, 2),

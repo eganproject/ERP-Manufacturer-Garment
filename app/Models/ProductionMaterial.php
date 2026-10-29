@@ -11,6 +11,7 @@ class ProductionMaterial extends Model
     protected $casts = [
         'required_quantity' => 'decimal:2',
         'issued_quantity' => 'decimal:2',
+        'returned_quantity' => 'decimal:2',
         'unit_cost' => 'decimal:4',
     ];
 
@@ -27,7 +28,7 @@ class ProductionMaterial extends Model
     /** Biaya bahan: aktual bila sudah dikeluarkan, estimasi harga pokok saat ini bila belum. */
     public function cost(): float
     {
-        if ((float) $this->issued_quantity > 0) {
+        if ((float) $this->issued_quantity > 0 || (float) $this->returned_quantity > 0) {
             return round((float) $this->issued_quantity * (float) $this->unit_cost, 2);
         }
 

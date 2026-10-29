@@ -9,6 +9,10 @@
     <x-slot:actions>
         <x-more-actions>
             <a href="{{ route('production-orders.pdf', $order) }}" target="_blank" class="menu-item">Cetak SPK</a>
+            @if ($inProgress)
+                <a href="{{ route('production-orders.materials', [$order, 'issue']) }}" class="menu-item">Bahan Tambahan</a>
+                <a href="{{ route('production-orders.materials', [$order, 'return']) }}" class="menu-item">Retur Sisa Bahan</a>
+            @endif
             @if ($order->isEditable() && auth()->user()->can('production.manage'))
                 <a href="{{ route('production-orders.edit', $order) }}" class="menu-item">Ubah SPK</a>
                 <div class="menu-divider"></div>
@@ -16,6 +20,9 @@
                 <x-delete-button :action="route('production-orders.destroy', $order)" label="Hapus SPK" class="menu-item-danger" />
             @endif
         </x-more-actions>
+        @if ($inProgress && $order->items->contains(fn ($i) => $i->remainingQuantity() > 0))
+            <a href="{{ route('production-orders.receipts.create', $order) }}" class="btn-secondary">Setor Hasil</a>
+        @endif
         @if ($order->isEditable() && auth()->user()->can('production.manage'))
             <x-action-form :action="route('production-orders.start', $order)" :confirm="$order->subcontractOrders->where('status', \App\Enums\SubcontractStatus::Open)->isNotEmpty() ? 'Bahan untuk internal dikeluarkan dari gudang. Bahan yang direncanakan ke vendor maklon dikirim lewat order maklon.' : 'Bahan baku akan dikeluarkan dari gudang sesuai kebutuhan BOM. Bila ada tahap yang dikerjakan vendor maklon dengan bahan dari gudang, buat order maklon dulu agar bahannya dikirim lewat order maklon.'" icon="question" button="Ya, mulai produksi" class="btn-primary">Mulai Produksi</x-action-form>
         @endif
@@ -25,9 +32,9 @@
     @if ($order->status === ProductionOrderStatus::Draft)
         <x-next-step>Periksa kebutuhan bahan di bawah. Bila ada tahap yang dikerjakan vendor luar, buat <strong>Order Maklon</strong> dulu. Lalu klik <strong>Mulai Produksi</strong>: bahan dikeluarkan dari gudang dan dibebankan ke SPK.</x-next-step>
     @elseif ($order->status === ProductionOrderStatus::InProgress)
-        <x-next-step>Catat <strong>hasil kerja borongan</strong> harian karyawan (untuk upah) dan klik <strong>Perbarui</strong> di tiap kartu tahapan saat tahap itu selesai (untuk progres SPK). Setelah semua tahap selesai (dan order maklon ditutup), isi jumlah jadi per ukuran lalu klik <strong>Selesaikan Produksi</strong> agar barang jadi masuk stok.</x-next-step>
+        <x-next-step>Catat <strong>hasil kerja borongan</strong> harian karyawan (untuk upah) dan klik <strong>Perbarui</strong> di tiap kartu tahapan saat tahap itu selesai (untuk progres SPK). Hasil yang sudah selesai packing bisa masuk gudang lebih dulu lewat <strong>Setor Hasil</strong>. Kain kurang / sisa bahan dicatat lewat menu <strong>Lainnya</strong>. Setelah semua tahap selesai (dan order maklon ditutup), isi sisa jumlah jadi per ukuran lalu klik <strong>Selesaikan Produksi</strong>.</x-next-step>
     @elseif ($order->status === ProductionOrderStatus::Completed)
-        <x-next-step tone="green" title="Produksi selesai">Hasil produksi sudah masuk stok barang jadi dengan HPP per pcs seperti di kartu Biaya Produksi.</x-next-step>
+        <x-next-step tone="green" title="Produksi selesai">Hasil produksi sudah masuk stok barang jadi dengan HPP per pcs seperti di kartu Biaya Produksi.@if ((float) $order->defect_quantity > 0) Barang grade B ada di stok <strong>Barang Cacat</strong> untuk diperbaiki, dijual murah, atau dimusnahkan.@endif</x-next-step>
     @endif
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -44,9 +51,10 @@
                     <div><dt class="text-gray-500">Mulai</dt><dd>{{ tanggal($order->start_date) }}</dd></div>
                     <div><dt class="text-gray-500">Target</dt><dd>{{ tanggal($order->due_date) }}</dd></div>
                 </div>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-4 gap-2">
                     <div><dt class="text-gray-500">Rencana</dt><dd class="font-semibold">{{ qty($order->quantity) }}</dd></div>
-                    <div><dt class="text-gray-500">Jadi</dt><dd class="font-semibold text-emerald-600">{{ qty($order->finished_quantity) }}</dd></div>
+                    <div><dt class="text-gray-500">Jadi</dt><dd class="font-semibold text-emerald-600">{{ qty($order->items->sum('finished_quantity')) }}</dd></div>
+                    <div><dt class="text-gray-500">Grade B</dt><dd class="font-semibold text-amber-600">{{ qty($order->items->sum('defect_quantity')) }}</dd></div>
                     <div><dt class="text-gray-500">Reject</dt><dd class="font-semibold text-red-600">{{ qty($order->reject_quantity) }}</dd></div>
                 </div>
                 @if ($order->notes)<div><dt class="text-gray-500">Catatan</dt><dd>{{ $order->notes }}</dd></div>@endif
@@ -54,55 +62,100 @@
         </x-card>
 
         @php
-            // Saran jumlah jadi: rencana per ukuran, dikurangi kekurangan output tahap terakhir mulai dari ukuran terbanyak
-            $suggestFinished = $order->items->mapWithKeys(fn ($i) => [$i->id => (float) $i->quantity])->all();
-            $lastOutput = (float) ($order->stages->sortBy('sequence')->last()?->output_quantity ?? 0);
-            $shortfall = $lastOutput > 0 ? array_sum($suggestFinished) - $lastOutput : 0;
+            // Saran setoran penutup: sisa per ukuran, dikurangi kekurangan output tahap terakhir mulai dari ukuran terbanyak
+            $suggestFinished = $order->items->mapWithKeys(fn ($i) => [$i->id => $i->remainingQuantity()])->all();
+            $lastStage = $order->stages->sortBy('sequence')->last();
+            $lastOutput = (float) ($lastStage?->output_quantity ?? 0);
+            $receivedGood = (float) $order->items->sum('finished_quantity');
+            $shortfall = $lastOutput > 0 ? array_sum($suggestFinished) - max(0, $lastOutput - $receivedGood) : 0;
             foreach ($order->items->sortByDesc('quantity') as $i) {
                 if ($shortfall <= 0) break;
                 $cut = min($shortfall, $suggestFinished[$i->id]);
                 $suggestFinished[$i->id] -= $cut;
                 $shortfall -= $cut;
             }
+            $canFinish = $inProgress && $allStagesDone;
+            $hasReceipts = $order->receipts->isNotEmpty();
         @endphp
-        <x-card title="Rincian per Ukuran" :padding="false" class="lg:col-span-2" tip="Jumlah rencana per varian. Saat menyelesaikan produksi, isi jumlah jadi per varian; barang jadi masuk stok dengan HPP aktual SPK.">
-            <form method="POST" action="{{ route('production-orders.complete', $order) }}" data-confirm="Barang jadi akan dimasukkan ke stok dan SPK ditutup." data-confirm-icon="question" data-confirm-button="Ya, selesaikan">
+        <x-card title="Rincian per Ukuran" :padding="false" class="lg:col-span-2" tip="Jumlah rencana per varian dan yang sudah disetor ke gudang. Saat menyelesaikan produksi, isi sisa jumlah jadi (bagus) dan grade B per ukuran; barang masuk stok dan HPP aktual SPK dihitung.">
+            <form method="POST" action="{{ route('production-orders.complete', $order) }}" data-confirm="Sisa hasil dimasukkan ke stok dan SPK ditutup. Biaya yang tercatat sesudahnya tidak bisa ditambahkan lagi." data-confirm-icon="question" data-confirm-button="Ya, selesaikan">
                 @csrf
+                <div class="overflow-x-auto">
                 <table class="table-base">
-                    <thead><tr><th>SKU</th><th>Ukuran / Warna</th><th class="text-right">Rencana</th><th class="w-40 text-right">Jadi</th></tr></thead>
+                    <thead><tr>
+                        <th>SKU</th><th>Ukuran / Warna</th><th class="text-right">Rencana</th>
+                        <th class="text-right">{{ $canFinish && $hasReceipts ? 'Sudah Disetor' : 'Jadi' }}</th>
+                        @if ($canFinish)
+                            <th class="w-32 text-right">{{ $hasReceipts ? 'Sisa Jadi' : 'Jadi' }}</th>
+                            <th class="w-32 text-right"><span class="inline-flex items-center gap-1">Grade B <x-tip title="Grade B" text="Reject yang masih punya nilai (bisa diperbaiki / dijual murah). Masuk stok Barang Cacat dengan HPP yang sama. Reject yang dibuang tidak perlu diisi; biayanya ditanggung barang bagus." /></span></th>
+                        @else
+                            <th class="text-right">Grade B</th>
+                        @endif
+                    </tr></thead>
                     <tbody class="divide-y divide-gray-100">
                         @foreach ($order->items as $item)
                             <tr>
                                 <td class="font-medium">{{ $item->variant->sku }}</td>
                                 <td>{{ $item->variant->size }}{{ $item->variant->color ? ' / '.$item->variant->color : '' }}</td>
                                 <td class="text-right">{{ qty($item->quantity) }}</td>
-                                <td class="text-right">
-                                    @if ($inProgress && $allStagesDone)
-                                        <input type="number" min="0" max="{{ (float) $item->quantity }}" step="1" name="finished[{{ $item->id }}]" value="{{ old('finished.'.$item->id, $suggestFinished[$item->id]) }}" class="form-control text-right">
-                                    @else
-                                        {{ qty($item->finished_quantity) }}
-                                    @endif
-                                </td>
+                                @if ($canFinish)
+                                    <td class="text-right">{{ $hasReceipts ? qty((float) $item->finished_quantity + (float) $item->defect_quantity) : '' }}</td>
+                                    <td class="text-right"><input type="number" min="0" max="{{ $item->remainingQuantity() }}" step="1" name="finished[{{ $item->id }}]" value="{{ old('finished.'.$item->id, $suggestFinished[$item->id]) }}" class="form-control text-right" aria-label="Jadi {{ $item->variant->sku }}"></td>
+                                    <td class="text-right"><input type="number" min="0" max="{{ $item->remainingQuantity() }}" step="1" name="defects[{{ $item->id }}]" value="{{ old('defects.'.$item->id, 0) }}" class="form-control text-right" aria-label="Grade B {{ $item->variant->sku }}"></td>
+                                @else
+                                    <td class="text-right">{{ qty($item->finished_quantity) }}</td>
+                                    <td class="text-right">{{ qty($item->defect_quantity) }}</td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
-                @if ($inProgress && $allStagesDone && $order->subcontractOrders->contains(fn ($s) => $s->isOpen()))
+                </div>
+                @if ($canFinish && $order->subcontractOrders->contains(fn ($s) => $s->isOpen()))
                     <p class="border-t border-gray-200 p-4 text-sm text-amber-700">Tutup order maklon yang masih berjalan (retur sisa bahan & rekonsiliasi) sebelum menyelesaikan produksi.</p>
-                @elseif ($inProgress && $allStagesDone)
-                    @php $lastStage = $order->stages->sortBy('sequence')->last(); @endphp
+                @elseif ($canFinish)
                     <div class="flex flex-wrap items-end justify-end gap-3 border-t border-gray-200 p-4">
-                        @if ($lastStage && (float) $lastStage->output_quantity > 0)
-                            <p class="mr-auto self-center text-sm text-gray-600">Output tahap {{ $lastStage->stage->label() }}: <span class="font-semibold">{{ qty($lastStage->output_quantity) }} pcs</span>. Total jadi per ukuran tidak boleh melebihi angka ini.</p>
+                        @if ($lastStage && $lastOutput > 0)
+                            <p class="mr-auto self-center text-sm text-gray-600">Output tahap {{ $lastStage->stage->label() }}: <span class="font-semibold">{{ qty($lastOutput) }} pcs</span>. Total jadi bagus (termasuk yang sudah disetor) tidak boleh melebihi angka ini.</p>
                         @endif
-                        <div class="w-40"><x-form.input name="reject_quantity" type="number" min="0" step="1" label="Total Reject" tip="Total pcs gagal dari seluruh tahap. Dicatat di SPK untuk laporan produksi; biayanya ikut menjadi HPP barang jadi yang bagus." :value="$order->stages->sum('reject_quantity')" /></div>
+                        <div class="w-40"><x-form.input name="reject_quantity" type="number" min="0" step="1" label="Total Reject" tip="Total pcs gagal dari seluruh tahap, termasuk grade B. Dicatat di SPK untuk laporan produksi. Biaya reject yang dibuang ikut menjadi HPP barang yang bagus." :value="$order->stages->sum('reject_quantity')" /></div>
                         <button type="submit" class="btn-success">Selesaikan Produksi</button>
                     </div>
                 @elseif ($inProgress)
-                    <p class="border-t border-gray-200 p-4 text-sm text-gray-500">Selesaikan semua tahapan untuk memasukkan hasil produksi ke stok.</p>
+                    <p class="border-t border-gray-200 p-4 text-sm text-gray-500">Selesaikan semua tahapan untuk menutup SPK. Hasil yang sudah jadi bisa masuk gudang lebih dulu lewat <strong>Setor Hasil</strong>.</p>
                 @endif
             </form>
         </x-card>
+
+        @if ($order->receipts->isNotEmpty() || $order->materialTransfers->isNotEmpty())
+            <x-card title="Setoran Hasil & Perpindahan Bahan" :padding="false" class="lg:col-span-3" tip="Dokumen yang menggerakkan stok selama SPK berjalan: setor hasil ke gudang (HPJ), bahan tambahan (BBT), dan retur sisa bahan (RSB).">
+                <div class="overflow-x-auto">
+                    <table class="table-base">
+                        <thead><tr><th>Dokumen</th><th>Tanggal</th><th>Jenis</th><th>Rincian</th>@can('costing.view')<th class="text-right">Nilai</th>@endcan<th class="w-16"></th></tr></thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach ($order->receipts->map(fn ($r) => ['doc' => $r, 'date' => $r->date, 'kind' => 'receipt'])->concat($order->materialTransfers->map(fn ($t) => ['doc' => $t, 'date' => $t->date, 'kind' => 'transfer']))->sortBy(fn ($row) => [$row['date']->timestamp, $row['doc']->id]) as $row)
+                                @php $doc = $row['doc']; @endphp
+                                <tr>
+                                    <td class="font-medium whitespace-nowrap">{{ $doc->number }}</td>
+                                    <td class="whitespace-nowrap">{{ tanggal($doc->date) }}</td>
+                                    @if ($row['kind'] === 'receipt')
+                                        <td><x-badge color="green">{{ $doc->is_final ? 'Setoran Penutup' : 'Setor Hasil' }}</x-badge></td>
+                                        <td>{{ qty($doc->quantity) }} pcs bagus{{ (float) $doc->defect_quantity > 0 ? ' + '.qty($doc->defect_quantity).' pcs grade B' : '' }}@can('costing.view')<span class="text-xs text-gray-500"> · {{ rupiah($doc->unit_cost) }}/pcs</span>@endcan</td>
+                                        @can('costing.view')<td class="text-right whitespace-nowrap">{{ rupiah($doc->total_cost) }}</td>@endcan
+                                        <td class="text-right"><a href="{{ route('production-receipts.pdf', $doc) }}" target="_blank" class="text-xs text-indigo-600 hover:underline">Cetak</a></td>
+                                    @else
+                                        <td><x-badge :color="$doc->type->color()">{{ $doc->type->label() }}</x-badge></td>
+                                        <td>{{ $doc->items->count() }} bahan{{ $doc->notes ? ' · '.$doc->notes : '' }}</td>
+                                        @can('costing.view')<td class="text-right whitespace-nowrap">{{ $doc->type === \App\Enums\ProductionMaterialTransferType::Return ? '−' : '' }}{{ rupiah($doc->totalValue()) }}</td>@endcan
+                                        <td class="text-right"><a href="{{ route('production-material-transfers.pdf', $doc) }}" target="_blank" class="text-xs text-indigo-600 hover:underline">Cetak</a></td>
+                                    @endif
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </x-card>
+        @endif
 
         @php $canSubcontract = in_array($order->status, [ProductionOrderStatus::Draft, ProductionOrderStatus::InProgress], true) && auth()->user()->can('subcontract.manage'); @endphp
         @if ($order->subcontractOrders->isNotEmpty() || $canSubcontract)
@@ -247,13 +300,14 @@
 
         <x-card title="Kebutuhan & Pemakaian Bahan" :padding="false" class="lg:col-span-3">
             <table class="table-base">
-                <thead><tr><th>Bahan</th><th class="text-right">Kebutuhan</th><th class="text-right">Dikeluarkan</th><th class="text-right">Stok Gudang</th></tr></thead>
+                <thead><tr><th>Bahan</th><th class="text-right">Kebutuhan</th><th class="text-right">Dikeluarkan</th><th class="text-right">Diretur</th><th class="text-right">Stok Gudang</th></tr></thead>
                 <tbody class="divide-y divide-gray-100">
                     @foreach ($order->materials as $line)
                         <tr>
                             <td>{{ $line->material->display_name }}</td>
                             <td class="text-right">{{ qty($line->required_quantity) }} {{ $line->material->unit->code }}</td>
                             <td class="text-right">{{ qty($line->issued_quantity) }}</td>
+                            <td class="text-right">{{ qty($line->returned_quantity) }}</td>
                             <td @class(['text-right', 'text-red-600 font-semibold' => $order->isEditable() && $line->material->stock < $line->required_quantity])>{{ qty($line->material->stock) }}</td>
                         </tr>
                     @endforeach
@@ -337,7 +391,7 @@
             </x-card>
         @endcan
 
-        <x-journal-entries :sources="$order" class="lg:col-span-3" />
+        <x-journal-entries :sources="collect([$order])->concat($order->receipts)->concat($order->materialTransfers)->all()" class="lg:col-span-3" />
         <x-activity-log :activities="$order->activities" class="lg:col-span-3" />
     </div>
 </x-layouts.app>

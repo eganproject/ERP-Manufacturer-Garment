@@ -103,7 +103,11 @@ Hanya untuk dua platform: **TikTok Shop** dan **Shopee**.
    - **Retur Sisa Bahan** bila ada, lalu **Produksi** → **Tutup Order** (rekonsiliasi pemakaian bahan).
 5. Upah borongan: **Upah Borongan → Hasil Kerja Harian** (atau *+ Input Hasil Kerja* dari SPK). Isi karyawan, operasi (atau *pcs jadi komplit*), qty bagus & reject. Upah = bagus × tarif dan langsung dibebankan ke HPP SPK.
 6. Perbarui **Tahapan Produksi** di SPK (Cutting → Sewing → Finishing → QC → Packing) dengan output & reject.
-7. Setelah semua tahap selesai dan order maklon ditutup: isi jumlah jadi per ukuran → **Selesaikan Produksi**. Total jadi tidak boleh melebihi output tahap Packing (formulir sudah menyarankan angkanya). Barang jadi masuk stok dengan HPP aktual.
+7. **Bahan kurang / sisa bahan** (menu **Lainnya** di SPK yang berjalan):
+   - **Bahan Tambahan** (BBT-): kain kurang, salah potong, atau bahan di luar BOM. Stok gudang berkurang dan nilainya menambah HPP SPK.
+   - **Retur Sisa Bahan** (RSB-): sisa bahan yang masih layak kembali ke gudang dan mengurangi HPP SPK. Maksimal sebesar bahan yang dipegang produksi internal (sisa di vendor maklon diretur lewat order maklon).
+8. **Setor Hasil** (HPJ-) bertahap: hasil yang sudah selesai packing bisa langsung masuk gudang tanpa menunggu SPK selesai, mis. untuk mengejar batas kirim PO marketplace. Isi pcs **bagus** (stok jual) dan **grade B** (reject yang masih bisa diperbaiki / dijual murah → stok **Barang Cacat**). Nilainya memakai **HPP sementara** = perkiraan biaya penuh SPK (bahan + tarif borongan + tarif maklon + biaya lain) ÷ rencana pcs.
+9. Setelah semua tahap selesai dan order maklon ditutup: isi **sisa** jumlah jadi & grade B per ukuran → **Selesaikan Produksi**. Total jadi bagus tidak boleh melebihi output tahap Packing (formulir sudah menyarankan angkanya). Setoran penutup menyerap selisih biaya aktual, sehingga total nilai semua setoran = HPP aktual SPK; sisa pembulatan masuk Selisih Biaya Produksi.
 
 ## 4. Penggajian borongan — Produksi & Keuangan
 

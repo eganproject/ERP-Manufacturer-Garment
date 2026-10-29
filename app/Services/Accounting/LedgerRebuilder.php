@@ -28,7 +28,9 @@ use App\Models\MarketplaceSettlement;
 use App\Models\Payment;
 use App\Models\Payroll;
 use App\Models\ProductionCost;
+use App\Models\ProductionMaterialTransfer;
 use App\Models\ProductionOrder;
+use App\Models\ProductionReceipt;
 use App\Models\PurchaseReturn;
 use App\Models\SalesReturn;
 use App\Models\StockMovement;
@@ -85,6 +87,12 @@ class LedgerRebuilder
 
                 $active = [ProductionOrderStatus::InProgress, ProductionOrderStatus::Completed];
                 ProductionOrder::whereIn('status', $active)->orderBy('id')->each(fn ($spk) => $this->auto->productionIssue($spk));
+                ProductionMaterialTransfer::whereHas('productionOrder', fn ($q) => $q->whereIn('status', $active))
+                    ->orderBy('date')->orderBy('id')
+                    ->each(fn ($t) => $this->auto->productionMaterialTransfer($t));
+                ProductionReceipt::whereHas('productionOrder', fn ($q) => $q->whereIn('status', $active))
+                    ->orderBy('date')->orderBy('id')
+                    ->each(fn ($r) => $this->auto->productionReceipt($r));
                 ProductionCost::with('productionOrder', 'subcontractReceipt.subcontractOrder.supplier')
                     ->whereHas('productionOrder', fn ($q) => $q->whereIn('status', $active))
                     ->orderBy('date')->orderBy('id')

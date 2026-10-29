@@ -148,11 +148,18 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('start', 'start')->name('start');
         Route::put('stages/{stage}', 'updateStage')->name('stages.update');
         Route::post('complete', 'complete')->name('complete');
+        Route::get('materials/{type}', 'materialForm')->name('materials')->whereIn('type', ['issue', 'return']);
+        Route::post('materials/{type}', 'storeMaterials')->name('materials.store')->whereIn('type', ['issue', 'return']);
+        Route::get('receipts/create', 'receiptForm')->name('receipts.create');
+        Route::post('receipts', 'storeReceipt')->name('receipts.store');
         Route::post('cancel', 'cancel')->name('cancel');
         Route::get('pdf', 'pdf')->name('pdf');
         Route::post('costs', 'storeCost')->name('costs.store');
         Route::delete('costs/{cost}', 'destroyCost')->name('costs.destroy');
     });
+
+    Route::get('production-material-transfers/{transfer}/pdf', [ProductionOrderController::class, 'materialTransferPdf'])->name('production-material-transfers.pdf');
+    Route::get('production-receipts/{receipt}/pdf', [ProductionOrderController::class, 'receiptPdf'])->name('production-receipts.pdf');
 
     // Produksi maklon (subkontrak ke vendor luar)
     Route::resource('subcontract-orders', SubcontractOrderController::class)->only(['index', 'create', 'store', 'show']);

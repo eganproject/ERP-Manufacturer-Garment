@@ -261,7 +261,9 @@ class FlowDemoSeeder extends Seeder
         $this->on(11);
         $this->stage($production, $spkA, 'qc', 296, 2);
         $this->stage($production, $spkA, 'packing', 296);
-        $production->complete($spkA->fresh(), $this->finished($spkA, 296), 4);
+        $production->returnMaterials($spkA->fresh(), [$material('KN-CMB30-HTM')->id => 2], ['date' => $this->d(11), 'notes' => 'Sisa kain setelah potong']);
+        $largest = $spkA->items()->orderByDesc('quantity')->first();
+        $production->complete($spkA->fresh(), $this->finished($spkA, 296), 4, [$largest->id => 2]); // 2 dari 4 reject masih layak jual murah (grade B)
 
         // Hari 12: hasil maklon diterima, kaos dikirim & difakturkan
         $this->on(12);
