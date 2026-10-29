@@ -99,7 +99,11 @@ class ProductionOrder extends Model
         $this->loadMissing(['bom.items.material', 'materials.material', 'costs']);
 
         $planned = (float) $this->quantity;
-        $standardUnitMaterial = $this->bom->standardMaterialCost();
+        $this->loadMissing('items.variant');
+        // Bahan standar per pcs = rata-rata tertimbang varian SPK (BOM bisa beda per ukuran / warna)
+        $standardUnitMaterial = $planned > 0 && $this->items->isNotEmpty()
+            ? $this->items->sum(fn (ProductionOrderItem $i) => (float) $i->quantity * $this->bom->standardMaterialCost($i->variant)) / $planned
+            : $this->bom->standardMaterialCost();
         $standardUnitConversion = (float) $this->bom->labor_cost + (float) $this->bom->overhead_cost;
 
         $material = $this->status === ProductionOrderStatus::Completed

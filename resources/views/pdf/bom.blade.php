@@ -41,7 +41,7 @@
                 <tr>
                     <td class="c">{{ $i + 1 }}</td>
                     <td>{{ $item->material->code }}</td>
-                    <td>{{ $item->material->display_name }}@if ($item->notes)<br><span style="color:#71717a">{{ $item->notes }}</span>@endif</td>
+                    <td>{{ $item->material->display_name }}@if ($item->scopeLabel())<br><span class="bold">Khusus {{ $item->scopeLabel() }}</span>@endif @if ($item->notes)<br><span style="color:#71717a">{{ $item->notes }}</span>@endif</td>
                     <td class="r">{{ qty($item->quantity, 4) }} {{ $item->material->unit->code }}</td>
                     <td class="r">{{ qty($item->waste_percent) }}%</td>
                     <td class="r bold">{{ qty($need, 2) }} {{ $item->material->unit->code }}</td>

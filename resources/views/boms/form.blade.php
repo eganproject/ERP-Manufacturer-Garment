@@ -1,13 +1,19 @@
 @php
     $initialItems = old('items', $bom->items->map(fn ($i) => [
         'material_id' => $i->material_id, 'quantity' => (float) $i->quantity, 'waste_percent' => (float) $i->waste_percent, 'notes' => $i->notes,
+        'sizes' => implode(', ', $i->sizes ?? []), 'colors' => implode(', ', $i->colors ?? []),
     ])->all());
+    $variantOptions = $products->mapWithKeys(fn ($p) => [$p->id => [
+        'sizes' => $p->variants->pluck('size')->filter()->unique()->values(),
+        'colors' => $p->variants->pluck('color')->filter()->unique()->values(),
+    ]]);
 @endphp
 
 <x-layouts.app :title="$bom->exists ? 'Ubah BOM' : 'Buat BOM'">
-    <x-guide title="Apa itu BOM?" :steps="['BOM (Bill of Materials) adalah **resep produksi**: bahan apa saja dan berapa banyak untuk membuat **1 pcs** produk.', 'SPK memakai BOM aktif untuk menghitung bahan yang dikeluarkan dari gudang saat **Mulai Produksi**.', 'MRP memakai BOM untuk menghitung kekurangan bahan dari Sales Order yang masih terbuka.', 'Upah & overhead per pcs ikut dibebankan ke HPP SPK, sehingga harga pokok produk bisa dihitung.']"></x-guide>
+    <x-guide title="Apa itu BOM?" :steps="['BOM (Bill of Materials) adalah **resep produksi**: bahan apa saja dan berapa banyak untuk membuat **1 pcs** produk.', 'SPK memakai BOM aktif untuk menghitung bahan yang dikeluarkan dari gudang saat **Mulai Produksi**.', 'MRP memakai BOM untuk menghitung kekurangan bahan dari Sales Order yang masih terbuka.', 'Upah & overhead per pcs ikut dibebankan ke HPP SPK, sehingga harga pokok produk bisa dihitung.', 'Bahan yang **beda per warna / ukuran** (kain hitam vs putih, XL lebih boros): isi kolom **Ukuran** / **Warna** di baris bahan. Kosong = dipakai semua varian.']"></x-guide>
     <form method="POST" action="{{ $bom->exists ? route('boms.update', $bom) : route('boms.store') }}"
-          x-data="lineItems(@js(array_values($initialItems)), { material_id: '', quantity: '', waste_percent: 0, notes: '' })" class="space-y-6">
+          x-data="{ ...lineItems(@js(array_values($initialItems)), { material_id: '', quantity: '', waste_percent: 0, notes: '', sizes: '', colors: '' }), productId: @js((string) old('product_id', $bom->product_id)), variantOptions: @js($variantOptions), get sizeHint() { return (this.variantOptions[this.productId]?.sizes || []).join(', ') }, get colorHint() { return (this.variantOptions[this.productId]?.colors || []).join(', ') } }"
+          @change="if ($event.target.name === 'product_id') productId = $event.target.value" class="space-y-6">
         @csrf
         @if ($bom->exists) @method('PUT') @endif
 
@@ -27,7 +33,7 @@ Tidak dipakai bila tahap jahit dimaklonkan atau artikel memakai tarif upah boron
             <x-slot:header><button type="button" class="btn-secondary btn-sm" @click="add()">+ Bahan</button></x-slot:header>
             <div class="overflow-x-auto">
                 <table class="table-base">
-                    <thead><tr><th class="min-w-72">Bahan</th><th class="w-40">Qty / pcs <x-tip title="Qty per pcs" text="Jumlah bahan untuk 1 pcs dalam satuan bahan, mis. 1,6 (meter kain) atau 7 (kancing)." /></th><th class="w-32">Waste % <x-tip title="Waste (susut)" text="Cadangan bahan yang terbuang saat potong/jahit. Mis. 5 berarti kebutuhan dinaikkan 5%: 1,6 m → 1,68 m per pcs." /></th><th>Keterangan</th><th class="w-12"></th></tr></thead>
+                    <thead><tr><th class="min-w-72">Bahan</th><th class="w-40">Qty / pcs <x-tip title="Qty per pcs" text="Jumlah bahan untuk 1 pcs dalam satuan bahan, mis. 1,6 (meter kain) atau 7 (kancing)." /></th><th class="w-32">Waste % <x-tip title="Waste (susut)" text="Cadangan bahan yang terbuang saat potong/jahit. Mis. 5 berarti kebutuhan dinaikkan 5%: 1,6 m → 1,68 m per pcs." /></th><th class="w-36">Ukuran <x-tip title="Khusus ukuran" text="Kosongkan bila bahan dipakai semua ukuran. Isi mis. XL, XXL bila baris ini hanya untuk ukuran tersebut (buat baris lain untuk ukuran lainnya). SPK & MRP menghitung bahan sesuai ukuran yang diproduksi." /></th><th class="w-36">Warna <x-tip title="Khusus warna" text="Kosongkan bila bahan dipakai semua warna. Isi mis. Hitam bila bahan ini (kain hitam, benang hitam) hanya untuk varian warna Hitam." /></th><th>Keterangan</th><th class="w-12"></th></tr></thead>
                     <tbody class="divide-y divide-gray-100">
                         <template x-for="(row, index) in rows" :key="row.key">
                             <tr>
@@ -43,14 +49,19 @@ Tidak dipakai bila tahap jahit dimaklonkan atau artikel memakai tarif upah boron
                                 </td>
                                 <td><input type="number" step="0.0001" min="0" :name="`items[${index}][quantity]`" x-model="row.quantity" class="form-control" required></td>
                                 <td><input type="number" step="0.01" min="0" max="100" :name="`items[${index}][waste_percent]`" x-model="row.waste_percent" class="form-control"></td>
+                                <td><input type="text" :name="`items[${index}][sizes]`" x-model="row.sizes" class="form-control" placeholder="Semua" :title="sizeHint ? 'Pilihan: ' + sizeHint : ''" list="bom-sizes"></td>
+                                <td><input type="text" :name="`items[${index}][colors]`" x-model="row.colors" class="form-control" placeholder="Semua" :title="colorHint ? 'Pilihan: ' + colorHint : ''" list="bom-colors"></td>
                                 <td><input type="text" :name="`items[${index}][notes]`" x-model="row.notes" class="form-control" placeholder="mis. badan + lengan"></td>
                                 <td class="text-right"><button type="button" class="text-xl text-red-500 hover:text-red-700" @click="remove(index)">&times;</button></td>
                             </tr>
                         </template>
-                        <tr x-show="rows.length === 0"><td colspan="5" class="py-8 text-center text-gray-500">Belum ada bahan.</td></tr>
+                         <tr x-show="rows.length === 0"><td colspan="7" class="py-8 text-center text-gray-500">Belum ada bahan.</td></tr>
                     </tbody>
                 </table>
             </div>
+            <p class="border-t border-gray-200 px-4 py-2 text-xs text-gray-500" x-show="sizeHint || colorHint">Varian produk ini: ukuran <span x-text="sizeHint || '-'"></span> · warna <span x-text="colorHint || '-'"></span>. Pisahkan beberapa ukuran/warna dengan koma.</p>
+            <datalist id="bom-sizes"><template x-for="s in (variantOptions[productId]?.sizes || [])"><option :value="s"></option></template></datalist>
+            <datalist id="bom-colors"><template x-for="c in (variantOptions[productId]?.colors || [])"><option :value="c"></option></template></datalist>
         </x-card>
 
         <div class="flex justify-end gap-2">

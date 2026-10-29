@@ -62,7 +62,7 @@ class ProductionService
 
         $order->materials()->delete();
 
-        foreach ($bom->requirementsFor($total) as $materialId => $required) {
+        foreach ($bom->requirementsForVariants($variantQuantities) as $materialId => $required) {
             $order->materials()->create(['material_id' => $materialId, 'required_quantity' => $required]);
         }
 

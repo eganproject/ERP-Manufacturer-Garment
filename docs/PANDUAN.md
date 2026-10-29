@@ -93,6 +93,7 @@ Hanya untuk dua platform: **TikTok Shop** dan **Shopee**.
 
 ## 3. Produksi — Produksi (PPIC)
 
+0. **BOM (resep 1 pcs)**: bahan yang beda per warna/ukuran cukup diisi kolom **Ukuran** / **Warna** di baris bahan (mis. *Kain hitam* → warna Hitam; *Kain hitam 0,25 kg* → ukuran XL, XXL dan baris lain 0,22 kg untuk S, M, L). Kosong = dipakai semua varian. SPK & MRP menghitung bahan sesuai jumlah per varian, halaman BOM menampilkan HPP standar per varian.
 1. Dari halaman SO klik **Buat SPK**: produk & qty per ukuran terisi otomatis dari sisa SO yang belum dibuatkan SPK. Bisa juga SPK untuk stok tanpa SO.
 2. **Tahap yang dikerjakan vendor luar (maklon)**: sebelum mulai produksi, klik **+ Order Maklon** di SPK (atau menu **Maklon → + Buat Order Maklon**, lalu pilih SPK-nya), pilih vendor, tahap (mis. Sewing + Finishing), qty, tarif per pcs, dan bahan yang akan dikirim.
 3. Klik **Mulai Produksi**: bahan untuk pekerjaan internal keluar dari gudang; bahan untuk vendor tetap di gudang sampai dikirim lewat order maklon.

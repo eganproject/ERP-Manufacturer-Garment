@@ -8,7 +8,9 @@ use App\Models\Product;
 use App\Support\DocumentPdf;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class BomController extends Controller
 {
@@ -50,7 +52,7 @@ class BomController extends Controller
 
     public function show(Bom $bom)
     {
-        $bom->load(['product.unit', 'items.material.unit']);
+        $bom->load(['product.unit', 'product.variants', 'items.material.unit']);
 
         return view('boms.show', compact('bom'));
     }
@@ -107,9 +109,35 @@ class BomController extends Controller
     {
         return [
             'bom' => $bom,
-            'products' => Product::where('is_active', true)->orderBy('name')->get(),
+            'products' => Product::with('variants')->where('is_active', true)->orderBy('name')->get(),
             'materials' => Material::with('unit')->where('is_active', true)->orderBy('name')->get(),
         ];
+    }
+
+    /**
+     * Ubah isian "XL, XXL" jadi daftar ukuran/warna sesuai penulisan di varian produk (null = semua).
+     *
+     * @param  Collection<int, string|null>  $available
+     * @return list<string>|null
+     */
+    private function variantFilter(?string $input, $available, string $field, string $label): ?array
+    {
+        $values = collect(preg_split('/[,;]+/', (string) $input))->map(fn ($v) => trim($v))->filter()->unique(fn ($v) => mb_strtolower($v));
+
+        if ($values->isEmpty()) {
+            return null;
+        }
+
+        $known = $available->filter()->unique()->mapWithKeys(fn ($v) => [mb_strtolower(trim($v)) => trim($v)]);
+        $unknown = $values->reject(fn ($v) => $known->has(mb_strtolower($v)));
+
+        if ($unknown->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                $field => "{$label} {$unknown->implode(', ')} tidak ada di varian produk ini".($known->isNotEmpty() ? ' (pilihan: '.$known->implode(', ').').' : '.'),
+            ]);
+        }
+
+        return $values->map(fn ($v) => $known[mb_strtolower($v)])->values()->all();
     }
 
     private function validated(Request $request): array
@@ -125,16 +153,25 @@ class BomController extends Controller
             'items.*.quantity' => ['required', 'numeric', 'gt:0'],
             'items.*.waste_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'items.*.notes' => ['nullable', 'string', 'max:255'],
+            'items.*.sizes' => ['nullable', 'string', 'max:255'],
+            'items.*.colors' => ['nullable', 'string', 'max:255'],
         ], [
             'items.required' => 'Tambahkan minimal satu bahan.',
         ]);
 
-        $items = array_map(fn ($row) => [
-            'material_id' => $row['material_id'],
-            'quantity' => $row['quantity'],
-            'waste_percent' => $row['waste_percent'] ?? 0,
-            'notes' => $row['notes'] ?? null,
-        ], array_values($data['items']));
+        $variants = Product::with('variants')->find($data['product_id'])->variants;
+        $items = [];
+
+        foreach (array_values($data['items']) as $index => $row) {
+            $items[] = [
+                'material_id' => $row['material_id'],
+                'quantity' => $row['quantity'],
+                'waste_percent' => $row['waste_percent'] ?? 0,
+                'notes' => $row['notes'] ?? null,
+                'sizes' => $this->variantFilter($row['sizes'] ?? null, $variants->pluck('size'), "items.{$index}.sizes", 'Ukuran'),
+                'colors' => $this->variantFilter($row['colors'] ?? null, $variants->pluck('color'), "items.{$index}.colors", 'Warna'),
+            ];
+        }
 
         unset($data['items']);
 
