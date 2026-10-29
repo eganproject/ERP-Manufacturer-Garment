@@ -22,7 +22,8 @@
             </dl>
         </x-card>
 
-        <x-card title="Kebutuhan bahan per 1 pcs" :padding="false" class="lg:col-span-2" x-data="{ qty: 100 }">
+
+        <x-card title="Kebutuhan bahan per 1 pcs" :padding="false" class="lg:col-span-2" x-data="{ qty: 100 }" :tip="$bom->isPerVariant() ? 'Simulasi menghitung semua baris seolah dipakai semua pcs. Bahan khusus ukuran/warna di SPK & MRP dihitung sesuai jumlah per varian.' : null">
             <x-slot:header>
                 <label class="flex items-center gap-2 text-sm text-gray-600">Simulasi untuk
                     <input type="number" min="1" x-model.number="qty" class="form-control w-24 py-1"> pcs
@@ -35,7 +36,7 @@
                     @foreach ($bom->items as $item)
                         @php $factor = (float) $item->quantity * (1 + (float) $item->waste_percent / 100); @endphp
                         <tr>
-                            <td>{{ $item->material->display_name }}@if ($item->notes)<div class="text-xs text-gray-500">{{ $item->notes }}</div>@endif</td>
+                            <td>{{ $item->material->display_name }}@if ($item->scopeLabel())<div><x-badge color="indigo">{{ $item->scopeLabel() }}</x-badge></div>@endif @if ($item->notes)<div class="text-xs text-gray-500">{{ $item->notes }}</div>@endif</td>
                             <td class="text-right">{{ qty($item->quantity, 4) }} {{ $item->material->unit->code }}</td>
                             <td class="text-right">{{ qty($item->waste_percent) }}%</td>
                             <td class="text-right font-medium" x-text="ERP.formatNumber({{ $factor }} * qty, 2) + ' {{ $item->material->unit->code }}'"></td>
@@ -63,5 +64,25 @@
                 </tfoot>
             </table>
         </x-card>
+
+        @if ($bom->isPerVariant())
+            <x-card title="HPP standar per varian" :padding="false" class="lg:col-span-3" tip="BOM ini punya bahan khusus ukuran / warna, jadi biaya bahan per pcs berbeda tiap varian. HPP standar di atas adalah rata-rata semua varian.">
+                <div class="overflow-x-auto">
+                    <table class="table-base">
+                        <thead><tr><th>SKU</th><th>Ukuran / Warna</th><th class="text-right">Bahan / pcs</th><th class="text-right">HPP standar / pcs</th></tr></thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach ($bom->product->variants as $variant)
+                                <tr>
+                                    <td class="font-medium">{{ $variant->sku }}</td>
+                                    <td>{{ $variant->size }}{{ $variant->color ? ' / '.$variant->color : '' }}</td>
+                                    <td class="text-right">{{ rupiah($bom->standardMaterialCost($variant)) }}</td>
+                                    <td class="text-right font-medium">{{ rupiah($bom->standardUnitCost($variant)) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </x-card>
+        @endif
     </div>
 </x-layouts.app>

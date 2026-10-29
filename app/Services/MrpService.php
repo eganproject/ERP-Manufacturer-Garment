@@ -51,7 +51,6 @@ class MrpService
         foreach ($productRows->where('net', '>', 0)->groupBy(fn ($row) => $row['product']->id) as $rows) {
             /** @var Product $product */
             $product = $rows->first()['product'];
-            $netQty = $rows->sum('net');
 
             if (! $product->activeBom) {
                 $warnings[] = "Produk {$product->code} - {$product->name} belum memiliki BOM aktif, kebutuhan bahannya tidak dihitung.";
@@ -59,7 +58,9 @@ class MrpService
                 continue;
             }
 
-            foreach ($product->activeBom->requirementsFor($netQty) as $materialId => $qty) {
+            $variantNet = $rows->mapWithKeys(fn ($row) => [$row['variant']->id => (float) $row['net']])->filter()->all();
+
+            foreach ($product->activeBom->requirementsForVariants($variantNet) as $materialId => $qty) {
                 $gross[$materialId] = ($gross[$materialId] ?? 0) + $qty;
                 $sources[$materialId]['so'] = ($sources[$materialId]['so'] ?? 0) + $qty;
             }

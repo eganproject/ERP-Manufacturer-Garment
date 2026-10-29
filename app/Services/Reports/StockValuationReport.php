@@ -95,7 +95,7 @@ class StockValuationReport
             ->map(function (ProductVariant $v) {
                 [$unitCost, $basis] = match (true) {
                     (float) $v->average_cost > 0 => [(float) $v->average_cost, 'average'],
-                    $v->product->activeBom !== null => [$v->product->activeBom->standardUnitCost(), 'standard'],
+                    $v->product->activeBom !== null => [$v->product->activeBom->standardUnitCost($v), 'standard'],
                     default => [0.0, 'none'],
                 };
 
