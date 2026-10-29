@@ -22,6 +22,19 @@
             </div>
         </x-card>
 
+        @php $route = collect(old('stage_route', array_map(fn ($st) => $st->value, $product->stages()))); @endphp
+        <x-card title="Tahapan Produksi" tip="Tahap yang dilalui artikel ini di SPK, berurutan dari kiri ke kanan. Centang Sablon, Bordir atau Cuci bila artikel ini memakainya; SPK baru akan punya kartu tahap tersebut (bisa dimaklonkan ke vendor).">
+            <div class="flex flex-wrap gap-x-6 gap-y-3">
+                @foreach (\App\Enums\ProductionStage::cases() as $i => $stage)
+                    <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-gray-700 select-none">
+                        <input type="checkbox" name="stage_route[]" value="{{ $stage->value }}" @checked($route->contains($stage->value))>
+                        <span><span class="text-xs text-gray-400">{{ $i + 1 }}.</span> {{ $stage->label() }}@if ($stage->isOptional())<span class="text-xs text-gray-400"> (opsional)</span>@endif</span>
+                    </label>
+                @endforeach
+            </div>
+            @error('stage_route')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+        </x-card>
+
         <x-card title="Varian (Ukuran / Warna)" :padding="false" tip="Stok, penjualan dan produksi dicatat per varian (kombinasi ukuran & warna). Setiap varian punya SKU sendiri.
 Ketik warna lalu klik Buat semua ukuran untuk membuat varian S s.d. XXL sekaligus.">
             <x-slot:header>
