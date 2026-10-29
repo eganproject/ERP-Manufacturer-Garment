@@ -66,8 +66,15 @@ class ProductionService
             $order->materials()->create(['material_id' => $materialId, 'required_quantity' => $required]);
         }
 
-        if ($order->stages()->doesntExist()) {
-            foreach (ProductionStage::cases() as $i => $stage) {
+        // Tahap mengikuti alur artikel; SPK draft yang belum punya tahap maklon disusun ulang bila artikel/alur berubah
+        $route = $order->product()->first()->stages();
+        $current = $order->stages()->get();
+        $same = $current->pluck('stage')->map(fn ($s) => $s->value)->all() === array_map(fn ($s) => $s->value, $route);
+
+        if (! $same && $current->whereNotNull('subcontract_order_id')->isEmpty()) {
+            $order->stages()->delete();
+
+            foreach ($route as $i => $stage) {
                 $order->stages()->create(['stage' => $stage, 'sequence' => $i + 1]);
             }
         }

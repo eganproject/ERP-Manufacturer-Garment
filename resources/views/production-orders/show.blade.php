@@ -246,7 +246,7 @@
         @endif
 
         <x-card title="Tahapan Produksi" class="lg:col-span-3" tip="Catat progres tiap tahap (output bagus & reject). Semua tahap harus Selesai sebelum produksi bisa diselesaikan. Tahap yang dimaklonkan diperbarui otomatis dari penerimaan hasil maklon.">
-            <ol class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <ol @class(["grid grid-cols-1 gap-4 md:grid-cols-2", "xl:grid-cols-5" => $order->stages->count() <= 5, "xl:grid-cols-4" => $order->stages->count() > 5])>
                 @foreach ($order->stages as $stage)
                     <li class="rounded-lg border border-gray-200 p-4" x-data="{ edit: false }">
                         <div class="flex items-start justify-between gap-2">

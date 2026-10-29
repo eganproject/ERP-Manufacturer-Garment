@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Enums\ProductionStage;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
@@ -104,6 +105,8 @@ class ProductController extends Controller
             'unit_id' => ['required', 'exists:units,id'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
+            'stage_route' => ['nullable', 'array'],
+            'stage_route.*' => [Rule::enum(ProductionStage::class)],
             'variants' => ['required', 'array', 'min:1'],
             'variants.*.id' => ['nullable', 'integer'],
             'variants.*.sku' => ['required', 'string', 'max:50', 'distinct'],
@@ -121,6 +124,8 @@ class ProductController extends Controller
         return [array_merge($data, [
             'price' => $data['price'] ?? 0,
             'is_active' => $request->boolean('is_active'),
+            // Simpan null bila sama dengan tahap standar agar artikel lama & baru konsisten
+            'stage_route' => in_array($route = array_map(fn ($s) => $s->value, ProductionStage::ordered($data['stage_route'] ?? [])), [[], array_map(fn ($s) => $s->value, ProductionStage::standard())], true) ? null : $route,
         ]), $variants];
     }
 

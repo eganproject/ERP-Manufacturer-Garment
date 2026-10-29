@@ -103,7 +103,7 @@ Hanya untuk dua platform: **TikTok Shop** dan **Shopee**.
    - **Gudang** → **Terima Hasil** (bagus/reject). Ongkos jasa = bagus × tarif, otomatis masuk HPP SPK.
    - **Retur Sisa Bahan** bila ada, lalu **Produksi** → **Tutup Order** (rekonsiliasi pemakaian bahan).
 5. Upah borongan: **Upah Borongan → Hasil Kerja Harian** (atau *+ Input Hasil Kerja* dari SPK). Isi karyawan, operasi (atau *pcs jadi komplit*), qty bagus & reject. Upah = bagus × tarif dan langsung dibebankan ke HPP SPK.
-6. Perbarui **Tahapan Produksi** di SPK (Cutting → Sewing → Finishing → QC → Packing) dengan output & reject.
+6. Perbarui **Tahapan Produksi** di SPK (standar Cutting → Sewing → Finishing → QC → Packing) dengan output & reject. Artikel yang memakai **Sablon / Printing**, **Bordir** atau **Cuci / Washing** cukup dicentang di **Master Data → Produk → Tahapan Produksi**; SPK baru otomatis punya tahap itu di urutan yang benar dan tahapnya bisa dimaklonkan seperti tahap lain.
 7. **Bahan kurang / sisa bahan** (menu **Lainnya** di SPK yang berjalan):
    - **Bahan Tambahan** (BBT-): kain kurang, salah potong, atau bahan di luar BOM. Stok gudang berkurang dan nilainya menambah HPP SPK.
    - **Retur Sisa Bahan** (RSB-): sisa bahan yang masih layak kembali ke gudang dan mengurangi HPP SPK. Maksimal sebesar bahan yang dipegang produksi internal (sisa di vendor maklon diretur lewat order maklon).
