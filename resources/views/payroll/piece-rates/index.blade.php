@@ -1,6 +1,6 @@
 <x-layouts.app title="Tarif Borongan per Artikel">
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari kode / nama produk..." />
             <p class="mt-2 text-xs text-gray-500">Atur daftar operasi / segmen jahit beserta tarif per pcs, dan tarif per pcs jadi untuk karyawan yang mengerjakan satu baju dari awal sampai selesai. Artikel yang sudah punya tarif tidak lagi dibebani upah standar BOM saat SPK dimulai; upah aktual masuk dari hasil kerja harian.</p>
         </div>

@@ -2,7 +2,7 @@
     <x-slot:actions><a href="{{ route('imports.show', 'materials') }}" class="btn-secondary">Impor Excel</a><a href="{{ route('materials.create') }}" class="btn-primary">+ Tambah Bahan</a></x-slot:actions>
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari kode / nama...">
                 <div class="w-52">
                     <x-form.select name="category_id" :options="$categories->pluck('name', 'id')" :value="request('category_id')" placeholder="Semua kategori" />

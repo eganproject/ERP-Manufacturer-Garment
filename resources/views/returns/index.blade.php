@@ -13,7 +13,7 @@
     ]" />
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter :placeholder="'Cari no. retur / '.($kind->isSales ? 'SO' : 'PO').' / '.strtolower($kind->partyLabel).'...'">
                 <div class="w-56"><x-form.select name="party_id" :options="$parties" :value="request('party_id')" :placeholder="'Semua '.strtolower($kind->partyLabel)" data-select /></div>
                 <div class="w-40"><x-form.select name="status" :options="\App\Enums\ReturnStatus::options()" :value="request('status')" placeholder="Semua status" /></div>

@@ -4,7 +4,7 @@
     @endcan
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari no. PO / supplier...">
                 <div class="w-52">
                     <x-form.select name="status" :options="['open' => 'Menunggu barang (dipesan / sebagian)'] + collect(\App\Enums\PurchaseOrderStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all()" :value="request('status')" placeholder="Semua status" />

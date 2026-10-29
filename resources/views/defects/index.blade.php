@@ -44,7 +44,7 @@
     </x-card>
 
     <x-card title="Riwayat Penanganan" :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari no. / catatan...">
                 <div class="w-56"><x-form.select name="type" :options="DefectHandlingType::options()" :value="request('type')" placeholder="Semua jenis" /></div>
             </x-search-filter>

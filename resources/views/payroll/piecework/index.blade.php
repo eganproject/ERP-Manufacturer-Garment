@@ -13,7 +13,7 @@
     ]" />
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari no. lembar / SPK...">
                 <div class="w-56"><x-form.select name="employee_id" :options="$employees" :value="request('employee_id')" placeholder="Semua karyawan" data-select /></div>
                 <div class="w-36"><x-form.input name="from" :value="request('from')" placeholder="Dari" data-date /></div>

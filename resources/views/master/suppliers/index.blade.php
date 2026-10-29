@@ -2,7 +2,7 @@
     <x-slot:actions><a href="{{ route('imports.show', 'suppliers') }}" class="btn-secondary">Impor Excel</a><a href="{{ route('suppliers.create') }}" class="btn-primary">+ Tambah Supplier</a></x-slot:actions>
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4"><x-search-filter placeholder="Cari kode / nama / telepon...">
+        <div class="border-b border-gray-100 p-4"><x-search-filter placeholder="Cari kode / nama / telepon...">
             <div class="w-48"><x-form.select name="type" :options="['subcontractor' => 'Vendor maklon']" :value="request('type')" placeholder="Semua supplier" /></div>
         </x-search-filter></div>
         <div class="overflow-x-auto">

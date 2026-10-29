@@ -8,7 +8,7 @@
     @endcan
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari kode / nama akun...">
                 <div class="w-56"><x-form.select name="type" :options="AccountType::options()" :value="request('type')" placeholder="Semua golongan" /></div>
             </x-search-filter>

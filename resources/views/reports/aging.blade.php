@@ -7,7 +7,7 @@
 <x-layouts.app :title="$isAr ? 'Umur Piutang' : 'Umur Hutang'">
     <x-slot:actions><x-report.export-buttons /></x-slot:actions>
     <x-card :padding="false" class="mb-6">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <form method="GET" class="flex flex-wrap items-end gap-2">
                 <div class="w-44"><x-form.input name="as_of" label="Per Tanggal" :value="$asOf" data-date /></div>
                 <div class="w-64"><x-form.select name="party_id" :label="$partyLabel" :options="$parties" :value="$partyId" :placeholder="'Semua '.strtolower($partyLabel)" data-select /></div>

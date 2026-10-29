@@ -19,7 +19,7 @@
     </div>
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari no. penawaran / perihal / pelanggan...">
                 <div class="w-56">
                     <x-form.select name="status" :options="['active' => 'Aktif (menunggu jawaban)', 'expired' => 'Kedaluwarsa'] + \App\Enums\QuotationStatus::options()" :value="request('status')" placeholder="Semua status" />

@@ -2,7 +2,7 @@
     <x-slot:actions><a href="{{ route('users.create') }}" class="btn-primary">+ Tambah Pengguna</a></x-slot:actions>
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari nama / email...">
                 <div class="w-48">
                     <x-form.select name="role" :options="\App\Enums\Role::options()" :value="request('role')" placeholder="Semua peran" />

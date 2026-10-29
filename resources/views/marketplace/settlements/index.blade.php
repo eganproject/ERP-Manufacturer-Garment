@@ -5,7 +5,7 @@
     </x-slot:actions>
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari no. pencairan...">
                 <div class="w-64"><x-form.select name="store_id" :options="$stores" :value="request('store_id')" placeholder="Semua toko" /></div>
                 <div class="w-40"><x-form.select name="status" :options="$statuses" :value="request('status')" placeholder="Semua status" /></div>

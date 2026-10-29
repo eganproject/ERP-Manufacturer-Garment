@@ -45,7 +45,7 @@
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <x-card :padding="false" class="lg:col-span-2">
-            <div class="border-b border-gray-200 p-4">
+            <div class="border-b border-gray-100 p-4">
                 <x-search-filter placeholder="Cari SKU / nama...">
                     <div class="w-64"><x-form.select name="store_id" :options="$stores" :value="$storeId" placeholder="Semua toko" /></div>
                     <div class="w-40"><x-form.select name="type" :options="['preorder' => 'PO', 'ready' => 'Ready stock']" :value="request('type')" placeholder="Semua jenis" :native="true" /></div>

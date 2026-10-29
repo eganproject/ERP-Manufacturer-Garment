@@ -8,7 +8,7 @@
     @endcan
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter :placeholder="'Cari no. bukti / referensi / '.strtolower($type->partyLabel()).'...'">
                 <div class="w-44"><x-form.select name="status" :options="['posted' => 'Tercatat', 'cancelled' => 'Dibatalkan']" :value="request('status')" placeholder="Semua status" /></div>
             </x-search-filter>

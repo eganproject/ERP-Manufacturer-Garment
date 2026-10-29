@@ -8,7 +8,7 @@
     </x-slot:actions>
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari kode / nama / telepon...">
                 <div class="w-52"><x-form.select name="type" :options="$types" :value="request('type')" placeholder="Semua pola kerja" /></div>
                 <div class="w-40"><x-form.select name="status" :options="['active' => 'Aktif', 'inactive' => 'Nonaktif']" :value="request('status')" placeholder="Semua status" /></div>
