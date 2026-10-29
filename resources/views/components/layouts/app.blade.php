@@ -145,7 +145,7 @@
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-gray-50">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-white">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -160,129 +160,148 @@
          data-validation="{{ $validationHtml }}"></div>
 
     {{-- Overlay mobile --}}
-    <div x-cloak x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-30 bg-gray-950/40 backdrop-blur-[2px] lg:hidden" @click="sidebarOpen = false"></div>
+    <div x-cloak x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-30 bg-black/40 lg:hidden" @click="sidebarOpen = false"></div>
 
-    {{-- Sidebar --}}
-    <aside class="fixed inset-y-0 left-0 z-40 flex w-[17rem] -translate-x-full flex-col border-r border-gray-200 bg-white transition-transform duration-200 lg:translate-x-0"
-           :class="{ 'translate-x-0 shadow-pop': sidebarOpen, '-translate-x-full': !sidebarOpen }">
-        <div class="flex h-16 shrink-0 items-center gap-3 px-5">
-            @if ($company['logo'])
-                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($company['logo']) }}" alt="" class="h-9 w-9 rounded-lg border border-gray-200 bg-white object-contain p-0.5">
-            @else
-                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-xs">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3L4 6v4l3 1v10h10V11l3-1V6l-5-3a3 3 0 01-6 0z"/></svg>
-                </div>
-            @endif
-            <div class="min-w-0">
-                <p class="truncate text-sm font-semibold text-gray-900">{{ $company['name'] }}</p>
-                <p class="truncate text-xs text-gray-500">ERP Manufaktur Pakaian</p>
-            </div>
-        </div>
-
-        <div class="px-3 pb-2">
-            <button type="button" @click="$dispatch('open-palette')" class="flex h-9 w-full items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-400 transition hover:border-gray-300 hover:bg-white">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-                <span class="flex-1 text-left">Cari menu…</span>
-                <span class="kbd">Ctrl K</span>
+    {{-- Sidebar (gaya WMS: abu muda, menu 28px, menu aktif = pil putih) --}}
+    <aside class="fixed inset-y-0 left-0 z-40 flex w-60 -translate-x-full flex-col border-r border-gray-200 bg-gray-50 p-2 transition-transform duration-200 lg:translate-x-0"
+           :class="{ 'translate-x-0 shadow-xl': sidebarOpen, '-translate-x-full': !sidebarOpen }">
+        <div class="flex items-center justify-between gap-2 px-1.5 pt-1 pb-2">
+            <a href="{{ route('dashboard') }}" class="flex min-w-0 items-center gap-2 rounded-lg p-1 hover:bg-gray-100">
+                @if ($company['logo'])
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($company['logo']) }}" alt="" class="h-7 w-7 shrink-0 rounded-md bg-white object-contain">
+                @else
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3L4 6v4l3 1v10h10V11l3-1V6l-5-3a3 3 0 01-6 0z"/></svg>
+                    </span>
+                @endif
+                <span class="min-w-0 leading-tight">
+                    <span class="block truncate text-sm font-medium text-gray-900">{{ $company['name'] }}</span>
+                    <span class="block truncate text-xs text-gray-500">ERP Manufaktur Pakaian</span>
+                </span>
+            </a>
+            <button type="button" class="btn-ghost btn-icon lg:hidden" @click="sidebarOpen = false" aria-label="Tutup menu">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
-        <nav class="flex-1 space-y-0.5 overflow-y-auto px-3 pt-1 pb-4" x-data="{ collapsed: (() => { try { return JSON.parse(localStorage.getItem('erp.menu.collapsed') || '{}'); } catch (e) { return {}; } })(), toggle(key) { this.collapsed[key] = ! this.collapsed[key]; try { localStorage.setItem('erp.menu.collapsed', JSON.stringify(this.collapsed)); } catch (e) {} } }"
+        <nav class="sidebar-scroll flex-1 overflow-x-hidden overflow-y-auto" x-data="{ collapsed: (() => { try { return JSON.parse(localStorage.getItem('erp.menu.collapsed') || '{}'); } catch (e) { return {}; } })(), toggle(key) { this.collapsed[key] = ! this.collapsed[key]; try { localStorage.setItem('erp.menu.collapsed', JSON.stringify(this.collapsed)); } catch (e) {} } }"
              x-init="$nextTick(() => $el.querySelector('[aria-current=page]')?.scrollIntoView({ block: 'center' }))">
             @foreach ($menu as $entry)
                 @if (isset($entry['heading']))
                     @php $key = \Illuminate\Support\Str::slug($entry['heading']); @endphp
-                    <div class="pt-4">
-                        <button type="button" class="group flex w-full items-center justify-between rounded-md px-2.5 pb-1.5 text-[0.6875rem] font-semibold tracking-wider text-gray-400 uppercase transition hover:text-gray-700"
+                    <div class="mt-1">
+                        <button type="button" class="group flex w-full items-center justify-between rounded-md px-2 pt-3 pb-1 text-xs whitespace-nowrap text-gray-500 transition hover:text-gray-800"
                                 @click="toggle('{{ $key }}')" :aria-expanded="{{ $entry['active'] ? 'true' : "! collapsed['{$key}']" }}">
                             {{ $entry['heading'] }}
                             <svg class="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100" :class="{{ $entry['active'] ? 'false' : "collapsed['{$key}']" }} ? '-rotate-90 opacity-100' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div class="space-y-0.5" @unless ($entry['active']) x-show="! collapsed['{{ $key }}']" x-collapse.duration.150ms @endunless>
+                        <ul class="space-y-px" @unless ($entry['active']) x-show="! collapsed['{{ $key }}']" x-collapse.duration.150ms @endunless>
                             @foreach ($entry['items'] as $item)
-                                @include('partials.menu-link', ['item' => $item])
+                                <li>@include('partials.menu-link', ['item' => $item])</li>
                             @endforeach
-                        </div>
+                        </ul>
                     </div>
                 @else
-                    @include('partials.menu-link', ['item' => $entry])
+                    <ul class="space-y-px"><li>@include('partials.menu-link', ['item' => $entry])</li></ul>
                 @endif
             @endforeach
         </nav>
 
         {{-- Pengguna --}}
-        <div class="relative shrink-0 border-t border-gray-200 p-3" x-data="{ open: false }" @click.outside="open = false">
-            <button type="button" class="flex w-full items-center gap-3 rounded-lg p-2 text-left transition hover:bg-gray-100" @click="open = !open">
-                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-indigo-700 text-xs font-semibold text-white">{{ $initials }}</span>
-                <span class="min-w-0 flex-1">
-                    <span class="block truncate text-sm font-medium text-gray-900">{{ auth()->user()->name }}</span>
-                    <span class="block truncate text-xs text-gray-500">{{ auth()->user()->role->label() }}</span>
-                </span>
-                <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
-            </button>
-            <div x-cloak x-show="open" x-transition.origin.bottom class="absolute right-3 bottom-full left-3 mb-1 overflow-hidden rounded-xl border border-gray-200 bg-white p-1 shadow-pop">
-                <p class="truncate px-3 pt-2 pb-1 text-xs text-gray-500">{{ auth()->user()->email }}</p>
-                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                    Profil & Password
-                </a>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100">
-                        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        Keluar
-                    </button>
-                </form>
-            </div>
-        </div>
+        <a href="{{ route('profile.edit') }}" class="mt-1 flex items-center gap-2 rounded-lg p-1.5 hover:bg-gray-100">
+            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">{{ $initials }}</span>
+            <span class="min-w-0 flex-1 leading-tight">
+                <span class="block truncate text-[0.8125rem] font-medium text-gray-900">{{ auth()->user()->name }}</span>
+                <span class="block truncate text-xs text-gray-500">{{ auth()->user()->role->label() }}</span>
+            </span>
+        </a>
     </aside>
 
-    <div class="flex min-h-full flex-col lg:pl-[17rem]">
+    <div class="flex min-h-full flex-col lg:pl-60">
         {{-- Topbar --}}
-        <header class="sticky top-0 z-20 border-b border-gray-200/70 bg-white/75 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
-            <div class="mx-auto flex h-14 max-w-[1600px] items-center gap-3 px-4 sm:px-6 lg:px-8">
-                <button type="button" class="-ml-1 rounded-lg p-2 text-gray-500 hover:bg-gray-100 lg:hidden" @click="sidebarOpen = true" aria-label="Buka menu">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <header class="sticky top-0 z-20 flex h-12 items-center gap-3 border-b border-gray-200 bg-white px-4 sm:px-5">
+            <button type="button" class="btn-ghost btn-icon -ml-1.5 lg:hidden" @click="sidebarOpen = true" aria-label="Buka menu">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <nav aria-label="Breadcrumb" class="flex min-w-0 flex-1 items-center gap-1.5 text-sm text-gray-500">
+                <a href="{{ route('dashboard') }}" class="shrink-0 hover:text-gray-700" aria-label="Dashboard">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1v-9.5z"/></svg>
+                </a>
+                @if ($currentGroup)
+                    <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                    <span class="hidden shrink-0 sm:inline">{{ $currentGroup }}</span>
+                @endif
+                @if ($title && $title !== 'Dashboard')
+                    <svg class="hidden h-3.5 w-3.5 shrink-0 sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                    <span class="truncate font-medium text-gray-700">{{ $title }}</span>
+                @endif
+            </nav>
+
+            <button type="button" @click="$dispatch('open-palette')" class="btn-ghost btn-icon sm:hidden" aria-label="Cari menu">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+            </button>
+            <button type="button" @click="$dispatch('open-palette')" title="Cari menu (Ctrl+K)"
+                    class="hidden h-7 w-56 items-center gap-2 rounded-lg bg-gray-100 px-2 text-left text-[0.8125rem] text-gray-500 transition hover:bg-gray-200/70 sm:flex lg:w-64">
+                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+                <span class="flex-1 truncate">Cari menu atau aksi…</span>
+                <kbd class="rounded border border-gray-300 bg-white px-1 font-sans text-[0.625rem] leading-4 text-gray-500">Ctrl K</kbd>
+            </button>
+
+            <div class="relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+                <button type="button" @click="open = !open" class="flex items-center gap-1.5 rounded-lg p-1 hover:bg-gray-100" aria-label="Menu akun" :aria-expanded="open">
+                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">{{ $initials }}</span>
+                    <svg class="hidden h-3.5 w-3.5 text-gray-500 sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
-                <nav aria-label="Breadcrumb" class="flex min-w-0 flex-1 items-center gap-1.5 text-sm">
-                    <a href="{{ route('dashboard') }}" class="text-gray-400 hover:text-gray-700" aria-label="Dashboard">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1v-9.5z"/></svg>
+                <div x-cloak x-show="open" x-transition.origin.top.right class="menu-panel">
+                    <div class="px-2.5 py-2">
+                        <p class="truncate text-sm font-medium text-gray-900">{{ auth()->user()->name }}</p>
+                        <p class="truncate text-xs text-gray-500">{{ auth()->user()->email }}</p>
+                    </div>
+                    <div class="menu-divider"></div>
+                    <a href="{{ route('profile.edit') }}" class="menu-item">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        Profil & Password
                     </a>
-                    @if ($currentGroup)
-                        <svg class="h-3.5 w-3.5 shrink-0 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                        <span class="hidden shrink-0 text-gray-500 sm:inline">{{ $currentGroup }}</span>
-                    @endif
-                    @if ($title && $title !== 'Dashboard')
-                        <svg class="hidden h-3.5 w-3.5 shrink-0 text-gray-300 sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                        <span class="truncate font-medium text-gray-900">{{ $title }}</span>
-                    @endif
-                </nav>
-                <button type="button" @click="$dispatch('open-palette')" class="btn-ghost btn-icon sm:hidden" aria-label="Cari menu">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-                </button>
-                <span class="hidden text-sm text-gray-500 md:block">{{ now()->translatedFormat('l, j F Y') }}</span>
+                    @can('settings.manage')
+                        <a href="{{ route('settings.edit') }}" class="menu-item">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            Pengaturan Perusahaan
+                        </a>
+                    @endcan
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="menu-item-danger">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                            Keluar
+                        </button>
+                    </form>
+                </div>
             </div>
         </header>
 
-        <main class="page-enter mx-auto w-full max-w-[1600px] flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
-            {{-- Judul halaman + aksi utama --}}
-            @if ($title || isset($actions))
-                <div class="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-                    <div class="min-w-0">
-                        @if ($title)<h1 class="text-xl font-semibold tracking-tight text-gray-900">{{ $title }}</h1>@endif
-                        @if ($subtitle)<p class="mt-1 text-sm text-gray-500">{{ $subtitle }}</p>@endif
+        <main class="page-enter w-full flex-1 px-4 py-5 sm:px-6">
+            <div class="mx-auto max-w-screen-2xl">
+                {{-- Judul halaman + aksi utama --}}
+                @if ($title || isset($actions))
+                    <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="min-w-0">
+                            @if ($title)<h1 class="text-xl font-semibold text-gray-900">{{ $title }}</h1>@endif
+                            @if ($subtitle)<p class="mt-0.5 text-sm text-gray-500">{{ $subtitle }}</p>@endif
+                        </div>
+                        @isset($actions)
+                            <div class="flex shrink-0 flex-wrap items-center gap-2">{{ $actions }}</div>
+                        @endisset
                     </div>
-                    @isset($actions)
-                        <div class="flex flex-wrap items-center gap-2">{{ $actions }}</div>
-                    @endisset
-                </div>
-            @endif
+                @endif
 
-            {{ $slot }}
+                {{ $slot }}
+            </div>
         </main>
 
-        <footer class="mx-auto w-full max-w-[1600px] px-4 pb-6 text-xs text-gray-400 sm:px-6 lg:px-8">
-            {{ $company['name'] }} · {{ config('app.name') }}
+        <footer class="px-4 pb-5 text-xs text-gray-400 sm:px-6">
+            <div class="mx-auto max-w-screen-2xl border-t border-gray-100 pt-3">
+                &copy; {{ date('Y') }} {{ $company['name'] }} &middot; {{ config('app.name') }}
+            </div>
         </footer>
     </div>
 
@@ -290,23 +309,23 @@
     <div x-cloak x-data="commandPalette(@js($paletteItems))" x-show="open"
          @open-palette.window="show()" @keydown.window="hotkey($event)"
          class="fixed inset-0 z-[60] flex items-start justify-center p-4 pt-[12vh]" role="dialog" aria-modal="true" aria-label="Cari menu">
-        <div x-show="open" x-transition.opacity class="absolute inset-0 bg-gray-950/40 backdrop-blur-[2px]" @click="open = false"></div>
-        <div x-show="open" x-transition.scale.98.origin.top class="relative w-full max-w-xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-pop">
+        <div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/40" @click="open = false"></div>
+        <div x-show="open" x-transition.scale.98.origin.top class="relative w-full max-w-xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
             <div class="flex items-center gap-3 border-b border-gray-100 px-4">
                 <svg class="h-5 w-5 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
                 <input x-ref="input" x-model="query" @input="cursor = 0" @keydown.down.prevent="move(1)" @keydown.up.prevent="move(-1)" @keydown.enter.prevent="go()"
-                       type="text" placeholder="Ketik nama menu atau aksi, mis. &quot;invoice&quot;…" class="h-14 w-full border-0 bg-transparent p-0 text-[0.9375rem] text-gray-900 placeholder:text-gray-400 focus:ring-0">
+                       type="text" placeholder="Ketik nama menu atau aksi, mis. &quot;invoice&quot;…" class="h-12 w-full border-0 bg-transparent p-0 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-0">
                 <span class="kbd">Esc</span>
             </div>
             <ul class="max-h-[55vh] overflow-y-auto p-2" x-ref="list">
                 <template x-for="(item, i) in results" :key="item.url + item.label">
                     <li>
                         <template x-if="i === 0 || results[i - 1].group !== item.group">
-                            <p class="px-3 pt-2 pb-1 text-[0.6875rem] font-semibold tracking-wider text-gray-400 uppercase" x-text="item.group"></p>
+                            <p class="px-2.5 pt-2 pb-1 text-xs text-gray-500" x-text="item.group"></p>
                         </template>
                         <a :href="item.url" @mouseenter="cursor = i" :data-active="cursor === i"
-                           class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-700 data-[active=true]:bg-gray-100 data-[active=true]:text-gray-900">
-                            <svg class="h-4.5 w-4.5 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" :d="item.icon"/></svg>
+                           class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-gray-700 data-[active=true]:bg-gray-100 data-[active=true]:text-gray-900">
+                            <svg class="h-4 w-4 shrink-0 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" :d="item.icon"/></svg>
                             <span class="flex-1 truncate" x-text="item.label"></span>
                             <svg x-show="cursor === i" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 10l-5 5 5 5M20 4v7a4 4 0 01-4 4H4"/></svg>
                         </a>
@@ -314,7 +333,7 @@
                 </template>
                 <li x-show="results.length === 0" class="px-3 py-10 text-center text-sm text-gray-500">Tidak ada menu yang cocok.</li>
             </ul>
-            <div class="flex items-center gap-4 border-t border-gray-100 bg-gray-50/80 px-4 py-2.5 text-xs text-gray-500">
+            <div class="flex items-center gap-4 border-t border-gray-100 bg-gray-50 px-4 py-2 text-xs text-gray-500">
                 <span class="flex items-center gap-1"><span class="kbd">↑</span><span class="kbd">↓</span> pilih</span>
                 <span class="flex items-center gap-1"><span class="kbd">Enter</span> buka</span>
                 <span class="ml-auto hidden sm:inline">Tekan <span class="kbd">Ctrl K</span> kapan saja</span>

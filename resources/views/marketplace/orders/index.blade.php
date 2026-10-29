@@ -35,7 +35,7 @@
     <form method="POST" action="{{ route('marketplace-orders.ship-many') }}" id="ship-many" data-confirm="Pesanan yang dipilih dikirim: stok keluar dari gudang toko & penjualan dicatat." data-confirm-button="Ya, kirim">@csrf</form>
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="No. pesanan / pembeli / resi...">
                 @if (request('status'))<input type="hidden" name="status" value="{{ request('status') }}">@endif
                 <div class="w-64"><x-form.select name="store_id" :options="$stores" :value="request('store_id')" placeholder="Semua toko" /></div>
@@ -60,7 +60,7 @@
                             <td class="whitespace-nowrap">{{ tanggal($order->order_date) }}</td>
                             <td class="whitespace-nowrap"><x-badge :color="$order->store->platform->color()">{{ $order->store->platform->label() }}</x-badge><div class="text-xs text-gray-500">{{ $order->store->name }}</div></td>
                             <td>{{ $order->buyer_username ?? $order->recipient_name ?? '-' }}@if ($order->city)<div class="text-xs text-gray-500">{{ $order->city }}</div>@endif</td>
-                            <td class="text-sm">
+                            <td class="whitespace-nowrap">
                                 {{ $order->items->count() }} SKU · {{ qty($order->items->sum('quantity')) }} pcs
                                 @if ($order->hasUnmappedItems() && ! $order->isShipped())<div class="text-xs text-red-600">SKU belum dipetakan</div>@endif
                             </td>

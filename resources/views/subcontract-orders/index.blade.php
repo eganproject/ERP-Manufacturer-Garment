@@ -13,7 +13,7 @@
     ]" />
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari no. order / SPK / vendor...">
                 <div class="w-56"><x-form.select name="supplier_id" :options="$vendors" :value="request('supplier_id')" placeholder="Semua vendor" data-select /></div>
                 <div class="w-44"><x-form.select name="status" :options="\App\Enums\SubcontractStatus::options()" :value="request('status')" placeholder="Semua status" /></div>

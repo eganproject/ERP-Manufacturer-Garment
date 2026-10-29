@@ -13,7 +13,7 @@
     ]" />
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari no. penggajian...">
                 <div class="w-44"><x-form.select name="status" :options="$statuses" :value="request('status')" placeholder="Semua status" /></div>
             </x-search-filter>

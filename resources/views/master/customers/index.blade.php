@@ -2,7 +2,7 @@
     <x-slot:actions><a href="{{ route('imports.show', 'customers') }}" class="btn-secondary">Impor Excel</a><a href="{{ route('customers.create') }}" class="btn-primary">+ Tambah Pelanggan</a></x-slot:actions>
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4"><x-search-filter placeholder="Cari kode / nama / telepon..." /></div>
+        <div class="border-b border-gray-100 p-4"><x-search-filter placeholder="Cari kode / nama / telepon..." /></div>
         <div class="overflow-x-auto">
             <table class="table-base">
                 <thead><tr><th>Kode</th><th>Nama</th><th>Kontak</th><th>Telepon</th><th>Status</th><th class="text-right">Aksi</th></tr></thead>

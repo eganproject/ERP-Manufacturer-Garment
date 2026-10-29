@@ -13,7 +13,7 @@
     ]" />
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari no. tagihan / faktur / PO / maklon / supplier...">
                 <div class="w-56"><x-form.select name="supplier_id" :options="$suppliers" :value="request('supplier_id')" placeholder="Semua supplier" data-select /></div>
                 <div class="w-48"><x-form.select name="status" :options="['overdue' => 'Jatuh Tempo'] + \App\Enums\InvoiceStatus::options()" :value="request('status')" placeholder="Semua status" /></div>

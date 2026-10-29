@@ -17,7 +17,7 @@
     @endcan
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <form method="GET" class="flex flex-wrap items-end gap-2">
                 <div class="w-32"><x-form.input name="year" type="number" :value="request('year')" placeholder="Tahun" /></div>
                 <button type="submit" class="btn-secondary">Filter</button>

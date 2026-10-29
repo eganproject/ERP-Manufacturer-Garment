@@ -12,7 +12,8 @@
 @source '../../app/Enums/**/*.php';
 
 /*
- * Sistem desain: dominan netral (abu "zinc") + satu warna aksen (biru tinta).
+ * Sistem desain mengikuti gaya WMS (ERPNext / Frappe UI): abu netral tanpa rona, permukaan putih
+ * datar, kontrol 32px berlatar abu lembut, teks 14px. Satu warna aksen biru untuk tombol utama & tautan.
  * Seluruh view memakai kelas gray-* / indigo-* / blue-*, jadi palet itu dipetakan
  * ulang di sini agar semua modul ikut berubah dari satu tempat.
  */
@@ -20,17 +21,17 @@
     --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
 
     /* Netral */
-    --color-gray-50: oklch(0.985 0.001 286);
-    --color-gray-100: oklch(0.967 0.002 286);
-    --color-gray-200: oklch(0.925 0.004 286);
-    --color-gray-300: oklch(0.871 0.006 286);
-    --color-gray-400: oklch(0.705 0.012 286);
-    --color-gray-500: oklch(0.552 0.014 286);
-    --color-gray-600: oklch(0.442 0.015 286);
-    --color-gray-700: oklch(0.37 0.013 286);
-    --color-gray-800: oklch(0.274 0.008 286);
-    --color-gray-900: oklch(0.21 0.007 286);
-    --color-gray-950: oklch(0.141 0.005 286);
+    --color-gray-50: oklch(0.979 0 0);
+    --color-gray-100: oklch(0.955 0 0);
+    --color-gray-200: oklch(0.913 0 0);
+    --color-gray-300: oklch(0.83 0 0);
+    --color-gray-400: oklch(0.683 0 0);
+    --color-gray-500: oklch(0.586 0 0);
+    --color-gray-600: oklch(0.5 0 0);
+    --color-gray-700: oklch(0.439 0 0);
+    --color-gray-800: oklch(0.341 0 0);
+    --color-gray-900: oklch(0.205 0 0);
+    --color-gray-950: oklch(0.168 0 0);
 
     /* Aksen tunggal: indigo & blue sama-sama memakai warna ini */
     --color-indigo-50: oklch(0.97 0.014 266);
@@ -70,9 +71,9 @@
     --color-green-700: var(--color-emerald-700);
     --color-green-800: var(--color-emerald-800);
 
-    --shadow-xs: 0 1px 2px 0 rgb(24 24 27 / 0.04);
-    --shadow-card: 0 1px 2px 0 rgb(24 24 27 / 0.04), 0 1px 3px 0 rgb(24 24 27 / 0.03);
-    --shadow-pop: 0 12px 32px -8px rgb(24 24 27 / 0.18), 0 4px 8px -4px rgb(24 24 27 / 0.06);
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --shadow-card: none;
+    --shadow-pop: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 [x-cloak] {
@@ -80,27 +81,14 @@
 }
 
 @layer base {
-    /* Ukuran dasar 15px (bawaan 16px) di layar lebar, 14.5px di laptop kecil:
-       semua ukuran rem (teks, jarak, tinggi tombol, lebar sidebar) ikut mengecil proporsional */
+    /* Ukuran dasar bawaan browser (16px): teks isi memakai text-sm (14px) seperti aplikasi WMS */
     html {
-        font-size: 93.75%;
-        font-feature-settings: 'cv11', 'ss01', 'ss03';
         -webkit-tap-highlight-color: transparent;
     }
 
-    @media (width >= 64rem) and (width < 96rem) {
-        html {
-            font-size: 90.625%;
-        }
-    }
-
     body {
-        @apply bg-gray-50 text-gray-800;
-        /* Cahaya aksen lembut di atas halaman agar tidak datar */
-        background-image:
-            radial-gradient(60rem 22rem at 85% -6rem, oklch(0.94 0.03 266 / 0.75), transparent 70%),
-            radial-gradient(40rem 18rem at 10% -8rem, oklch(0.95 0.03 160 / 0.45), transparent 70%);
-        background-repeat: no-repeat;
+        @apply bg-white text-sm text-gray-900;
+        letter-spacing: 0.02em;
     }
 
     ::selection {
@@ -118,11 +106,11 @@
 
     input[type='checkbox'],
     input[type='radio'] {
-        @apply h-4 w-4 border-gray-300 text-indigo-600 shadow-xs focus:ring-2 focus:ring-indigo-500/30 focus:ring-offset-0;
+        @apply h-3.5 w-3.5 cursor-pointer border-gray-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500/30 focus:ring-offset-0;
     }
 
     input[type='checkbox'] {
-        @apply rounded-[5px];
+        @apply rounded;
     }
 
     /* Scrollbar tipis */
@@ -134,14 +122,20 @@
 
 @layer components {
     /* ---------- Form ---------- */
+    /* Kontrol "isi abu": tanpa garis, abu lembut, putih + garis tipis saat difokus (gaya Frappe UI) */
     .form-control {
-        @apply block w-full rounded-lg border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs transition-[border-color,box-shadow] duration-150 placeholder:text-gray-400 hover:border-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/12 focus:outline-none disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 read-only:bg-gray-50;
-        min-height: 2.375rem;
+        @apply block min-h-8 w-full rounded-lg border border-transparent bg-gray-100 px-2.5 py-1.5 text-sm leading-5 text-gray-900 transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-gray-400 hover:bg-gray-200/70 focus:border-gray-300 focus:bg-white focus:shadow-sm focus:ring-0 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 read-only:bg-gray-50 read-only:hover:bg-gray-50 read-only:focus:border-transparent read-only:focus:shadow-none;
+    }
+
+    /* Di atas latar abu (kaki tabel, panel abu) kontrol jadi putih bergaris agar tetap terlihat */
+    :is(tfoot, .card .bg-gray-50) .form-control:not(:focus) {
+        @apply border-gray-200 bg-white hover:border-gray-300 hover:bg-white;
     }
 
     select.form-control {
-        @apply pr-9;
-        background-position: right 0.6rem center;
+        @apply pr-8;
+        background-position: right 0.5rem center;
+        background-size: 1.25em 1.25em;
     }
 
     textarea.form-control {
@@ -149,19 +143,19 @@
     }
 
     .form-control[type='file'] {
-        @apply cursor-pointer p-1 text-gray-600 file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200;
+        @apply cursor-pointer p-1 text-gray-600 file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-white file:px-2.5 file:py-1 file:text-sm file:text-gray-800 file:shadow-xs hover:file:bg-gray-50;
     }
 
     .form-label {
-        @apply mb-1.5 block text-[0.8125rem] font-medium text-gray-700;
+        @apply mb-1.5 block text-xs text-gray-500;
     }
 
     .form-help {
-        @apply mt-1.5 text-xs text-gray-500;
+        @apply mt-1 text-xs text-gray-400;
     }
 
     .form-error {
-        @apply mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600;
+        @apply mt-1 flex items-center gap-1 text-xs text-red-600;
     }
 
     .form-label-row {
@@ -173,56 +167,63 @@
     }
 
     .form-section {
-        @apply text-sm font-semibold text-gray-900;
+        @apply text-base font-semibold text-gray-900;
     }
 
     /* ---------- Tombol ---------- */
+    /* Tinggi 32px, sudut 8px, tanpa bayangan: utama = biru solid, sekunder = abu lembut */
     .btn,
     .btn-primary,
     .btn-secondary,
     .btn-danger,
     .btn-success,
-    .btn-ghost {
-        @apply inline-flex h-9.5 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3.5 text-sm font-medium whitespace-nowrap transition-[background-color,border-color,color,box-shadow,transform] duration-150 select-none focus:outline-none focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-50;
+    .btn-ghost,
+    .btn-outline-danger {
+        @apply inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3 text-sm whitespace-nowrap transition-colors duration-150 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-60;
+    }
+
+    :is(.btn, .btn-primary, .btn-secondary, .btn-danger, .btn-success, .btn-ghost, .btn-outline-danger) > svg {
+        @apply h-4 w-4 shrink-0;
     }
 
     .btn-primary,
     .btn-success {
-        @apply bg-indigo-600 bg-gradient-to-b from-indigo-500 to-indigo-600 text-white shadow-xs hover:-translate-y-px hover:from-indigo-600 hover:to-indigo-700 focus-visible:ring-indigo-500/25 active:translate-y-0;
-        box-shadow:
-            inset 0 1px 0 0 rgb(255 255 255 / 0.12),
-            0 1px 2px 0 rgb(24 24 27 / 0.08);
+        @apply bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:ring-indigo-300 active:bg-indigo-800;
     }
 
     .btn-secondary,
     .btn {
-        @apply border border-gray-300 bg-white text-gray-700 shadow-xs hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900 focus-visible:ring-gray-400/20;
+        @apply bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-300 active:bg-gray-300;
     }
 
     .btn-danger {
-        @apply bg-red-600 text-white shadow-xs hover:bg-red-700 focus-visible:ring-red-500/25;
+        @apply bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-300;
     }
 
     .btn-ghost {
-        @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-gray-400/20;
+        @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-gray-300;
     }
 
-    /* Tombol hapus/batal yang tidak mencolok (garis abu, teks merah) */
+    /* Tombol hapus/batal yang tidak mencolok (abu lembut, teks merah) */
     .btn-outline-danger {
-        @apply inline-flex h-9.5 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 text-sm font-medium whitespace-nowrap text-red-600 shadow-xs transition-colors duration-150 select-none hover:border-red-300 hover:bg-red-50 hover:text-red-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-red-500/20 disabled:pointer-events-none disabled:opacity-50;
+        @apply bg-gray-100 text-red-600 hover:bg-red-50 hover:text-red-700 focus-visible:ring-red-300;
     }
 
     .btn-sm {
-        @apply h-8 rounded-md px-2.5 text-[0.8125rem];
+        @apply h-7 rounded-md px-2.5 text-[0.8125rem];
     }
 
     .btn-icon {
-        @apply h-9.5 w-9.5 px-0;
+        @apply h-8 w-8 px-0;
+    }
+
+    .btn-icon.btn-sm {
+        @apply h-7 w-7;
     }
 
     /* ---------- Menu tarik-turun (aksi "Lainnya") ---------- */
     .menu-panel {
-        @apply absolute right-0 z-40 mt-1.5 w-60 origin-top-right overflow-hidden rounded-xl border border-gray-200 bg-white p-1 shadow-pop;
+        @apply absolute right-0 z-40 mt-1.5 w-56 origin-top-right overflow-hidden rounded-xl border border-gray-200 bg-white p-1 shadow-lg;
     }
 
     .menu-panel form {
@@ -231,11 +232,20 @@
 
     .menu-item,
     .menu-item-danger {
-        @apply flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-sm whitespace-nowrap transition-colors;
+        @apply flex h-7 w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 text-left text-sm whitespace-nowrap transition-colors;
     }
 
     .menu-item {
         @apply text-gray-700 hover:bg-gray-100 hover:text-gray-900;
+    }
+
+    .menu-item svg,
+    .menu-item-danger svg {
+        @apply h-4 w-4 shrink-0;
+    }
+
+    .menu-item svg {
+        @apply text-gray-500;
     }
 
     .menu-item-danger {
@@ -247,12 +257,13 @@
     }
 
     /* ---------- Tabel ---------- */
+    /* Kepala abu muda 32px, judul kolom huruf biasa 13px, baris dipisah garis tipis */
     .table-base {
         @apply min-w-full text-sm;
     }
 
     .table-base thead th {
-        @apply border-b border-gray-200 bg-gray-50/80 px-4 py-2 text-left text-[0.6875rem] font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase;
+        @apply h-8 bg-gray-50 px-4 py-0 text-left text-[0.8125rem] font-normal whitespace-nowrap text-gray-500;
     }
 
     .table-base thead th.text-right {
@@ -264,11 +275,15 @@
     }
 
     .table-base tbody td {
-        @apply px-4 py-2.5 align-top text-gray-700;
+        @apply px-4 py-2.5 text-gray-700;
+    }
+
+    .table-base tbody tr + tr {
+        @apply border-t border-gray-100;
     }
 
     .table-base tbody tr {
-        @apply transition-colors hover:bg-indigo-50/40;
+        @apply transition-colors hover:bg-gray-50/60;
     }
 
     .table-base tbody + tbody {
@@ -276,7 +291,7 @@
     }
 
     .table-base tfoot {
-        @apply border-t border-gray-200 bg-gray-50/60 text-gray-800;
+        @apply border-t border-gray-200 bg-gray-50 text-gray-900;
     }
 
     .table-base tfoot td,
@@ -289,7 +304,7 @@
     }
 
     /* Kolom pertama (nama/nomor) tidak terlalu sempit; di HP tabel digeser ke samping */
-    .table-base tbody td:first-child:not(:has(input[type='checkbox'])) {
+    .table-base:not(:has(thead th:first-child:empty)) tbody td:first-child:not(:has(input[type='checkbox'])) {
         @apply min-w-40;
     }
 
@@ -302,46 +317,46 @@
 
     /* ---------- Lain-lain ---------- */
     .card {
-        @apply rounded-xl border border-gray-200/80 bg-white shadow-card;
+        @apply rounded-xl border border-gray-200 bg-white;
     }
 
-    /* Kartu yang bisa diklik: sedikit terangkat saat disorot */
+    /* Kartu yang bisa diklik: garis sedikit lebih tegas saat disorot */
     a.card {
-        @apply transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-pop;
+        @apply transition-colors duration-150 hover:border-gray-300 hover:bg-gray-50/40;
     }
 
     /* Chip ikon berwarna lembut (dashboard, ringkasan) */
     .icon-chip {
-        @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100;
+        @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700;
     }
 
     .icon-chip svg {
-        @apply h-4.5 w-4.5;
+        @apply h-5 w-5;
     }
 
     .icon-chip.tone-green {
-        @apply bg-emerald-50 text-emerald-600 ring-emerald-100;
+        @apply bg-emerald-50 text-emerald-700;
     }
 
     .icon-chip.tone-amber {
-        @apply bg-amber-50 text-amber-600 ring-amber-100;
+        @apply bg-amber-50 text-amber-700;
     }
 
     .icon-chip.tone-red {
-        @apply bg-red-50 text-red-600 ring-red-100;
+        @apply bg-red-50 text-red-700;
     }
 
     .kbd {
-        @apply inline-flex h-5 min-w-5 items-center justify-center rounded border border-gray-200 bg-white px-1 font-sans text-[0.6875rem] font-medium text-gray-500 shadow-xs;
+        @apply inline-flex h-5 min-w-5 items-center justify-center rounded border border-gray-200 bg-white px-1 font-sans text-[0.6875rem] text-gray-500;
     }
 
     .link {
-        @apply font-medium text-indigo-600 hover:text-indigo-700 hover:underline;
+        @apply text-indigo-600 hover:underline;
     }
 
     /* Daftar keterangan (dl) di kartu informasi */
     .card dl dt {
-        @apply text-xs font-medium text-gray-500;
+        @apply text-xs font-normal text-gray-500;
     }
 }
 
@@ -359,37 +374,41 @@
 }
 
 .choices__inner {
-    @apply flex min-h-9.5 w-full cursor-pointer items-center rounded-lg border border-gray-300 bg-white py-1 pr-9 pl-3 text-gray-900 shadow-xs transition-[border-color,box-shadow] duration-150;
+    @apply flex min-h-8 w-full cursor-pointer items-center rounded-lg border border-transparent bg-gray-100 py-1 pr-8 pl-2.5 leading-5 text-gray-900 transition-[background-color,border-color,box-shadow] duration-150;
 }
 
 .choices[data-type*='select-multiple'] .choices__inner {
-    @apply flex-wrap gap-1 py-1 pl-1.5;
+    @apply flex-wrap gap-1 py-1 pl-1;
 }
 
-.choices:not(.is-disabled):hover .choices__inner {
-    @apply border-gray-400;
+.choices:not(.is-disabled):not(.is-focused):not(.is-open):hover .choices__inner {
+    @apply bg-gray-200/70;
+}
+
+:is(tfoot, .card .bg-gray-50) .choices:not(.is-focused):not(.is-open) .choices__inner {
+    @apply border-gray-200 bg-white;
 }
 
 .choices.is-focused .choices__inner,
 .choices.is-open .choices__inner {
-    @apply border-indigo-500 ring-4 ring-indigo-500/12;
+    @apply border-gray-300 bg-white shadow-sm;
 }
 
 .choices.is-invalid .choices__inner {
-    @apply border-red-400 ring-red-500/12;
+    @apply border-red-300 bg-red-50;
     animation: erp-shake 0.35s ease-in-out;
 }
 
 .choices.is-disabled .choices__inner {
-    @apply cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500;
+    @apply cursor-not-allowed bg-gray-50 text-gray-500;
 }
 
 /* Panah */
 .choices::after {
     content: '';
-    @apply pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 transition-transform duration-200;
-    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2371717a' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.6' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")
-        center / 16px no-repeat;
+    @apply pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 transition-transform duration-200;
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23999' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")
+        center / 14px no-repeat;
 }
 
 .choices.is-open::after {
@@ -421,7 +440,7 @@
 }
 
 .choices[data-type*='select-one'] .choices__button {
-    @apply absolute top-1/2 right-8 h-5 w-5 -translate-y-1/2 rounded-full hover:bg-gray-100;
+    @apply absolute top-1/2 right-7 h-4 w-4 -translate-y-1/2 rounded hover:bg-gray-200;
 }
 
 .choices[data-type*='select-one'] .choices__item[data-value=''] .choices__button,
@@ -435,12 +454,12 @@
 }
 
 .choices__list--multiple .choices__item {
-    @apply inline-flex items-center gap-1 rounded-md bg-indigo-50 py-0.5 pr-1 pl-2 text-[0.8125rem] font-medium text-indigo-700 ring-1 ring-indigo-200/70 ring-inset;
+    @apply inline-flex items-center gap-0.5 rounded-md bg-white py-0.5 pr-0.5 pl-1.5 text-xs text-gray-800 shadow-xs ring-1 ring-gray-200;
     animation: erp-pop 0.18s ease-out;
 }
 
 .choices__list--multiple .choices__item.is-highlighted {
-    @apply bg-indigo-100;
+    @apply bg-indigo-600 text-white ring-indigo-600;
 }
 
 .choices__list--multiple .choices__button {
@@ -454,7 +473,7 @@
 
 /* Dropdown */
 .choices__list--dropdown {
-    @apply absolute top-full left-0 z-[70] mt-1.5 hidden w-full origin-top overflow-hidden rounded-xl border border-gray-200 bg-white p-1 text-gray-700 shadow-pop;
+    @apply absolute top-full left-0 z-[70] mt-1 hidden w-full origin-top overflow-hidden rounded-lg border border-gray-200 bg-white p-1 text-gray-800 shadow-lg;
     word-break: break-word;
 }
 
@@ -468,11 +487,11 @@
 }
 
 .choices__list--dropdown .choices__list {
-    @apply max-h-72 overflow-y-auto overscroll-contain;
+    @apply max-h-64 overflow-y-auto overscroll-contain;
 }
 
 .choices[data-type*='select-one'] .choices__list--dropdown .choices__input {
-    @apply mb-1 block w-full rounded-lg border-gray-200 bg-gray-50 py-1.5 pr-3 pl-8 text-sm shadow-none placeholder:text-gray-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/12;
+    @apply mb-1 block w-full rounded-md border-transparent bg-gray-100 py-1.5 pr-3 pl-8 text-sm shadow-none placeholder:text-gray-400 focus:border-gray-300 focus:bg-white focus:ring-0;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa' stroke-width='2'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z'/%3e%3c/svg%3e");
     background-position: 0.6rem center;
     background-repeat: no-repeat;
@@ -480,7 +499,7 @@
 }
 
 .choices__list--dropdown .choices__item {
-    @apply relative rounded-lg px-2.5 py-1.75;
+    @apply relative rounded-md px-2.5 py-1.5;
 }
 
 .choices__list--dropdown .choices__item--selectable {
@@ -488,7 +507,7 @@
 }
 
 .choices__list--dropdown .choices__item--selectable.is-highlighted {
-    @apply bg-indigo-50 text-indigo-900;
+    @apply bg-gray-100 text-gray-900;
 }
 
 .choices__list--dropdown .choices__item--selectable.is-selected {
@@ -498,7 +517,7 @@
 .choices__list--dropdown .choices__item--selectable.is-selected:not([data-value=''])::after {
     content: '';
     @apply absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2;
-    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%234f46e5' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.2' d='M5 10.5l3.2 3.2L15 7'/%3e%3c/svg%3e")
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23777' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.2' d='M5 10.5l3.2 3.2L15 7'/%3e%3c/svg%3e")
         center / contain no-repeat;
 }
 
@@ -517,7 +536,7 @@
 }
 
 .choices__heading {
-    @apply px-2.5 pt-2.5 pb-1 text-[0.6875rem] font-semibold tracking-wider text-gray-400 uppercase;
+    @apply px-2.5 pt-2 pb-1 text-xs font-semibold text-gray-400;
 }
 
 /* Input kecil di dalam tabel baris */
@@ -526,12 +545,13 @@ td .choices {
 }
 
 .is-invalid {
-    @apply border-red-400 focus:border-red-500 focus:ring-red-500/12;
+    @apply border-red-300 bg-red-50 focus:border-red-400;
 }
 
 /* ---------- flatpickr ---------- */
 .flatpickr-calendar {
-    @apply mt-1.5 w-[18.5rem] rounded-xl border border-gray-200 bg-white p-2 font-sans shadow-pop;
+    @apply mt-1 w-[18rem] rounded-xl border border-gray-200 bg-white p-1.5 font-sans text-gray-800 shadow-lg;
+    letter-spacing: 0.02em;
 }
 
 .flatpickr-calendar.arrowTop::before,
@@ -563,7 +583,7 @@ td .choices {
 
 .flatpickr-months .flatpickr-prev-month,
 .flatpickr-months .flatpickr-next-month {
-    @apply top-2 flex h-8 w-8 items-center justify-center rounded-lg p-0 text-gray-500 hover:bg-gray-100;
+    @apply top-2 flex h-7 w-7 items-center justify-center rounded-md p-0 text-gray-500 hover:bg-gray-100;
 }
 
 .flatpickr-months .flatpickr-prev-month svg,
@@ -584,16 +604,16 @@ td .choices {
 }
 
 span.flatpickr-weekday {
-    @apply text-[0.6875rem] font-semibold text-gray-400;
+    @apply text-xs font-medium text-gray-400;
 }
 
 .flatpickr-day {
-    @apply h-9 max-w-none rounded-lg border-0 text-[0.8125rem] leading-9 text-gray-700 hover:bg-gray-100;
+    @apply h-9 max-w-none rounded-md border-0 text-sm leading-9 text-gray-800 hover:bg-gray-100;
     flex-basis: 14.2857%;
 }
 
 .flatpickr-day.today {
-    @apply font-semibold text-indigo-600 ring-1 ring-indigo-200 ring-inset hover:bg-indigo-50 hover:text-indigo-700;
+    @apply font-semibold text-gray-900 ring-1 ring-gray-300 ring-inset hover:bg-gray-100;
 }
 
 .flatpickr-day.selected,
@@ -618,7 +638,7 @@ span.flatpickr-weekday {
 }
 
 .flatpickr-monthSelect-month {
-    @apply m-0 rounded-lg border-0 py-2 text-[0.8125rem] text-gray-700 hover:bg-gray-100;
+    @apply m-0 rounded-md border-0 py-2 text-sm text-gray-800 hover:bg-gray-100;
     width: calc(33.33% - 0.25rem);
 }
 
@@ -632,79 +652,100 @@ span.flatpickr-weekday {
 }
 
 .erp-date.form-control {
-    @apply pr-9;
-    background: #fff
+    @apply pr-8;
+    background: var(--color-gray-100)
         url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa' stroke-width='1.6'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3e%3c/svg%3e")
-        no-repeat right 0.7rem center / 16px;
+        no-repeat right 0.6rem center / 16px;
+}
+
+:is(tfoot, .card .bg-gray-50) .erp-date.form-control {
+    background-color: #fff;
+}
+
+.erp-date.form-control:hover {
+    background-color: color-mix(in oklab, var(--color-gray-200) 70%, transparent);
+}
+
+.erp-date.form-control:focus,
+.erp-date.form-control.active {
+    background-color: #fff;
 }
 
 .erp-date.form-control:disabled {
-    @apply bg-gray-50;
+    background-color: var(--color-gray-50);
 }
 
 /* ---------- SweetAlert2: dialog & toast ---------- */
+/* Dialog konfirmasi ala WMS: ikon bulat kecil di kiri, judul & pesan rata kiri, tombol di kanan bawah */
 .swal2-container {
     @apply z-[80];
 }
 
 .swal2-container.swal2-backdrop-show {
-    background: rgb(24 24 27 / 0.4) !important;
-    backdrop-filter: blur(2px);
+    background: rgb(0 0 0 / 0.4) !important;
 }
 
 .swal2-popup.erp-swal {
-    @apply w-[26rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-200 p-6 font-sans shadow-pop;
+    @apply w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl border border-gray-200 p-5 text-left font-sans shadow-xl;
+    grid-template-columns: auto minmax(0, 1fr);
+    letter-spacing: 0.02em;
+}
+
+.erp-swal > * {
+    grid-column: 1 / -1;
 }
 
 .erp-swal .swal2-icon {
-    @apply mx-auto mt-0 mb-4 h-12 w-12 border-0 text-[0px];
+    @apply m-0 mr-4 flex h-9 w-9 items-center justify-center self-start rounded-full border-0 text-[0px];
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    animation: erp-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .erp-swal .swal2-icon .swal2-icon-content {
-    @apply text-2xl;
+    @apply text-lg leading-none;
 }
 
 .erp-swal .swal2-title {
-    @apply p-0 text-lg font-semibold text-gray-900;
+    @apply p-0 text-left text-base font-semibold text-gray-900;
+    grid-column: 2;
+    grid-row: 1;
 }
 
 .erp-swal .swal2-html-container {
-    @apply m-0 mt-2 p-0 text-sm leading-relaxed text-gray-600;
+    @apply m-0 mt-1.5 p-0 text-left text-sm leading-relaxed whitespace-pre-line text-gray-600;
+    grid-column: 2;
+    grid-row: 2;
 }
 
 .erp-swal .swal2-html-container ul {
-    @apply mx-auto max-w-sm space-y-1 rounded-lg bg-red-50 p-3 text-[0.8125rem] text-red-700;
+    @apply max-w-sm space-y-1 rounded-lg bg-red-50 p-3 text-[0.8125rem] whitespace-normal text-red-700;
 }
 
-.erp-swal .swal2-input {
-    @apply mx-0 mt-4 mb-0 h-10 w-full max-w-none rounded-lg border border-gray-300 px-3 text-sm shadow-xs focus:border-indigo-500 focus:shadow-none focus:ring-4 focus:ring-indigo-500/12;
+.erp-swal .swal2-input,
+.erp-swal .swal2-textarea {
+    @apply mx-0 mt-4 mb-0 h-8 w-full max-w-none rounded-lg border border-transparent bg-gray-100 px-2.5 text-sm shadow-none focus:border-gray-300 focus:bg-white focus:shadow-sm focus:ring-0;
+}
+
+.erp-swal .swal2-textarea {
+    @apply h-auto min-h-20 py-1.5;
 }
 
 .erp-swal .swal2-validation-message {
-    @apply mx-0 mt-2 justify-start bg-transparent p-0 text-xs font-medium text-red-600 before:hidden;
+    @apply mx-0 mt-2 justify-start bg-transparent p-0 text-xs text-red-600 before:hidden;
 }
 
 .erp-swal .swal2-actions {
-    @apply mt-6 w-full flex-nowrap gap-2;
+    @apply mt-5 w-full flex-nowrap justify-end gap-2;
 }
 
 .erp-swal .swal2-actions > button {
-    @apply m-0 flex-1;
+    @apply m-0;
 }
 
 .erp-swal.swal2-icon-warning .erp-swal-confirm,
 .erp-swal.swal2-icon-error .erp-swal-confirm {
-    @apply bg-red-600 bg-none hover:bg-red-700 focus-visible:ring-red-500/25;
-}
-
-/* Ikon dialog: emoji dalam lingkaran lembut yang memantul (lihat ICONS di app.js) */
-.erp-swal .swal2-icon {
-    @apply flex items-center justify-center rounded-full;
-    animation: erp-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.erp-swal .swal2-icon .swal2-icon-content {
-    @apply text-[1.75rem] leading-none;
+    @apply bg-red-600 hover:bg-red-700 focus-visible:ring-red-300;
 }
 
 .erp-swal-emoji {
@@ -714,31 +755,31 @@ span.flatpickr-weekday {
 
 .erp-swal .swal2-icon.swal2-warning,
 .erp-swal .swal2-icon.swal2-error {
-    @apply bg-red-50 ring-8 ring-red-50/50;
+    @apply bg-red-100;
 }
 
 .erp-swal .swal2-icon.swal2-question,
 .erp-swal .swal2-icon.swal2-info {
-    @apply bg-indigo-50 ring-8 ring-indigo-50/50;
+    @apply bg-indigo-100;
 }
 
 .erp-swal .swal2-icon.swal2-success {
-    @apply bg-emerald-50 ring-8 ring-emerald-50/50;
+    @apply bg-emerald-100;
 }
 
 .swal2-popup.erp-swal.swal2-show {
-    animation: erp-dialog-in 0.32s cubic-bezier(0.34, 1.4, 0.64, 1);
+    animation: erp-dialog-in 0.22s ease-out;
 }
 
 /* ---------- Toast (ERP.toast) ---------- */
 .erp-toaster {
-    @apply pointer-events-none fixed top-4 right-4 z-[90] flex w-[22rem] max-w-[calc(100vw-2rem)] flex-col gap-2.5;
+    @apply pointer-events-none fixed top-4 right-4 z-[90] flex w-[24rem] max-w-[calc(100vw-2rem)] flex-col gap-2;
 }
 
 .erp-toast {
     --tone: var(--color-indigo-500);
     --tone-soft: var(--color-indigo-50);
-    @apply pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 py-3 pr-2.5 pl-3 text-sm shadow-pop backdrop-blur;
+    @apply pointer-events-auto relative flex items-start gap-2.5 overflow-hidden rounded-xl border border-gray-200 bg-white p-3 text-sm shadow-lg;
     transition:
         transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
         opacity 0.3s ease;
@@ -771,7 +812,7 @@ span.flatpickr-weekday {
 }
 
 .erp-toast-icon {
-    @apply relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl leading-none;
+    @apply relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base leading-none;
     background: var(--tone-soft);
 }
 
@@ -788,15 +829,15 @@ span.flatpickr-weekday {
 }
 
 .erp-toast-title {
-    @apply font-semibold text-gray-900;
+    @apply pt-0.5 font-medium text-gray-900;
 }
 
 .erp-toast-text {
-    @apply mt-0.5 text-[0.8125rem] leading-snug text-gray-500;
+    @apply mt-0.5 text-sm leading-snug whitespace-pre-line text-gray-600;
 }
 
 .erp-toast-close {
-    @apply -my-1 shrink-0 self-start rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700;
+    @apply shrink-0 self-start rounded p-0.5 text-gray-400 transition hover:text-gray-600;
 }
 
 .erp-toast-close svg {
@@ -805,7 +846,7 @@ span.flatpickr-weekday {
 
 /* Garis waktu tersisa */
 .erp-toast-bar {
-    @apply absolute inset-x-0 bottom-0 h-[3px] origin-left opacity-70;
+    @apply absolute inset-x-0 bottom-0 h-0.5 origin-left opacity-60;
     background: var(--tone);
 }
 
@@ -944,7 +985,7 @@ span.flatpickr-weekday {
 
 /* ---------- Tooltip penjelasan (<x-tip>) ---------- */
 .tip-trigger {
-    @apply relative inline-flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full align-middle text-gray-400 transition-colors duration-150 hover:text-indigo-600 focus-visible:text-indigo-600 focus-visible:ring-offset-0;
+    @apply relative -my-1 inline-flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full align-middle text-gray-400 transition-colors duration-150 hover:text-indigo-600 focus-visible:text-indigo-600 focus-visible:ring-offset-0;
 }
 
 /* Area sentuh lebih besar di HP tanpa mengubah tampilan */
@@ -958,11 +999,11 @@ span.flatpickr-weekday {
 }
 
 .tip-trigger svg {
-    @apply h-4 w-4;
+    @apply h-3.5 w-3.5;
 }
 
 .erp-tip {
-    @apply pointer-events-auto fixed top-0 left-0 z-[95] w-max max-w-[min(20rem,calc(100vw-1.5rem))] rounded-xl bg-gray-900 px-3.5 py-2.5 text-[0.8125rem] leading-relaxed text-gray-100 shadow-pop transition-[opacity,transform] duration-150 ease-out;
+    @apply pointer-events-auto fixed top-0 left-0 z-[95] w-max max-w-[min(18rem,calc(100vw-1.5rem))] rounded-lg border border-gray-200 bg-white p-3 text-xs leading-relaxed text-gray-600 shadow-lg shadow-gray-900/10 transition-[opacity,transform] duration-150 ease-out;
     overflow-wrap: anywhere;
 }
 
@@ -979,23 +1020,23 @@ span.flatpickr-weekday {
 }
 
 .erp-tip-title {
-    @apply mb-0.5 block text-[0.8125rem] font-semibold text-white;
+    @apply mb-0.5 block text-[0.8125rem] font-semibold text-gray-900;
 }
 
 .erp-tip-body {
-    @apply block whitespace-pre-line text-gray-300;
+    @apply block whitespace-pre-line text-gray-600;
 }
 
 .erp-tip-arrow {
-    @apply absolute h-2.5 w-2.5 rotate-45 rounded-[2px] bg-gray-900;
+    @apply absolute h-2.5 w-2.5 rotate-45 border-gray-200 bg-white;
 }
 
 .erp-tip[data-side='top'] .erp-tip-arrow {
-    @apply -bottom-1;
+    @apply -bottom-[5px] border-r border-b;
 }
 
 .erp-tip[data-side='bottom'] .erp-tip-arrow {
-    @apply -top-1;
+    @apply -top-[5px] border-t border-l;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1006,15 +1047,15 @@ span.flatpickr-weekday {
 
 /* ---------- Panduan halaman (<x-guide>) ---------- */
 .guide {
-    @apply mb-6 overflow-hidden rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 to-white shadow-card;
+    @apply mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white;
 }
 
 .guide-head {
-    @apply flex w-full cursor-pointer items-center gap-3 px-4 py-3 focus-visible:ring-offset-0 sm:px-5;
+    @apply flex w-full cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-50/60 focus-visible:ring-offset-0 sm:px-5;
 }
 
 .guide-icon {
-    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-600 ring-1 ring-indigo-100;
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700;
 }
 
 .guide-icon svg {
@@ -1022,11 +1063,11 @@ span.flatpickr-weekday {
 }
 
 .guide-body {
-    @apply border-t border-indigo-100/70 px-4 pt-3 pb-4 sm:px-5 sm:pl-[3.75rem];
+    @apply border-t border-gray-100 px-4 pt-3 pb-4 sm:px-5 sm:pl-[3.75rem];
 }
 
 .guide-steps {
-    @apply grid gap-x-6 gap-y-2.5 text-[0.8125rem] leading-relaxed text-gray-700 md:grid-cols-2;
+    @apply grid gap-x-6 gap-y-2.5 text-sm leading-relaxed text-gray-700 md:grid-cols-2;
 }
 
 .guide-steps li {
@@ -1038,5 +1079,16 @@ span.flatpickr-weekday {
 }
 
 .guide-step-no {
-    @apply mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[0.6875rem] font-semibold text-white;
+    @apply mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-700;
+}
+
+/* ---------- Scroll menu sidebar: thumb tipis, muncul saat disorot ---------- */
+.sidebar-scroll {
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    scrollbar-color: transparent transparent;
+}
+
+.sidebar-scroll:hover {
+    scrollbar-color: color-mix(in oklch, var(--color-gray-400) 45%, transparent) transparent;
 }

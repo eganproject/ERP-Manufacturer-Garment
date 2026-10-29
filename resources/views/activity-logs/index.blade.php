@@ -1,6 +1,6 @@
 <x-layouts.app title="Log Aktivitas">
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari aktivitas...">
                 <div class="w-48">
                     <x-form.select name="user_id" :options="$users" :value="request('user_id')" placeholder="Semua pengguna" />

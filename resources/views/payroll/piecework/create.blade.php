@@ -50,7 +50,7 @@
                     @csrf
                     <input type="hidden" name="production_order_id" value="{{ $spk->id }}">
                     <x-card title="Hasil Kerja {{ $spk->number }}" :padding="false">
-                        <div class="grid grid-cols-1 gap-4 border-b border-gray-200 p-4 sm:grid-cols-3">
+                        <div class="grid grid-cols-1 gap-4 border-b border-gray-100 p-4 sm:grid-cols-3">
                             <x-form.input name="date" label="Tanggal Kerja" tip="Tanggal pekerjaan dilakukan. Menentukan periode penggajian yang akan membayarnya." :value="old('date', now()->toDateString())" required data-date />
                             <x-form.input name="notes" label="Catatan" :value="old('notes')" placeholder="mis. Line 2, shift pagi" class="sm:col-span-2" />
                         </div>

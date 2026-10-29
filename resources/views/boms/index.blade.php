@@ -2,7 +2,7 @@
     <x-slot:actions><a href="{{ route('boms.create') }}" class="btn-primary">+ Buat BOM</a></x-slot:actions>
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4"><x-search-filter placeholder="Cari nama BOM / produk..." /></div>
+        <div class="border-b border-gray-100 p-4"><x-search-filter placeholder="Cari nama BOM / produk..." /></div>
         <div class="overflow-x-auto">
             <table class="table-base">
                 <thead><tr><th>Nama BOM</th><th>Produk</th><th class="text-right">Jumlah Bahan</th><th>Status</th><th class="text-right">Aksi</th></tr></thead>

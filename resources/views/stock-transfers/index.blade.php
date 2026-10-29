@@ -4,7 +4,7 @@
     @endcan
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari no. transfer...">
                 <div class="w-56"><x-form.select name="warehouse_id" :options="$warehouses" :value="request('warehouse_id')" placeholder="Semua gudang" /></div>
             </x-search-filter>

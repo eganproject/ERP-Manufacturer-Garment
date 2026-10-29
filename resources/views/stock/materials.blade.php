@@ -7,7 +7,7 @@
     </x-slot:actions>
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari kode / nama bahan...">
                 @include('stock.partials.warehouse-filter')
                 <label class="inline-flex items-center gap-2 py-2 text-sm text-gray-700">

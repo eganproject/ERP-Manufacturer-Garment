@@ -19,7 +19,7 @@
     </div>
 
     <x-card :padding="false">
-        <div class="border-b border-gray-200 p-4">
+        <div class="border-b border-gray-100 p-4">
             <x-search-filter placeholder="Cari no. / nama / no. seri / lokasi...">
                 <div class="w-40"><x-form.input name="from" :value="$from" data-date /></div>
                 <div class="w-40"><x-form.input name="to" :value="$to" data-date /></div>
