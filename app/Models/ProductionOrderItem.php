@@ -11,11 +11,18 @@ class ProductionOrderItem extends Model
     protected $casts = [
         'quantity' => 'decimal:2',
         'finished_quantity' => 'decimal:2',
+        'defect_quantity' => 'decimal:2',
     ];
 
     public function productionOrder()
     {
         return $this->belongsTo(ProductionOrder::class);
+    }
+
+    /** Pcs yang belum disetor ke gudang (bagus maupun grade B). */
+    public function remainingQuantity(): float
+    {
+        return max(0, round((float) $this->quantity - (float) $this->finished_quantity - (float) $this->defect_quantity, 2));
     }
 
     public function variant()

@@ -3,16 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProductionCostType;
+use App\Enums\ProductionMaterialTransferType;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\SalesOrderStatus;
 use App\Enums\StageStatus;
 use App\Enums\SubcontractStatus;
 use App\Models\ActivityLog;
 use App\Models\Bom;
+use App\Models\Material;
 use App\Models\Product;
 use App\Models\ProductionCost;
+use App\Models\ProductionMaterialTransfer;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderItem;
+use App\Models\ProductionReceipt;
 use App\Models\ProductionStage;
 use App\Models\SalesOrder;
 use App\Models\Warehouse;
@@ -35,8 +39,8 @@ class ProductionOrderController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('can:production.view', only: ['index', 'show', 'pdf']),
-            new Middleware('can:production.manage', except: ['index', 'show', 'pdf']),
+            new Middleware('can:production.view', only: ['index', 'show', 'pdf', 'materialTransferPdf', 'receiptPdf']),
+            new Middleware('can:production.manage', except: ['index', 'show', 'pdf', 'materialTransferPdf', 'receiptPdf']),
         ];
     }
 
@@ -94,7 +98,7 @@ class ProductionOrderController extends Controller implements HasMiddleware
 
     public function show(ProductionOrder $productionOrder)
     {
-        $productionOrder->load(['product.unit', 'bom.items.material', 'salesOrder.customer', 'items.variant', 'materials.material.unit', 'stages.subcontractOrder.supplier', 'costs', 'creator', 'activities.user', 'subcontractOrders.supplier', 'pieceworkSheets.entries', 'product.operations']);
+        $productionOrder->load(['product.unit', 'bom.items.material', 'salesOrder.customer', 'items.variant', 'materials.material.unit', 'stages.subcontractOrder.supplier', 'costs', 'creator', 'activities.user', 'subcontractOrders.supplier', 'pieceworkSheets.entries', 'product.operations', 'materialTransfers.items', 'receipts']);
 
         return view('production-orders.show', [
             'order' => $productionOrder,
@@ -168,11 +172,107 @@ class ProductionOrderController extends Controller implements HasMiddleware
             'finished' => ['required', 'array'],
             'finished.*' => ['nullable', 'numeric', 'min:0'],
             'reject_quantity' => ['nullable', 'numeric', 'min:0'],
+            'defects' => ['nullable', 'array'],
+            'defects.*' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $this->service->complete($productionOrder, $data['finished'], (float) ($data['reject_quantity'] ?? 0));
+        $this->service->complete($productionOrder, $data['finished'], (float) ($data['reject_quantity'] ?? 0), $data['defects'] ?? []);
 
-        return back()->with('success', 'Produksi selesai, barang jadi masuk ke stok.');
+        return back()->with('success', 'Produksi selesai, sisa hasil masuk stok dan HPP aktual SPK sudah dihitung.');
+    }
+
+    /** Form bahan tambahan (issue) / retur sisa bahan (return) untuk SPK berjalan. */
+    public function materialForm(ProductionOrder $productionOrder, string $type)
+    {
+        $type = ProductionMaterialTransferType::from($type);
+
+        if ($productionOrder->status !== ProductionOrderStatus::InProgress) {
+            return redirect()->route('production-orders.show', $productionOrder)->with('error', 'Bahan hanya dapat ditambah / diretur saat SPK Dalam Proses.');
+        }
+
+        $productionOrder->load(['product', 'materials.material.unit']);
+
+        return view('production-orders.materials', [
+            'order' => $productionOrder,
+            'type' => $type,
+            'internal' => ProductionService::internalIssued($productionOrder),
+            'materials' => $type === ProductionMaterialTransferType::Issue
+                ? Material::with('unit')->where('is_active', true)->whereNotIn('id', $productionOrder->materials->pluck('material_id'))->orderBy('name')->get()
+                : collect(),
+        ]);
+    }
+
+    public function storeMaterials(Request $request, ProductionOrder $productionOrder, string $type)
+    {
+        $type = ProductionMaterialTransferType::from($type);
+        $data = $request->validate([
+            'date' => ['required', 'date'],
+            'warehouse_id' => ['nullable', Warehouse::rule()],
+            'notes' => ['nullable', 'string'],
+            'items' => ['nullable', 'array'],
+            'items.*' => ['nullable', 'numeric', 'min:0'],
+            'extra_material_id' => ['nullable', 'exists:materials,id'],
+            'extra_quantity' => ['nullable', 'numeric', 'min:0'],
+        ], [], ['date' => 'tanggal', 'items' => 'jumlah bahan']);
+
+        $lines = $data['items'] ?? [];
+
+        if ($type === ProductionMaterialTransferType::Issue && ! empty($data['extra_material_id']) && (float) ($data['extra_quantity'] ?? 0) > 0) {
+            $lines[$data['extra_material_id']] = (float) ($lines[$data['extra_material_id']] ?? 0) + (float) $data['extra_quantity'];
+        }
+
+        $transfer = $type === ProductionMaterialTransferType::Issue
+            ? $this->service->issueMaterials($productionOrder, $lines, $data)
+            : $this->service->returnMaterials($productionOrder, $lines, $data);
+
+        return redirect()->route('production-orders.show', $productionOrder)
+            ->with('success', "{$type->label()} {$transfer->number} berhasil dicatat.");
+    }
+
+    /** Form setor hasil produksi bertahap. */
+    public function receiptForm(ProductionOrder $productionOrder)
+    {
+        if ($productionOrder->status !== ProductionOrderStatus::InProgress) {
+            return redirect()->route('production-orders.show', $productionOrder)->with('error', 'Setor hasil hanya dapat dicatat saat SPK Dalam Proses.');
+        }
+
+        $productionOrder->load(['product', 'items.variant', 'stages']);
+
+        return view('production-orders.receipt', [
+            'order' => $productionOrder,
+            'estimatedUnitCost' => $this->service->estimatedUnitCost($productionOrder),
+        ]);
+    }
+
+    public function storeReceipt(Request $request, ProductionOrder $productionOrder)
+    {
+        $data = $request->validate([
+            'date' => ['required', 'date'],
+            'warehouse_id' => ['nullable', Warehouse::rule()],
+            'notes' => ['nullable', 'string'],
+            'items' => ['required', 'array'],
+            'items.*.good' => ['nullable', 'numeric', 'min:0'],
+            'items.*.defect' => ['nullable', 'numeric', 'min:0'],
+        ], [], ['date' => 'tanggal', 'items' => 'jumlah setor']);
+
+        $receipt = $this->service->receive($productionOrder, $data['items'], $data);
+
+        return redirect()->route('production-orders.show', $productionOrder)
+            ->with('success', "Setor hasil {$receipt->number} berhasil dicatat, barang masuk stok.");
+    }
+
+    public function materialTransferPdf(ProductionMaterialTransfer $transfer)
+    {
+        $transfer->load(['productionOrder.product', 'items.material.unit', 'creator', 'warehouse']);
+
+        return DocumentPdf::stream('pdf.production-material-transfer', ['transfer' => $transfer], $transfer->number);
+    }
+
+    public function receiptPdf(ProductionReceipt $receipt)
+    {
+        $receipt->load(['productionOrder.product', 'items.variant', 'creator', 'warehouse']);
+
+        return DocumentPdf::stream('pdf.production-receipt', ['receipt' => $receipt], $receipt->number);
     }
 
     public function storeCost(Request $request, ProductionOrder $productionOrder)

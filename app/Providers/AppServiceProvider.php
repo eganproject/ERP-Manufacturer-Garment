@@ -24,7 +24,9 @@ use App\Models\Material;
 use App\Models\Payment;
 use App\Models\Payroll;
 use App\Models\PieceworkSheet;
+use App\Models\ProductionMaterialTransfer;
 use App\Models\ProductionOrder;
+use App\Models\ProductionReceipt;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseReturn;
@@ -74,6 +76,8 @@ class AppServiceProvider extends ServiceProvider
             'payment' => Payment::class,
             'subcontract_order' => SubcontractOrder::class,
             'subcontract_transfer' => SubcontractTransfer::class,
+            'production_material_transfer' => ProductionMaterialTransfer::class,
+            'production_receipt' => ProductionReceipt::class,
             'subcontract_receipt' => SubcontractReceipt::class,
             'sales_return' => SalesReturn::class,
             'purchase_return' => PurchaseReturn::class,

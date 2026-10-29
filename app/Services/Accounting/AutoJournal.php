@@ -8,6 +8,7 @@ use App\Enums\DefectHandlingType;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
 use App\Enums\ProductionCostType;
+use App\Enums\ProductionMaterialTransferType;
 use App\Enums\StockMovementType;
 use App\Enums\SubcontractTransferType;
 use App\Models\Bill;
@@ -28,7 +29,9 @@ use App\Models\Material;
 use App\Models\Payment;
 use App\Models\Payroll;
 use App\Models\ProductionCost;
+use App\Models\ProductionMaterialTransfer;
 use App\Models\ProductionOrder;
+use App\Models\ProductionReceipt;
 use App\Models\PurchaseReturn;
 use App\Models\SalesReturn;
 use App\Models\StockMovement;
@@ -273,17 +276,51 @@ class AutoJournal
         ], 'close');
     }
 
+    /** Bahan tambahan ke SPK (Dr WIP / Cr bahan baku) atau retur sisa bahan SPK ke gudang (kebalikannya). */
+    public function productionMaterialTransfer(ProductionMaterialTransfer $transfer): ?JournalEntry
+    {
+        $transfer->loadMissing('items', 'productionOrder');
+        $spk = $transfer->productionOrder;
+        $value = $transfer->totalValue();
+        $sign = $transfer->type === ProductionMaterialTransferType::Issue ? 1 : -1;
+
+        return $this->post($transfer, $transfer->date, "{$transfer->type->label()} {$spk->number} ({$transfer->number})", [
+            ['account' => 'wip', 'amount' => $sign * $value, 'reference' => $spk],
+            ['account' => 'raw_material', 'amount' => -$sign * $value],
+        ]);
+    }
+
+    /** Setoran hasil produksi: barang jadi bagus & reject grade B masuk persediaan, keluar dari WIP SPK. */
+    public function productionReceipt(ProductionReceipt $receipt): ?JournalEntry
+    {
+        $receipt->loadMissing('productionOrder');
+        $spk = $receipt->productionOrder;
+        $defect = (float) $receipt->defect_quantity > 0 ? ' + '.qty($receipt->defect_quantity).' pcs grade B' : '';
+
+        return $this->post($receipt, $receipt->date, "Hasil produksi {$spk->number} masuk gudang ({$receipt->number}: ".qty($receipt->quantity).' pcs'.$defect.' × '.rupiah($receipt->unit_cost).')', [
+            ['account' => 'finished_goods', 'amount' => $receipt->goodValue()],
+            ['account' => 'defect_inventory', 'amount' => $receipt->defectValue()],
+            ['account' => 'wip', 'amount' => -(float) $receipt->total_cost, 'reference' => $spk],
+        ]);
+    }
+
     /**
-     * SPK selesai: barang jadi masuk persediaan sebesar HPP; sisa saldo WIP SPK (pembulatan,
+     * SPK selesai: sisa saldo WIP SPK (pembulatan, biaya yang tercatat sesudah setoran terakhir,
      * selisih harga rata-rata) dibebankan ke selisih biaya produksi agar WIP SPK menjadi nol.
+     * SPK lama (sebelum ada setoran hasil) memasukkan barang jadi langsung dari jurnal ini.
      */
     public function productionComplete(ProductionOrder $spk): ?JournalEntry
     {
         $spk->load('items');
-        $finishedValue = round($spk->items->sum(fn ($i) => (float) $i->finished_quantity * (float) $spk->unit_cost), 2);
+        $legacy = ! $spk->receipts()->exists();
+        $finishedValue = $legacy ? round($spk->items->sum(fn ($i) => (float) $i->finished_quantity * (float) $spk->unit_cost), 2) : 0.0;
         $wip = $this->referenceBalance('wip', $spk);
 
-        return $this->post($spk, $spk->completed_at ?? today(), "Hasil produksi {$spk->number} masuk gudang (".qty($spk->finished_quantity).' pcs × '.rupiah($spk->unit_cost).')', [
+        $description = $legacy
+            ? "Hasil produksi {$spk->number} masuk gudang (".qty($spk->finished_quantity).' pcs × '.rupiah($spk->unit_cost).')'
+            : "Tutup SPK {$spk->number}: sisa biaya produksi ke selisih biaya";
+
+        return $this->post($spk, $spk->completed_at ?? today(), $description, [
             ['account' => 'finished_goods', 'amount' => $finishedValue],
             ['account' => 'production_variance', 'amount' => $wip - $finishedValue],
             ['account' => 'wip', 'amount' => -$wip, 'reference' => $spk],
