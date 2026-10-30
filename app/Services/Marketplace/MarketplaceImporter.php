@@ -101,8 +101,19 @@ class MarketplaceImporter
     public function groupOrders(MarketplacePlatform $platform, array $headers, array $rows): array
     {
         $map = self::columnMap($headers, self::ORDER_COLUMNS);
-        $slash = $platform->slashDateFormat();
         $get = fn (array $row, string $field) => isset($map[$field]) ? trim((string) ($row[$map[$field]] ?? '')) : '';
+        // Urutan hari/bulan dibaca dari isi file (ekspor TikTok bisa d/m/Y atau m/d/Y tergantung bahasa Seller Center)
+        $dateFields = ['order_date', 'paid_at', 'shipped_at', 'completed_at', 'cancelled_at', 'ship_by'];
+        $slash = SpreadsheetReader::detectSlashOrder(
+            (function () use ($rows, $dateFields, $get) {
+                foreach ($rows as $row) {
+                    foreach ($dateFields as $field) {
+                        yield $get($row, $field);
+                    }
+                }
+            })(),
+            $platform->slashDateFormat(),
+        );
         $date = fn (array $row, string $field) => SpreadsheetReader::date($get($row, $field), $slash);
         $orders = [];
 

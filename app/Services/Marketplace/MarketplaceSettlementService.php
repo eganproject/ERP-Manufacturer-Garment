@@ -207,7 +207,10 @@ class MarketplaceSettlementService
         $shipping = collect(self::SHIPPING_PARTS)->map($pick)->all();
         $adjustments = $pick(self::ADJUSTMENT_COLUMNS);
         $netColumn = $pick(self::NET_COLUMNS)[0] ?? null;
-        $slash = $store->platform->slashDateFormat();
+        $slash = SpreadsheetReader::detectSlashOrder(
+            isset($map['date']) ? array_map(fn ($row) => $row[$map['date']] ?? '', $rows) : [],
+            $store->platform->slashDateFormat(),
+        );
 
         $num = fn (array $row, ?string $col) => $col ? SpreadsheetReader::number($row[$col] ?? '') : 0.0;
         $sumAbs = fn (array $row, array $cols) => round(array_sum(array_map(fn ($c) => abs($num($row, $c)), $cols)), 2);
