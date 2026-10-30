@@ -271,6 +271,33 @@ class MarketplaceTest extends TestCase
         $this->assertSame(47.0, $this->tshirtM->fresh()->stockIn($this->online));
     }
 
+    public function test_tiktok_indonesian_export_uses_day_month_dates(): void
+    {
+        $tiktok = MarketplaceStore::create(['platform' => MarketplacePlatform::TikTok, 'name' => 'Garmen TT ID', 'warehouse_id' => $this->online->id]);
+        $file = $this->csv([
+            ['Order ID', 'Order Status', 'Normal or Pre-order', 'Seller SKU', 'Product Name', 'Variation', 'Quantity', 'SKU Subtotal After Discount', 'Created Time', 'Paid Time', 'Shipped Time'],
+            ['Platform unique order ID.', 'Current order status.', '', '', '', '', '', '', '', '', ''],
+            ['586000000000000001', 'Perlu dikirim', 'Pre-order', 'TS-BSC-HTM-M', 'Kaos', 'M', '1', '64900', '01/10/2026 10:16:37', '', ''],
+            ['586000000000000002', 'Perlu dikirim', 'Pre-order', 'TS-BSC-HTM-M', 'Kaos', 'M', '1', '64900', '27/09/2026 22:44:20', '27/09/2026 22:45:14', ''],
+        ]);
+
+        app(MarketplaceImporter::class)->importFile($tiktok, $file->getRealPath(), 'untuk-dikirim.csv');
+        $orders = MarketplaceOrder::where('marketplace_store_id', $tiktok->id)->get()->keyBy('order_number');
+
+        $this->assertSame('2026-10-01', $orders['586000000000000001']->order_date->toDateString());
+        $this->assertSame('2026-09-27', $orders['586000000000000002']->paid_at->toDateString());
+        $this->assertTrue($orders['586000000000000001']->is_preorder);
+    }
+
+    public function test_slash_date_order_is_detected_from_file_values(): void
+    {
+        $this->assertSame('dmy', SpreadsheetReader::detectSlashOrder(['01/10/2026 10:16', '27/09/2026 22:44'], 'mdy'));
+        $this->assertSame('mdy', SpreadsheetReader::detectSlashOrder(['10/09/2026', '10/27/2026'], 'dmy'));
+        $this->assertSame('mdy', SpreadsheetReader::detectSlashOrder(['10/09/2026 11:02:03 PM'], 'dmy'));
+        $this->assertSame('dmy', SpreadsheetReader::detectSlashOrder(['01/10/2026 10:16:37'], 'mdy'));
+        $this->assertSame('mdy', SpreadsheetReader::detectSlashOrder(['', '05/06/2026'], 'mdy'));
+    }
+
     public function test_spreadsheet_reader_parses_numbers_and_xlsx(): void
     {
         $this->assertSame(1250000.0, SpreadsheetReader::number('Rp 1.250.000'));

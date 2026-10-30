@@ -111,6 +111,42 @@ class SpreadsheetReader
     }
 
     /**
+     * Tebak urutan tanggal bergaris miring ('dmy' / 'mdy') dari isi kolom tanggal satu file. Ekspor TikTok
+     * berbahasa Indonesia memakai hari/bulan (27/09/2026 22:44), versi bahasa Inggris bulan/hari + AM/PM.
+     * Urutan: angka > 12 di salah satu posisi menentukan; bila semua ambigu, jam AM/PM = 'mdy', jam 24 jam = 'dmy';
+     * tanpa petunjuk sama sekali dipakai $default.
+     *
+     * @param  iterable<string|null>  $values
+     */
+    public static function detectSlashOrder(iterable $values, string $default = 'dmy'): string
+    {
+        $ampm = $clock24 = false;
+
+        foreach ($values as $value) {
+            if (! preg_match('#^\s*(\d{1,2})[/\-.](\d{1,2})[/\-.]\d{4}(.*)$#', (string) $value, $m)) {
+                continue;
+            }
+            if ((int) $m[1] > 12) {
+                return 'dmy';
+            }
+            if ((int) $m[2] > 12) {
+                return 'mdy';
+            }
+            if (preg_match('/\b[ap]\.?m\.?\b/i', $m[3])) {
+                $ampm = true;
+            } elseif (preg_match('/\d{1,2}:\d{2}/', $m[3])) {
+                $clock24 = true;
+            }
+        }
+
+        return match (true) {
+            $ampm => 'mdy',
+            $clock24 => 'dmy',
+            default => $default,
+        };
+    }
+
+    /**
      * Tanggal dari teks / serial Excel. $slash = urutan tanggal bergaris miring: 'dmy' (Shopee) atau 'mdy' (TikTok).
      */
     public static function date(?string $value, string $slash = 'dmy'): ?Carbon
