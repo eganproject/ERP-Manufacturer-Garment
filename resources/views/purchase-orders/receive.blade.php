@@ -26,10 +26,13 @@
                     <tbody class="divide-y divide-gray-100">
                         @foreach ($order->items as $item)
                             <tr>
-                                <td>{{ $item->material->display_name }}</td>
+                                <td>
+                                    {{ $item->material->display_name }}
+                                    @if ($item->isConverted())<div class="text-xs text-gray-500">{{ $item->conversionLabel() }} · stok bertambah dalam {{ $item->material->unit->code }}</div>@endif
+                                </td>
                                 <td class="text-right">{{ qty($item->quantity) }}</td>
                                 <td class="text-right">{{ qty($item->received_quantity) }}</td>
-                                <td class="text-right font-medium">{{ qty($item->outstandingQuantity()) }} {{ $item->material->unit->code }}</td>
+                                <td class="text-right font-medium">{{ qty($item->outstandingQuantity()) }} {{ $item->unitCode() }}</td>
                                 <td>
                                     @if ($item->outstandingQuantity() > 0)
                                         <input type="number" step="0.01" min="0" max="{{ $item->outstandingQuantity() }}" name="items[{{ $item->id }}]"

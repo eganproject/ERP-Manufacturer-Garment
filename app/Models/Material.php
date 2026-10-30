@@ -16,6 +16,7 @@ class Material extends Model
         'average_cost' => 'decimal:4',
         'min_stock' => 'decimal:2',
         'stock' => 'decimal:2',
+        'purchase_conversion' => 'decimal:6',
         'is_active' => 'boolean',
     ];
 
@@ -27,6 +28,41 @@ class Material extends Model
     public function unit()
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    /** Satuan beli (mis. YD) bila berbeda dari satuan stok; kosong = dibeli dalam satuan stok. */
+    public function purchaseUnit()
+    {
+        return $this->belongsTo(Unit::class, 'purchase_unit_id');
+    }
+
+    public function hasPurchaseUnit(): bool
+    {
+        return $this->purchase_unit_id && $this->purchase_unit_id !== $this->unit_id && (float) $this->purchase_conversion > 0;
+    }
+
+    /** Satuan default di PO: satuan beli bila ada, selain itu satuan stok. */
+    public function defaultPurchaseUnitId(): int
+    {
+        return $this->hasPurchaseUnit() ? (int) $this->purchase_unit_id : (int) $this->unit_id;
+    }
+
+    /** Faktor satuan $unitId → satuan stok (1 bila satuan stok atau tidak dikenal). */
+    public function conversionFor(?int $unitId): float
+    {
+        return $this->hasPurchaseUnit() && $unitId === (int) $this->purchase_unit_id ? (float) $this->purchase_conversion : 1.0;
+    }
+
+    /** Pilihan satuan di PO: [unit_id => [kode, faktor ke satuan stok]]. */
+    public function purchaseUnitOptions(): array
+    {
+        $options = [];
+        if ($this->hasPurchaseUnit()) {
+            $options[(int) $this->purchase_unit_id] = [$this->purchaseUnit?->code, (float) $this->purchase_conversion];
+        }
+        $options[(int) $this->unit_id] = [$this->unit?->code, 1.0];
+
+        return $options;
     }
 
     public function defaultSupplier()

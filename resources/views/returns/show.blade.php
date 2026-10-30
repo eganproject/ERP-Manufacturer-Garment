@@ -59,7 +59,7 @@
                                     </td>
                                 @else
                                     <td>{{ $item->material->display_name }}</td>
-                                    <td class="text-right">{{ qty($item->quantity) }} {{ $item->material->unit->code }}</td>
+                                    <td class="text-right">{{ qty($item->quantity) }} {{ $item->purchaseOrderItem?->unitCode() ?? $item->material->unit->code }}</td>
                                 @endif
                                 <td class="text-right">{{ qty($item->billed_quantity) }}</td>
                                 <td class="text-right whitespace-nowrap">{{ rupiah($item->price) }}</td>

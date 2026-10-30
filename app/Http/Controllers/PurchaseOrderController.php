@@ -73,7 +73,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
 
     public function show(PurchaseOrder $purchaseOrder)
     {
-        $purchaseOrder->load(['supplier', 'items.material.unit', 'receipts.items.material', 'receipts.warehouse', 'bills', 'returns.items.material', 'creator', 'approver', 'activities.user']);
+        $purchaseOrder->load(['supplier', 'items.material.unit', 'items.unit', 'receipts.items.material.unit', 'receipts.items.purchaseOrderItem.unit', 'receipts.warehouse', 'bills', 'returns.items.material', 'creator', 'approver', 'activities.user']);
 
         return view('purchase-orders.show', ['order' => $purchaseOrder]);
     }
@@ -161,7 +161,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
     public function receiveForm(PurchaseOrder $purchaseOrder)
     {
         abort_unless($purchaseOrder->canReceive(), 403, 'PO ini tidak dapat diterima.');
-        $purchaseOrder->load(['supplier', 'items.material.unit']);
+        $purchaseOrder->load(['supplier', 'items.material.unit', 'items.unit']);
 
         return view('purchase-orders.receive', ['order' => $purchaseOrder]);
     }
@@ -185,14 +185,14 @@ class PurchaseOrderController extends Controller implements HasMiddleware
 
     public function pdf(PurchaseOrder $purchaseOrder)
     {
-        $purchaseOrder->load(['supplier', 'items.material.unit', 'creator', 'approver']);
+        $purchaseOrder->load(['supplier', 'items.material.unit', 'items.unit', 'creator', 'approver']);
 
         return DocumentPdf::stream('pdf.purchase-order', ['order' => $purchaseOrder], $purchaseOrder->number);
     }
 
     public function receiptPdf(GoodsReceipt $receipt)
     {
-        $receipt->load(['purchaseOrder.supplier', 'items.material.unit', 'items.purchaseOrderItem', 'creator']);
+        $receipt->load(['purchaseOrder.supplier', 'items.material.unit', 'items.purchaseOrderItem.unit', 'creator']);
 
         return DocumentPdf::stream('pdf.goods-receipt', ['receipt' => $receipt], $receipt->number);
     }
@@ -202,7 +202,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
         return [
             'order' => $order,
             'suppliers' => Supplier::where('is_active', true)->orderBy('name')->get(),
-            'materials' => Material::with('unit')->where('is_active', true)->orderBy('name')->get(),
+            'materials' => Material::with('unit', 'purchaseUnit')->where('is_active', true)->orderBy('name')->get(),
         ];
     }
 
@@ -215,18 +215,30 @@ class PurchaseOrderController extends Controller implements HasMiddleware
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.material_id' => ['required', 'exists:materials,id'],
+            'items.*.unit_id' => ['nullable', 'integer'],
             'items.*.quantity' => ['required', 'numeric', 'gt:0'],
             'items.*.price' => ['required', 'numeric', 'min:0'],
         ], [
             'items.required' => 'Tambahkan minimal satu bahan.',
         ]);
 
-        $items = array_map(fn ($row) => [
-            'material_id' => $row['material_id'],
-            'quantity' => $row['quantity'],
-            'price' => $row['price'],
-            'subtotal' => round($row['quantity'] * $row['price'], 2),
-        ], array_values($data['items']));
+        $materials = Material::with('unit', 'purchaseUnit')->findMany(array_column($data['items'], 'material_id'))->keyBy('id');
+
+        $items = array_map(function ($row) use ($materials) {
+            $material = $materials->get($row['material_id']);
+            // Satuan baris: satuan beli atau satuan stok bahan; selain itu pakai satuan default bahan
+            $unitId = isset($row['unit_id']) && array_key_exists((int) $row['unit_id'], $material->purchaseUnitOptions())
+                ? (int) $row['unit_id'] : $material->defaultPurchaseUnitId();
+
+            return [
+                'material_id' => $row['material_id'],
+                'unit_id' => $unitId,
+                'conversion' => $material->conversionFor($unitId),
+                'quantity' => $row['quantity'],
+                'price' => $row['price'],
+                'subtotal' => round($row['quantity'] * $row['price'], 2),
+            ];
+        }, array_values($data['items']));
 
         unset($data['items']);
 

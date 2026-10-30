@@ -62,8 +62,8 @@
                         <tbody class="divide-y divide-gray-100">
                             @foreach ($order->items->filter(fn ($i) => $i->unbilledQuantity() > 0)->values() as $idx => $item)
                                 <tr>
-                                    <td>{{ $item->material->display_name }}<div class="text-xs text-gray-500">Harga PO {{ rupiah($item->price) }}</div></td>
-                                    <td class="text-right">{{ qty($item->quantity) }} {{ $item->material->unit->code }}</td>
+                                    <td>{{ $item->material->display_name }}<div class="text-xs text-gray-500">Harga PO {{ rupiah($item->price) }} / {{ $item->unitCode() }}</div></td>
+                                    <td class="text-right">{{ qty($item->quantity) }} {{ $item->unitCode() }}</td>
                                     <td class="text-right">{{ qty($item->received_quantity) }}</td>
                                     <td class="text-right">{{ qty($item->billed_quantity) }}</td>
                                     <td class="text-right font-medium">{{ qty($item->unbilledQuantity()) }}</td>

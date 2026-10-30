@@ -56,7 +56,7 @@ class PurchaseReturnController extends Controller implements HasMiddleware
         $order = null;
 
         if ($request->order_id) {
-            $order = PurchaseOrder::with(['supplier', 'items.material.unit'])->findOrFail($request->order_id);
+            $order = PurchaseOrder::with(['supplier', 'items.material.unit', 'items.unit'])->findOrFail($request->order_id);
 
             if (! $order->canReturn()) {
                 return redirect()->route('purchase-orders.show', $order)->with('error', 'Tidak ada barang diterima yang dapat diretur pada PO ini.');
@@ -74,7 +74,7 @@ class PurchaseReturnController extends Controller implements HasMiddleware
             'id' => $item->id,
             'name' => $item->material->display_name,
             'code' => $item->material->code,
-            'unit' => $item->material->unit->code,
+            'unit' => $item->unitCode(),
             'shipped' => (float) $item->received_quantity,
             'returned' => (float) $item->returned_quantity,
             'returnable' => $item->returnableQuantity(),
@@ -97,7 +97,7 @@ class PurchaseReturnController extends Controller implements HasMiddleware
 
     public function show(PurchaseReturn $purchaseReturn)
     {
-        $purchaseReturn->load(['supplier', 'purchaseOrder', 'items.material.unit', 'applications.payable', 'creator', 'activities.user']);
+        $purchaseReturn->load(['supplier', 'purchaseOrder', 'items.material.unit', 'items.purchaseOrderItem.unit', 'applications.payable', 'creator', 'activities.user']);
 
         $openDocuments = $purchaseReturn->hasBalance()
             ? Bill::open()->where('supplier_id', $purchaseReturn->supplier_id)->orderBy('due_date')->get()
@@ -138,7 +138,7 @@ class PurchaseReturnController extends Controller implements HasMiddleware
 
     public function pdf(PurchaseReturn $purchaseReturn)
     {
-        $purchaseReturn->load(['supplier', 'purchaseOrder', 'items.material.unit', 'applications.payable', 'creator']);
+        $purchaseReturn->load(['supplier', 'purchaseOrder', 'items.material.unit', 'items.purchaseOrderItem.unit', 'applications.payable', 'creator']);
 
         return DocumentPdf::stream('pdf.return', ['kind' => ReturnKind::purchases(), 'return' => $purchaseReturn], $purchaseReturn->number);
     }

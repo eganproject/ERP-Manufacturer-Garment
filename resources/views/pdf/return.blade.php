@@ -57,7 +57,7 @@
                         <td>{{ $item->material->code }}</td>
                         <td>{{ $item->material->name }}</td>
                         <td class="r">{{ qty($item->quantity) }}</td>
-                        <td>{{ $item->material->unit?->code }}</td>
+                        <td>{{ $item->purchaseOrderItem?->unitCode() ?? $item->material->unit?->code }}</td>
                     @endif
                     <td class="r">{{ qty($item->billed_quantity) }}</td>
                     <td class="r">{{ rupiah($item->price) }}</td>

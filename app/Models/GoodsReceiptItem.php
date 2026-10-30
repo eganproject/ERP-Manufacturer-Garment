@@ -8,7 +8,7 @@ class GoodsReceiptItem extends Model
 {
     protected $guarded = ['id'];
 
-    protected $casts = ['quantity' => 'decimal:2'];
+    protected $casts = ['quantity' => 'decimal:2', 'stock_quantity' => 'decimal:2'];
 
     public function goodsReceipt()
     {
