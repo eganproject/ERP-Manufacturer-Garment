@@ -13,6 +13,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Di MySQL DDL tidak transaksional: percobaan lama yang gagal (nama FK > 64 karakter)
+        // bisa meninggalkan tabel setengah jadi. Migrasi ini belum tercatat, jadi tabelnya pasti kosong.
+        Schema::dropIfExists('production_material_transfer_items');
+        Schema::dropIfExists('production_material_transfers');
+
         Schema::create('production_material_transfers', function (Blueprint $table) {
             $table->id();
             $table->string('number', 30)->unique();
@@ -27,7 +32,8 @@ return new class extends Migration
 
         Schema::create('production_material_transfer_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('production_material_transfer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('production_material_transfer_id')
+                ->constrained(indexName: 'pmt_items_transfer_id_foreign')->cascadeOnDelete();
             $table->foreignId('material_id')->constrained()->restrictOnDelete();
             $table->decimal('quantity', 15, 2);
             $table->decimal('unit_cost', 15, 4)->default(0);
