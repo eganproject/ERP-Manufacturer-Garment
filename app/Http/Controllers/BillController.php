@@ -65,7 +65,7 @@ class BillController extends Controller implements HasMiddleware
         $order = null;
 
         if ($request->purchase_order_id) {
-            $order = PurchaseOrder::with(['supplier', 'items.material.unit'])->findOrFail($request->purchase_order_id);
+            $order = PurchaseOrder::with(['supplier', 'items.material.unit', 'items.unit'])->findOrFail($request->purchase_order_id);
 
             if (! $order->canBill()) {
                 return redirect()->route('purchase-orders.show', $order)->with('error', 'Tidak ada barang diterima yang belum ditagih pada PO ini.');
@@ -137,14 +137,14 @@ class BillController extends Controller implements HasMiddleware
 
     public function show(Bill $bill)
     {
-        $bill->load(['supplier', 'purchaseOrder', 'subcontractOrder', 'fixedAsset', 'items.material.unit', 'allocations.payment', 'creditApplications.source', 'creator', 'activities.user']);
+        $bill->load(['supplier', 'purchaseOrder', 'subcontractOrder', 'fixedAsset', 'items.material.unit', 'items.purchaseOrderItem.unit', 'allocations.payment', 'creditApplications.source', 'creator', 'activities.user']);
 
         return view('bills.show', compact('bill'));
     }
 
     public function pdf(Bill $bill)
     {
-        $bill->load(['supplier', 'purchaseOrder', 'subcontractOrder', 'fixedAsset', 'items.material.unit', 'allocations.payment', 'creator']);
+        $bill->load(['supplier', 'purchaseOrder', 'subcontractOrder', 'fixedAsset', 'items.material.unit', 'items.purchaseOrderItem.unit', 'allocations.payment', 'creator']);
 
         return DocumentPdf::stream('pdf.bill', ['bill' => $bill], $bill->number);
     }

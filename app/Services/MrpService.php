@@ -83,7 +83,7 @@ class MrpService
         $onOrder = PurchaseOrderItem::query()
             ->join('purchase_orders', 'purchase_orders.id', '=', 'purchase_order_items.purchase_order_id')
             ->whereIn('purchase_orders.status', [PurchaseOrderStatus::Ordered->value, PurchaseOrderStatus::Partial->value])
-            ->selectRaw('material_id, SUM(quantity - received_quantity) as qty')
+            ->selectRaw('material_id, SUM((quantity - received_quantity) * conversion) as qty')
             ->groupBy('material_id')
             ->pluck('qty', 'material_id');
 
@@ -91,13 +91,13 @@ class MrpService
             ->join('purchase_orders', 'purchase_orders.id', '=', 'purchase_order_items.purchase_order_id')
             // PO draft & menunggu persetujuan: sudah direncanakan tetapi belum dipesan
             ->whereIn('purchase_orders.status', [PurchaseOrderStatus::Draft->value, PurchaseOrderStatus::PendingApproval->value])
-            ->selectRaw('material_id, SUM(quantity) as qty')
+            ->selectRaw('material_id, SUM(quantity * conversion) as qty')
             ->groupBy('material_id')
             ->pluck('qty', 'material_id');
 
         $lastSuppliers = $this->lastSuppliers(array_keys($gross));
 
-        $materialRows = Material::with(['unit', 'defaultSupplier'])
+        $materialRows = Material::with(['unit', 'purchaseUnit', 'defaultSupplier'])
             ->whereIn('id', array_keys($gross))
             ->get()
             ->map(function (Material $material) use ($gross, $sources, $onOrder, $draftPo, $includeSafetyStock, $lastSuppliers) {
@@ -107,6 +107,7 @@ class MrpService
                 $ordered = max(0, (float) ($onOrder[$material->id] ?? 0));
                 $drafted = max(0, (float) ($draftPo[$material->id] ?? 0));
                 $shortage = max(0.0, round($required + $safety - $stock - $ordered - $drafted, 2));
+                $factor = $material->conversionFor($material->defaultPurchaseUnitId());
 
                 return [
                     'material' => $material,
@@ -118,9 +119,12 @@ class MrpService
                     'on_order' => $ordered,
                     'draft_po' => $drafted,
                     'shortage' => $shortage,
-                    'suggested_quantity' => $shortage > 0 ? ceil($shortage) : 0,
+                    // Saran beli dalam satuan beli (mis. kekurangan 100 M → 110 YD), dibulatkan ke atas
+                    'purchase_unit' => $material->hasPurchaseUnit() ? $material->purchaseUnit?->code : $material->unit?->code,
+                    'purchase_conversion' => $factor,
+                    'suggested_quantity' => $shortage > 0 ? ceil(round($shortage / $factor, 4)) : 0,
                     'supplier_id' => $material->default_supplier_id ?? ($lastSuppliers[$material->id] ?? null),
-                    'price' => (float) $material->price,
+                    'price' => round((float) $material->price * $factor, 2),
                 ];
             })
             ->sortBy(fn ($row) => [$row['shortage'] > 0 ? 0 : 1, $row['material']->name])
@@ -162,9 +166,14 @@ class MrpService
                 $items = $rows->groupBy('material_id')->map(function (Collection $same, $materialId) {
                     $quantity = round($same->sum(fn ($r) => (float) $r['quantity']), 2);
                     $price = round((float) $same->first()['price'], 2);
+                    // Qty & harga MRP dalam satuan beli default bahan
+                    $material = Material::find($materialId);
+                    $unitId = $material->defaultPurchaseUnitId();
 
                     return [
                         'material_id' => (int) $materialId,
+                        'unit_id' => $unitId,
+                        'conversion' => $material->conversionFor($unitId),
                         'quantity' => $quantity,
                         'price' => $price,
                         'subtotal' => round($quantity * $price, 2),

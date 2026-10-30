@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Material;
 use App\Models\Supplier;
 use App\Models\Unit;
+use App\Support\UnitConversion;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,7 +16,7 @@ class MaterialController extends Controller
 {
     public function index(Request $request)
     {
-        $materials = Material::with(['category', 'unit'])
+        $materials = Material::with(['category', 'unit', 'purchaseUnit'])
             ->when($request->q, fn ($q, $s) => $q->where(fn ($w) => $w->where('name', 'like', "%{$s}%")->orWhere('code', 'like', "%{$s}%")))
             ->when($request->category_id, fn ($q, $c) => $q->where('category_id', $c))
             ->when($request->boolean('low_stock'), fn ($q) => $q->whereColumn('stock', '<=', 'min_stock'))
@@ -72,7 +73,8 @@ class MaterialController extends Controller
         return [
             'material' => $material,
             'categories' => Category::ofType('material')->orderBy('name')->get(),
-            'units' => Unit::orderBy('name')->get(),
+            'units' => $units = Unit::orderBy('name')->get(),
+            'standardFactors' => UnitConversion::mapFor($units),
             'suppliers' => Supplier::where('is_active', true)->orWhere('id', $material->default_supplier_id)->orderBy('name')->pluck('name', 'id'),
         ];
     }
@@ -84,6 +86,8 @@ class MaterialController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'category_id' => ['nullable', Rule::exists('categories', 'id')->where('type', 'material')],
             'unit_id' => ['required', 'exists:units,id'],
+            'purchase_unit_id' => ['nullable', 'exists:units,id', 'different:unit_id'],
+            'purchase_conversion' => ['nullable', 'required_with:purchase_unit_id', 'numeric', 'gt:0'],
             'default_supplier_id' => ['nullable', 'exists:suppliers,id'],
             'color' => ['nullable', 'string', 'max:50'],
             'price' => ['nullable', 'numeric', 'min:0'],
@@ -92,6 +96,7 @@ class MaterialController extends Controller
         ]);
 
         return array_merge($data, [
+            'purchase_conversion' => ! empty($data['purchase_unit_id']) ? $data['purchase_conversion'] : 1,
             'price' => $data['price'] ?? 0,
             'min_stock' => $data['min_stock'] ?? 0,
             'is_active' => $request->boolean('is_active'),

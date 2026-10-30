@@ -105,8 +105,8 @@
                             <th class="text-right">Kekurangan</th>
                             @if ($canPurchase)
                                 <th class="min-w-52">Supplier</th>
-                                <th class="min-w-28">Qty Beli</th>
-                                <th class="min-w-32">Harga</th>
+                                <th class="min-w-32">Qty Beli <x-tip title="Qty beli" text="Jumlah yang dipesan dalam satuan beli bahan (mis. YD). Kekurangan dalam satuan stok sudah dikonversi dan dibulatkan ke atas." /></th>
+                                <th class="min-w-32">Harga <x-tip title="Harga" text="Harga per satuan beli." /></th>
                             @endif
                         </tr>
                     </thead>
@@ -144,7 +144,15 @@
                                             @endforeach
                                         </select>
                                     </td>
-                                    <td><input type="number" min="0" step="0.01" name="lines[{{ $i }}][quantity]" x-model="rows[{{ $i }}].quantity" class="form-control py-1.5 text-right"></td>
+                                    <td>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="number" min="0" step="0.01" name="lines[{{ $i }}][quantity]" x-model="rows[{{ $i }}].quantity" class="form-control py-1.5 text-right">
+                                            <span class="text-xs text-gray-500">{{ $row['purchase_unit'] }}</span>
+                                        </div>
+                                        @if ($row['purchase_conversion'] != 1)
+                                            <div class="mt-0.5 text-right text-xs text-gray-500" x-text="'≈ ' + ERP.formatNumber(Math.round((Number(rows[{{ $i }}].quantity) || 0) * {{ $row['purchase_conversion'] }} * 100) / 100, 2) + ' {{ $m->unit->code }}'"></div>
+                                        @endif
+                                    </td>
                                     <td><input type="number" min="0" step="1" name="lines[{{ $i }}][price]" x-model="rows[{{ $i }}].price" class="form-control py-1.5 text-right"></td>
                                 @endif
                             </tr>

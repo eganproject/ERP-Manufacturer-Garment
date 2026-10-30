@@ -38,8 +38,8 @@
                     <td>{{ $item->material->name }}{{ $item->material->color ? " ({$item->material->color})" : "" }}</td>
                     <td class="r">{{ qty($item->purchaseOrderItem?->quantity) }}</td>
                     <td class="r bold">{{ qty($item->quantity) }}</td>
-                    <td>{{ $item->material->unit->code }}</td>
-                    <td></td>
+                    <td>{{ $item->purchaseOrderItem?->unitCode() ?? $item->material->unit->code }}</td>
+                    <td>{{ $item->purchaseOrderItem?->isConverted() ? '= '.qty($item->stock_quantity).' '.$item->material->unit->code.' di stok' : '' }}</td>
                 </tr>
             @endforeach
         </tbody>

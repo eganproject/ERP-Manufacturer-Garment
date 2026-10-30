@@ -89,6 +89,7 @@ Hanya untuk dua platform: **TikTok Shop** dan **Shopee**.
 3. Di halaman PO: **Tandai Dipesan**. Jika nilai PO ≥ batas persetujuan (Pengaturan Perusahaan), tombolnya menjadi **Ajukan Persetujuan**.
 4. **Keuangan** (atau Admin) membuka PO berstatus *Menunggu Persetujuan* → **Setujui** atau **Tolak** (alasan wajib). Pembuat PO tidak bisa menyetujui PO-nya sendiri.
 5. **Gudang**: saat barang datang, buka PO → **Terima Barang** (bisa bertahap). Stok bahan & harga pokok rata-rata ikut diperbarui.
+   - **Satuan beli ≠ satuan stok** (mis. kain dibeli per **yard** tetapi disimpan per **meter**): di **Master → Bahan Baku** isi **Satuan Beli** = YD dan **Isi 1 Satuan Beli** = 0,9144 (terisi otomatis untuk satuan baku: yard/meter, kg/gram, lusin/kodi; untuk ROLL isi sesuai isi sebenarnya, mis. 50). PO, penerimaan, tagihan & retur supplier memakai yard; stok, BOM, SPK dan harga pokok otomatis dihitung dalam meter (100 YD @Rp27.432 → stok +91,44 M @Rp30.000). Di PO satuan per baris masih bisa diganti ke satuan stok; MRP menyarankan qty beli dalam satuan beli (dibulatkan ke atas).
 6. Bila supplier tidak akan mengirim sisa: **Tutup Sisa PO** (alasan wajib). Barang cacat: **Retur ke Supplier** (nota debit memotong tagihan).
 
 ## 3. Produksi — Produksi (PPIC)

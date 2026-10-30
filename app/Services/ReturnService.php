@@ -195,11 +195,13 @@ class ReturnService
                 $item->returned_billed_quantity = (float) $item->returned_billed_quantity + $billedQty;
                 $item->save();
 
+                // Qty retur dalam satuan PO; stok keluar dalam satuan stok
                 $movement = $this->stock->move(
-                    $item->material, -1 * $qty, StockMovementType::PurchaseReturn,
+                    $item->material, -1 * $item->toStock($qty), StockMovementType::PurchaseReturn,
                     $return, $return->number, 'Retur '.$po->number.' ke '.$po->supplier->name, $date, warehouse: $return->warehouse_id,
                 );
-                $unitCost = (float) $movement->unit_cost;
+                $cost = round(abs((float) $movement->quantity) * (float) $movement->unit_cost, 2);
+                $unitCost = round($cost / $qty, 4);
 
                 $return->items()->create([
                     'purchase_order_item_id' => $item->id,
@@ -210,8 +212,8 @@ class ReturnService
                     'subtotal' => round($qty * $price, 2),
                     'amount' => round($billedQty * $price * $factor, 2),
                     'unit_cost' => $unitCost,
-                    'cost' => round($qty * $unitCost, 2),
-                    'billed_cost' => round($billedQty * $unitCost, 2),
+                    'cost' => $cost,
+                    'billed_cost' => round($cost * $billedQty / $qty, 2),
                 ]);
             }
 
@@ -321,9 +323,9 @@ class ReturnService
                             $return, $return->number, 'Pembatalan retur '.$return->number.' (cacat)', $date, location: StockLocation::Defect, warehouse: $return->warehouse_id);
                     }
                 } else {
-                    $this->stock->move($orderItem->material, (float) $line->quantity, StockMovementType::PurchaseReturn,
+                    $this->stock->move($orderItem->material, $orderItem->toStock((float) $line->quantity), StockMovementType::PurchaseReturn,
                         $return, $return->number, 'Pembatalan retur '.$return->number, $date,
-                        unitCost: (float) $line->unit_cost > 0 ? (float) $line->unit_cost : null, warehouse: $return->warehouse_id);
+                        unitCost: (float) $line->cost > 0 && $orderItem->toStock((float) $line->quantity) > 0 ? (float) $line->cost / $orderItem->toStock((float) $line->quantity) : null, warehouse: $return->warehouse_id);
                 }
             }
 

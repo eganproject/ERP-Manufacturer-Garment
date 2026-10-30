@@ -119,8 +119,11 @@
                     <tbody class="divide-y divide-gray-100">
                         @foreach ($order->items as $item)
                             <tr>
-                                <td>{{ $item->material->display_name }}</td>
-                                <td class="text-right">{{ qty($item->quantity) }} {{ $item->material->unit->code }}</td>
+                                <td>
+                                    {{ $item->material->display_name }}
+                                    @if ($item->isConverted())<div class="text-xs text-gray-500">{{ $item->conversionLabel() }}</div>@endif
+                                </td>
+                                <td class="text-right">{{ qty($item->quantity) }} {{ $item->unitCode() }}</td>
                                 <td @class(['text-right', 'text-emerald-600 font-medium' => $item->outstandingQuantity() <= 0])>{{ qty($item->received_quantity) }}</td>
                                 <td @class(['text-right', 'text-amber-600' => $item->unbilledQuantity() > 0])>{{ qty($item->billed_quantity) }}</td>
                                 <td @class(['text-right', 'text-red-600' => (float) $item->returned_quantity > 0])>{{ qty($item->returned_quantity) }}</td>
@@ -143,7 +146,7 @@
                             <td class="font-medium">{{ $receipt->number }}</td>
                             <td>{{ tanggal($receipt->receipt_date) }}<x-warehouse-tag :warehouse="$receipt->warehouse" /></td>
                             <td>{{ $receipt->delivery_note ?: '-' }}</td>
-                            <td>{!! $receipt->items->map(fn ($i) => e($i->material->name).': <b>'.qty($i->quantity).'</b>')->implode('<br>') !!}</td>
+                            <td>{!! $receipt->items->map(fn ($i) => e($i->material->name).': <b>'.qty($i->quantity).' '.e($i->purchaseOrderItem?->unitCode()).'</b>'.($i->purchaseOrderItem?->isConverted() ? ' <span class="text-gray-500">('.qty($i->stock_quantity).' '.e($i->material->unit?->code).')</span>' : ''))->implode('<br>') !!}</td>
                             <td class="text-right"><a href="{{ route('goods-receipts.pdf', $receipt) }}" target="_blank" class="text-sm font-medium text-indigo-600 hover:underline">Cetak</a></td>
                         </tr>
                     @empty

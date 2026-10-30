@@ -47,10 +47,10 @@ class TradeReport
         $withCost = $withCost && $isSales;
         [$model, $dateColumn, $partyColumn, $partyRelation, $itemRelation] = $isSales
             ? [Invoice::class, 'invoice_date', 'customer_id', 'customer', 'items.variant.product.unit']
-            : [Bill::class, 'bill_date', 'supplier_id', 'supplier', 'items.material.unit'];
+            : [Bill::class, 'bill_date', 'supplier_id', 'supplier', ['items.material.unit', 'items.purchaseOrderItem']];
 
         $documents = $model::query()
-            ->with([$partyRelation, $itemRelation])
+            ->with([$partyRelation, ...(array) $itemRelation])
             ->where('status', '!=', InvoiceStatus::Cancelled)
             ->whereBetween($dateColumn, [$from->toDateString(), $to->toDateString().' 23:59:59'])
             ->when($partyId, fn ($q, $id) => $q->where($partyColumn, $id))
@@ -110,7 +110,7 @@ class TradeReport
     {
         [$model, $partyColumn, $relations] = $isSales
             ? [SalesReturn::class, 'customer_id', ['customer', 'items.variant.product.unit']]
-            : [PurchaseReturn::class, 'supplier_id', ['supplier', 'items.material.unit']];
+            : [PurchaseReturn::class, 'supplier_id', ['supplier', 'items.material.unit', 'items.purchaseOrderItem']];
 
         return $model::query()
             ->with($relations)
@@ -183,7 +183,8 @@ class TradeReport
                     'owner' => $owner,
                     'doc' => $doc->id,
                     'is_return' => $doc->is_return,
-                    'quantity' => (float) $item->quantity,
+                    // Qty pembelian dijumlah dalam satuan stok bahan (PO bisa memakai satuan beli, mis. YD)
+                    'quantity' => (float) $item->quantity * ($isSales ? 1 : ($item->purchaseOrderItem?->factor() ?? 1)),
                     'dpp' => (float) $item->subtotal * $factor,
                     'cost' => $isSales ? (float) $item->cost : 0.0,
                 ];

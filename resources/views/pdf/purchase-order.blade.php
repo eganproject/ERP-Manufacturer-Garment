@@ -38,7 +38,7 @@
                     <td>{{ $item->material->code }}</td>
                     <td>{{ $item->material->name }}{{ $item->material->color ? " ({$item->material->color})" : "" }}</td>
                     <td class="r">{{ qty($item->quantity) }}</td>
-                    <td>{{ $item->material->unit->code }}</td>
+                    <td>{{ $item->unitCode() }}</td>
                     <td class="r">{{ rupiah($item->price) }}</td>
                     <td class="r">{{ rupiah($item->subtotal) }}</td>
                 </tr>

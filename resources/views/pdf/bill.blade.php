@@ -47,7 +47,7 @@
                     <td class="c">{{ $i + 1 }}</td>
                     <td>{{ $item->material?->display_name ?? $item->description }}</td>
                     <td class="r">{{ qty($item->quantity) }}</td>
-                    <td>{{ $item->material?->unit?->code ?? 'pcs' }}</td>
+                    <td>{{ $item->purchaseOrderItem?->unitCode() ?? $item->material?->unit?->code ?? 'pcs' }}</td>
                     <td class="r">{{ rupiah($item->price) }}</td>
                     <td class="r">{{ rupiah($item->subtotal) }}</td>
                 </tr>

@@ -24,6 +24,7 @@
                             <td class="text-right">{{ rupiah($material->price) }}</td>
                             <td @class(['text-right font-medium', 'text-red-600' => $material->isLowStock()])>
                                 <a href="{{ route('stock.materials.card', $material) }}" class="hover:underline">{{ qty($material->stock) }} {{ $material->unit->code }}</a>
+                                @if ($material->hasPurchaseUnit())<div class="text-xs font-normal text-gray-500">Beli per {{ $material->purchaseUnit?->code }} (1 = {{ \App\Support\UnitConversion::format((float) $material->purchase_conversion) }} {{ $material->unit->code }})</div>@endif
                             </td>
                             <td><x-badge :color="$material->is_active ? 'green' : 'gray'">{{ $material->is_active ? 'Aktif' : 'Nonaktif' }}</x-badge></td>
                             <td class="space-x-3 text-right whitespace-nowrap">

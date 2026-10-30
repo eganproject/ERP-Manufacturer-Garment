@@ -123,7 +123,7 @@ class PurchaseService
                 'created_by' => auth()->id(),
             ]);
 
-            $items = $po->items()->with('material')->lockForUpdate()->get()->keyBy('id');
+            $items = $po->items()->with('material.unit', 'unit')->lockForUpdate()->get()->keyBy('id');
 
             foreach ($quantities as $itemId => $qty) {
                 $item = $items->get($itemId);
@@ -138,18 +138,22 @@ class PurchaseService
                     ]);
                 }
 
+                // Qty PO dalam satuan beli (mis. YD); stok & harga pokok dalam satuan stok (mis. M)
+                $stockQty = $item->toStock($qty);
+
                 $receipt->items()->create([
                     'purchase_order_item_id' => $item->id,
                     'material_id' => $item->material_id,
                     'quantity' => $qty,
+                    'stock_quantity' => $stockQty,
                 ]);
 
                 $item->increment('received_quantity', $qty);
 
                 $this->stock->move(
-                    $item->material, $qty, StockMovementType::PurchaseReceipt,
-                    $receipt, $receipt->number, 'Penerimaan '.$po->number, $date,
-                    unitCost: (float) $item->price, warehouse: $receipt->warehouse_id,
+                    $item->material, $stockQty, StockMovementType::PurchaseReceipt,
+                    $receipt, $receipt->number, 'Penerimaan '.$po->number.($item->isConverted() ? ' ('.qty($qty).' '.$item->unitCode().')' : ''), $date,
+                    unitCost: $item->stockUnitPrice($qty), warehouse: $receipt->warehouse_id,
                 );
             }
 
